@@ -1,0 +1,1753 @@
+<script type="text/worker">
+
+/**
+ * VALOR CHARACTER SHEET
+ * v1.0.2
+ * 
+ * Installation Instructions:
+ * - Be a Roll20 Pro user.
+ * - From your game's main screen, go to Game Settings.
+ * - Under Character Sheet Template, select Custom.
+ * - Copy the contents of valor.html into the HTML Layout tab.
+ * - Copy the contents of valor.css into the CSS Styling tab.
+ * 
+ * Usage:
+ * - For Boosts, Weakens, or other techniques that grant skills or flaws, list
+ * them in the Description field.
+ * - If you want to use unlisted mods or limits, enter "Custom #", where # is
+ * the number of tech levels to add or how much to reduce ST by.
+ * - If you want to use unlisted skills or flaws, choose 'Custom Skill' or
+ * 'Custom Flaw' and set the level to the amount of SP.
+ * 
+ * Version History:
+ * v1.0: Initial release.
+ * 
+ * v1.0.1:
+ * - Various typos.
+ * - Various skills missing from skill list.
+ * - Reorganized flaw library.
+ * - Custom Skill and Custom Flaw now cost/grant SP.
+ * 
+ * v1.0.2:
+ * - Added extra skills, flaws, mods and limits from the GM Section.
+ * 
+ **/
+
+function calculateStats() {
+    // Base calculations
+    getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type', 'flawLibrary', 'skillLibrary', 'coreLibrary'], function(values) {
+        var level = parseInt(values.level);
+        var str = parseInt(values.str);
+        var agi = parseInt(values.agi);
+        var spr = parseInt(values.spr);
+        var mnd = parseInt(values.mnd);
+        var gut = parseInt(values.gut);
+        
+        if(str > level + 7) {
+            str = level + 7;
+        }
+        if(agi > level + 7) {
+            agi = level + 7;
+        }
+        if(spr > level + 7) {
+            spr = level + 7;
+        }
+        if(mnd > level + 7) {
+            mnd = level + 7;
+        }
+        if(gut > level + 7) {
+            gut = level + 7;
+        }
+        
+        if(str < 1) {
+            str = 1
+        }
+        if(agi < 1) {
+            agi = 1
+        }
+        if(spr < 1) {
+            spr = 1
+        }
+        if(mnd < 1) {
+            mnd = 1
+        }
+        if(gut < 1) {
+            gut = 1
+        }
+        
+        var mus = Math.ceil((level + str) / 2);
+        var dex = Math.ceil((level + agi) / 2);
+        var aur = Math.ceil((level + spr) / 2);
+        var int = Math.ceil((level + mnd) / 2);
+        var res = Math.ceil((level + gut) / 2);
+        
+        var strAtk = (level + str) * 2;
+        var agiAtk = (level + agi) * 2;
+        var sprAtk = (level + spr) * 2;
+        var mndAtk = (level + mnd) * 2;
+        
+        var hp = 50 + 10 * level + 10 * gut + 5 * str;
+        var st = 8 + 4 * level + 2 * spr + 2 * mnd;
+        var defense = level * 2 + str + gut;
+        var resistance = level * 2 + spr + mnd;
+        var speed = Math.ceil(agi / 4) + 2;
+        var di = level + 4;
+        
+        var valor = 10;
+        var unspentSP = 14 + 6 * level;
+        var unspentAP = 22 + 3 * level - str - agi - spr - mnd - gut;
+        var unspentTP = 8 + 4 * level;
+        if(level > 5) {
+            unspentTP += level - 5;
+        }
+        if(level > 10) {
+            unspentTP += level - 10;
+        }
+        if(level > 15) {
+            unspentTP += level - 15;
+        }
+        
+        switch(values.type) {
+            case 'flunky':
+                unspentSP = Math.ceil(unspentSP / 2);
+                unspentTP = Math.ceil(unspentTP / 4);
+                strAtk = Math.ceil(strAtk / 2);
+                agiAtk = Math.ceil(agiAtk / 2);
+                sprAtk = Math.ceil(sprAtk / 2);
+                mndAtk = Math.ceil(mndAtk / 2);
+                mus--;
+                dex--;
+                aur--;
+                int--;
+                res--;
+                di = Math.ceil(di / 2);
+                break;
+            case 'soldier':
+                unspentSP = Math.ceil(unspentSP / 2);
+                unspentTP = Math.ceil(unspentTP / 2);
+                strAtk = Math.ceil(strAtk / 2);
+                agiAtk = Math.ceil(agiAtk / 2);
+                sprAtk = Math.ceil(sprAtk / 2);
+                mndAtk = Math.ceil(mndAtk / 2);
+                mus--;
+                dex--;
+                aur--;
+                int--;
+                res--;
+                di = Math.ceil(di / 2);
+                break;
+            case 'swarm':
+                unspentTP = Math.ceil(unspentTP / 2);
+                break;
+            case 'master':
+                strAtk = 2 * level + 3 * str;
+                agiAtk = 2 * level + 3 * agi;
+                sprAtk = 2 * level + 3 * spr;
+                mndAtk = 2 * level + 3 * mnd;
+                unspentSP += 4 + level;
+                unspentTP += 1 + level;
+                break;
+                
+        }
+
+        // Apply Flaws
+        var flawFieldNames = [];
+        getSectionIDs('repeating_flaws', function(idarray) {
+            for(var i=0; i < idarray.length; i++) {
+                flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawname');
+                flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawlevel');
+            }
+            getAttrs(flawFieldNames, function(flawValues) {
+                var flawSP = 0;
+                for(var i=0; i < idarray.length; i++) {
+                    var flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
+                    var flawLevel = 1;
+                    if(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']) {
+                        flawLevel = parseInt(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']);
+                    }
+                    var flaw = values.flawLibrary.find(function(f) {
+                        return f.id == flawName;
+                    })
+                    
+                    // Apply effects
+                    switch(flawName) {
+                        case 'energyVulnerability':
+                            resistance -= 2 + 2 * flawLevel;
+                            break;
+                        case 'fragile':
+                            hp -= 15 + 15 * flawLevel;
+                            break;
+                        case 'lackOfControl':
+                            st -= 2 + 6 * flawLevel;
+                            break;
+                        case 'slow':
+                            speed -= flawLevel;
+                            break;
+                        case 'weakDefender':
+                            defense -= 2 + 2 * flawLevel;
+                            break;
+                    }
+                    
+                    // Gain SP
+                    if(flaw) {
+                        flawSP += flaw.cost + (flawLevel - 1) * flaw.levelUp;
+                    }
+                }
+                if(flawSP > level + 7) {
+                    flawSP = level + 7;
+                }
+                unspentSP += flawSP;
+                
+                // Apply Skills
+                var skillFieldNames = [];
+                getSectionIDs('repeating_skills', function(sidarray) {
+                    for(var i=0; i < sidarray.length; i++) {
+                        skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
+                        skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
+                    }
+                    
+                    getAttrs(skillFieldNames, function(skillValues) {
+                        for(var i=0; i < sidarray.length; i++) {
+                            var skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                            var skillLevel = 1;
+                            if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
+                                skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
+                            }
+                            
+                            switch(skillName) {
+                                case 'balancedFighter':
+                                    var stats = [mus, dex, aur, int, res];
+                                    var highestStat = Math.max(...stats);
+                                    if(mus < highestStat) {
+                                        mus++;
+                                    }
+                                    if(dex < highestStat) {
+                                        dex++;
+                                    }
+                                    if(aur < highestStat) {
+                                        aur++;
+                                    }
+                                    if(int < highestStat) {
+                                        int++;
+                                    }
+                                    if(res < highestStat) {
+                                        res++;
+                                    }
+                                    break;
+                                case 'energyAttacker':
+                                    sprAtk += 3 + 3 * skillLevel;
+                                    mndAtk += 3 + 3 * skillLevel;
+                                    break;
+                                case 'improvedDamageIncrement':
+                                    di += 2 + 3 * skillLevel; // ERRATA: More powerful IDI
+                                    break;
+                                case 'ironDefense':
+                                    defense += 2 + 2 * skillLevel;
+                                    break;
+                                case 'physicalAttacker':
+                                    strAtk += 3 + 3 * skillLevel;
+                                    agiAtk += 3 + 3 * skillLevel;
+                                    break;
+                                case 'resistant':
+                                    resistance += 2 + 2 * skillLevel;
+                                    break;
+                                case 'sprinter':
+                                    speed += skillLevel;
+                                    break;
+                                case 'tireless':
+                                    st += 2 + 6 * skillLevel;
+                                    break;
+                                case 'tough':
+                                    hp += 15 + 15 * skillLevel;
+                                    break;
+                                case 'versatileFighter':
+                                    unspentTP += 2 + 2 * skillLevel;
+                                    break;
+                                case 'breakValorLimit':
+                                    valor += 10;
+                                    break;
+                            }
+                            
+                            var skill = values.skillLibrary.find(function(s) {
+                                return s.id == skillName;
+                            });
+                            
+                            if(skill) {
+                                unspentSP -= skill.cost + (skillLevel - 1) * skill.levelUp;
+                            }
+                        }
+                        
+                        switch(values.type) {
+                            case 'flunky':
+                                hp = 1;
+                                break;
+                            case 'soldier':
+                                hp = Math.ceil(hp / 2);
+                                break;
+                            case 'master':
+                                hp *= 2;
+                                break;
+                        }
+                        
+                        // Apply techs
+                        var techFieldNames = [];
+                        getSectionIDs('repeating_techs', function(tidarray) {
+                            for(var i=0; i < tidarray.length; i++) {
+                                techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_core_level');
+                                techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_mod_level');
+                                techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_core');
+                            }
+                            
+                            getAttrs(techFieldNames, function(techValues) {
+                                
+                                var ults = [];
+                                if(level >= 5) {
+                                    ults.push(8);
+                                }
+                                if(level >= 10) {
+                                    ults.push(13);
+                                }
+                                if(level >= 15) {
+                                    ults.push(18);
+                                }
+                                if(level >= 20) {
+                                    ults.push(23);
+                                }
+                                
+                                for(var i=0; i < tidarray.length; i++) {
+                                    techCore = techValues['repeating_techs_' + tidarray[i] + '_tech_core'];
+                                    var techCoreLevel = 1;
+                                    if(techValues['repeating_techs_' + tidarray[i] + '_tech_core_level']) {
+                                        techCoreLevel = parseInt(techValues['repeating_techs_' + tidarray[i] + '_tech_core_level']);
+                                    }
+                                    var techModsLevel = 0;
+                                    if(techValues['repeating_techs_' + tidarray[i] + '_tech_mod_level']) {
+                                        techModsLevel = parseInt(techValues['repeating_techs_' + tidarray[i] + '_tech_mod_level']);
+                                    }
+                                    
+                                    var spentTP = techModsLevel + techCoreLevel;
+                                    
+                                    // Set the tech's total level
+                                    var techAttrs = {};
+                                    techAttrs['repeating_techs_' + tidarray[i] + '_tech_level'] = spentTP;
+                                    setAttrs(techAttrs);
+                                    
+                                    if((techCore == 'ultDamage' || techCore == 'ultTransform') && ults.length > 0) {
+                                        // Use the next Ult to offset the TP cost
+                                        spentTP -= ults[0];
+                                        ults.splice(0,1);
+                                    }
+                                    
+                                    if(spentTP > 0) {
+                                        unspentTP -= spentTP;
+                                    }
+                                }
+                                    
+                                //Set values
+                                setAttrs({
+                                    str: str,
+                                    agi: agi,
+                                    spr: spr,
+                                    mnd: mnd,
+                                    gut: gut,
+                                    mus: mus,
+                                    dex: dex,
+                                    aur: aur,
+                                    int: int,
+                                    res: res,
+                                    strAtk: strAtk,
+                                    agiAtk: agiAtk,
+                                    sprAtk: sprAtk,
+                                    mndAtk: mndAtk,
+                                    hp_max: hp,
+                                    st_max: st,
+                                    valor_max: valor,
+                                    defense: defense,
+                                    resistance: resistance,
+                                    speed: speed,
+                                    hpInc: Math.ceil(hp / 5),
+                                    stInc: Math.ceil(st / 5),
+                                    hpCrit: Math.ceil(hp / 5) * 2,
+                                    di: di,
+                                    unspentAP: unspentAP,
+                                    unspentSP: unspentSP,
+                                    unspentTP: unspentTP
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    });
+}
+
+on('change:level change:str change:agi change:spr change:mnd change:gut ' +
+   'change:type change:repeating_flaws change:repeating_skills ' +
+   'change:tech_core_level change:tech_mod_level change:tech_core', function() {
+    calculateStats();
+});
+
+/* Update displayed Technique info - Tech Level, Summary, Warnings, Mod/Limit Levels */
+on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_limit_st ' +
+   'change:tech_core change:tech_stat change: tech_mods change:tech_limits change:tech_description ' +
+   'change:level sheet:opened', function() {
+    var techFieldNames = ['coreLibrary', 'str', 'agi', 'spr', 'mnd', 'gut', 
+                          'mus', 'dex', 'aur', 'int', 'res', 
+                          'strAtk', 'agiAtk', 'sprAtk', 'mndAtk',
+                          'level', 'hp_max', 'di'];
+    getSectionIDs('repeating_techs', function(tidarray) {
+        for(var i=0; i < tidarray.length; i++) {
+            techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_name');
+            techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_core_level');
+            techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_core');
+            techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_stat');
+            techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_mods');
+            techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_limits');
+            techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_description');
+        }
+        
+        getAttrs(techFieldNames, function(techValues) {
+            var level = parseInt(techValues.level);
+            var hp = parseInt(techValues.hp_max);
+            var str = parseInt(techValues.str);
+            var agi = parseInt(techValues.agi);
+            var spr = parseInt(techValues.spr);
+            var mnd = parseInt(techValues.mnd);
+            var gut = parseInt(techValues.gut);
+            for(var i=0; i < tidarray.length; i++) {
+                var techName = techValues['repeating_techs_' + tidarray[i] + '_tech_name'];
+                var techStat = techValues['repeating_techs_' + tidarray[i] + '_tech_stat'];
+                var techDescription = techValues['repeating_techs_' + tidarray[i] + '_tech_description'];
+                var techCore = 'damage';
+                if(techValues['repeating_techs_' + tidarray[i] + '_tech_core']) {
+                    techCore = techValues['repeating_techs_' + tidarray[i] + '_tech_core'];
+                }
+                var techMods = '';
+                if(techValues['repeating_techs_' + tidarray[i] + '_tech_mods']) {
+                    techMods = techValues['repeating_techs_' + tidarray[i] + '_tech_mods'].toLowerCase();
+                }
+                var techLimits = '';
+                if(techValues['repeating_techs_' + tidarray[i] + '_tech_limits']) {
+                    techLimits = techValues['repeating_techs_' + tidarray[i] + '_tech_limits'].toLowerCase();
+                }
+                var techCoreLevel = 1;
+                if(techValues['repeating_techs_' + tidarray[i] + '_tech_core_level']) {
+                    techCoreLevel = parseInt(techValues['repeating_techs_' + tidarray[i] + '_tech_core_level']);
+                }
+                
+                // Build tech summary
+                var summary = '';
+                var warnings = ' ';
+                
+                if(techCoreLevel < 1) {
+                    warnings += 'WARNING: Core Level cannot be less than 1. ';
+                }
+                
+                // Start with user-provided text
+                if(techDescription) {
+                    summary += techDescription;
+                    summary += '\n';
+                }
+                
+                // Is this an ult?
+                if(techCore == 'ultDamage' || techCore == 'ultTransform') {
+                    summary += 'Ultimate Technique. ';
+                }
+                
+                // Display required action
+                var action = 'Attack';
+                if(techCore == 'barrier' || techCore == 'boost' || 
+                   techCore == 'healing' || techCore == 'weaken' ||
+                   techCore == 'ultTransform') {
+                    action  = 'Support';
+                }
+                if(techMods.indexOf('rush') > -1 || techMods.indexOf('ramming') > -1) {
+                    action += '+Move';
+                }
+                if((techCore == 'summoning' && techMods.indexOf('quick summon') == -1) || techLimits.indexOf('slow') > -1) {
+                    action = 'Slow';
+                }
+                summary += action + ' Action. ';
+                
+                // Display core functionality
+                var rollStat = techStat;
+                if(techMods.indexOf('muscular strike') > -1) {
+                    rollStat = 'str';
+                }
+                if(techMods.indexOf('dexterous strike') > -1) {
+                    rollStat = 'agi';
+                }
+                if(techMods.indexOf('aura strike') > -1) {
+                    rollStat = 'spr';
+                }
+                if(techMods.indexOf('intuitive strike') > -1) {
+                    rollStat = 'mnd';
+                }
+                if(techCore == 'damage' ||
+                   techCore == 'ultDamage' ||
+                   techCore == 'weaken') {
+                    var hitBonus = 0;
+                    if(techMods.indexOf('accurate') > -1) {
+                        hitBonus += 2;
+                    }
+                    if(techLimits.indexOf('final') > -1) {
+                        hitBonus += 5;
+                    }
+                    switch(rollStat) {
+                        case 'str':
+                            var toHit = techValues.mus + hitBonus;
+                            summary += 'Roll Muscle (1d10+' + toHit + ') to hit. '
+                            break;
+                        case 'agi':
+                            var toHit = techValues.dex + hitBonus;
+                            summary += 'Roll Dexterity (1d10+' + toHit + ') to hit. '
+                            break;
+                        case 'spr':
+                            var toHit = techValues.aur + hitBonus;
+                            summary += 'Roll Aura (1d10+' + toHit + ') to hit. '
+                            break;
+                        case 'mnd':
+                            var toHit = techValues.int + hitBonus;
+                            summary += 'Roll Intuition (1d10+' + toHit + ') to hit. '
+                            break;
+                        case 'gut':
+                            var toHit = techValues.res + hitBonus;
+                            summary += 'Roll Resolve (1d10+' + toHit + ') to hit. '
+                            break;
+                    }
+                }
+                switch(techCore) {
+                    case 'damage':
+                    case 'ultDamage':
+                        
+                        // Get damage and stat for description
+                        var specialAttack =
+                            techMods.indexOf('sapping') > -1 ||
+                            techMods.indexOf('piercing') > -1 ||
+                            techMods.indexOf('drain') > -1 ||
+                            techMods.indexOf('persistent') > -1 ||
+                            techMods.indexOf('debilitating') > -1;
+                        var damage = 0;
+                        switch(techStat) {
+                            case 'str':
+                                if(specialAttack && techCore == 'damage') {
+                                    damage = 12 + 4 * techCoreLevel + Math.ceil(techValues.strAtk / 2);
+                                } else if((!specialAttack && techCore == 'damage') || (specialAttack && techCore == 'ultDamage')) {
+                                    damage = 15 + 5 * techCoreLevel + techValues.strAtk;
+                                } else {
+                                    damage = 24 + 8 * techCoreLevel + techValues.strAtk;
+                                }
+                                summary += 'On a hit, deal ' + damage + ' physical damage to the target. '
+                                break;
+                            case 'agi':
+                                if(specialAttack && techCore == 'damage') {
+                                    damage = 12 + 4 * techCoreLevel + Math.ceil(techValues.agiAtk / 2);
+                                } else if((!specialAttack && techCore == 'damage') || (specialAttack && techCore == 'ultDamage')) {
+                                    damage = 15 + 5 * techCoreLevel + techValues.agiAtk;
+                                } else {
+                                    damage = 24 + 8 * techCoreLevel + techValues.agiAtk;
+                                }
+                                summary += 'On a hit, deal ' + damage + ' physical damage to the target. '
+                                break;
+                            case 'spr':
+                                if(specialAttack && techCore == 'damage') {
+                                    damage = 12 + 4 * techCoreLevel + Math.ceil(techValues.sprAtk / 2);
+                                } else if((!specialAttack && techCore == 'damage') || (specialAttack && techCore == 'ultDamage')) {
+                                    damage = 15 + 5 * techCoreLevel + techValues.sprAtk;
+                                } else {
+                                    damage = 24 + 8 * techCoreLevel + techValues.sprAtk;
+                                }
+                                summary += 'On a hit, deal ' + damage + ' energy damage to the target. '
+                                break;
+                            case 'mnd':
+                                if(specialAttack && techCore == 'damage') {
+                                    damage = 12 + 4 * techCoreLevel + Math.ceil(techValues.mndAtk / 2);
+                                } else if((!specialAttack && techCore == 'damage') || (specialAttack && techCore == 'ultDamage')) {
+                                    damage = 15 + 5 * techCoreLevel + techValues.mndAtk;
+                                } else {
+                                    damage = 24 + 8 * techCoreLevel + techValues.mndAtk;
+                                }
+                                summary += 'On a hit, deal ' + damage + ' energy damage to the target. '
+                                break;
+                        }
+                        break;
+                    case 'healing':
+                        switch(techStat) {
+                            case 'spr':
+                                healing = 12 + 4 * techCoreLevel + spr;
+                                break;
+                            case 'mnd':
+                                healing = 12 + 4 * techCoreLevel + mnd;
+                                break;
+                            case 'gut':
+                                healing = 12 + 4 * techCoreLevel + gut;
+                                break;
+                        }
+                        summary += 'Restore ' + healing + ' Health to the target. '
+                        break;
+                    case 'barrier':
+                        summary += 'Create a Barrier of power ' + techCoreLevel + '. ';
+                        break;
+                    case 'mimic':
+                        summary += 'Mimics a witnessed enemy Technique at Tech Level ' + techCoreLevel + '. ';
+                        break;
+                    case 'summoning':
+                        summary += 'Summons a Level ' + techCoreLevel + ' ally. Command it with a Support Action. ';
+                        break;
+                    case 'ultTransform':
+                        var bonusHp = level * 10;
+                        summary += 'Transform, gaining ' + bonusHp + ' HP and +1 to all Active Attributes. ';
+                        break;
+                    case 'boost':
+                    case 'weaken':
+                        break;
+                    default:
+                        warnings += "WARNING: Unknown Core '" + techCore + "'. ";
+                        break;
+                }
+                
+                summary += '\n';
+                
+                var totalModLevel = 0;
+                // Display mods
+                var mods = techMods.split('\n');
+                mods.forEach(function(mod) {
+                    // Try to get the level
+                    var split = mod.split(' ');
+                    var modLevel = parseInt(split[split.length - 1]);
+                    if(modLevel != modLevel) {
+                        // NaN, so there's no level listed - assume 1
+                        modLevel = 1;
+                    }
+                    
+                    if(mod.indexOf('ranged') == 0) {
+                        var range = 3 * modLevel;
+                        switch(techStat) {
+                            case 'str':
+                                range = 2 * modLevel;
+                                break;
+                            case 'agi':
+                            case 'spr':
+                                range = 4 * modLevel;
+                                break;
+                        }
+                        summary += 'Range ' + range + '. ';
+                        totalModLevel += modLevel;
+                    } else if(mod.indexOf('blast') == 0) {
+                        summary += 'Blast Radius ' + modLevel + '. ';
+                        if(techStat == 'spr') {
+                            totalModLevel += 2 * modLevel - 1;
+                        } else {
+                            totalModLevel += 2 * modLevel;
+                        }
+                    } else if(mod.indexOf('chain attack') == 0) {
+                        if(modLevel == 1) {
+                            summary += 'Chains once. ';
+                        } else if(modLevel == 2) {
+                            summary += 'Chains twice. ';
+                        } else {
+                            summary += 'Chains ' + modLevel + ' times. ';
+                        }
+                        totalModLevel += modLevel;
+                    } else if(mod.indexOf('line') == 0 && mod.indexOf('line variation') != 0) {
+                        var line = 3 * modLevel;
+                        switch(techStat) {
+                            case 'str':
+                            case 'agi':
+                                line = 2 * modLevel;
+                                break;
+                            case 'spr':
+                                line++;
+                                break;
+                        }
+                        summary += 'Targets in a line of length ' + line + '. ';
+                        totalModLevel += modLevel;
+                        log('added ' + modLevel);
+                    } else if(mod.indexOf('line variation') == 0) {
+                        var variations = modLevel;
+                        if(techStat == 'mnd') {
+                            variations++;
+                        }
+                        if(variations == 1) {
+                            summary += 'Line can change direction once. ';
+                        } else {
+                            summary += 'Line can change direction ' + variations + ' times. ';
+                        }
+                        totalModLevel += modLevel;
+                    } else if(mod.indexOf('multiple targets') == 0) {
+                        var targets = 1 + modLevel;
+                        if(techStat == 'agi') {
+                            targets++;
+                        }
+                        summary += 'Choose up to ' + targets + ' targets. ';
+                        totalModLevel += modLevel;
+                    } else if(mod.indexOf('indirect') == 0) {
+                        summary += 'Can target anywhere on the battlefield. ';
+                        totalModLevel += 3;
+                    } else if(mod.indexOf('rush') == 0) {
+                        summary += 'Take a Move Action, then target everyone you moved through. ';
+                        if(techStat == 'agi' || techStat == 'str') {
+                            totalModLevel += 2;
+                        } else {
+                            totalModLevel += 3;
+                        }
+                    } else if(mod.indexOf('smart area') == 0) {
+                        summary += 'You can choose to omit any number of spaces from the target area. ';
+                        if(techStat == 'mnd') {
+                            totalModLevel++;
+                        } else {
+                            totalModLevel += 2;
+                        }
+                    } else if(mod.indexOf('whirlwind') == 0) {
+                        summary += 'Targets all enemies in your Zone of Control. ';
+                        if(techStat == 'str') {
+                            totalModLevel++;
+                        } else {
+                            totalModLevel += 2;
+                        }
+                    } else if(mod.indexOf('debilitating') == 0) {
+                        // No change to summary or level
+                    } else if(mod.indexOf('drain') == 0) {
+                        summary += 'On a hit, recover Health equal to half of damage dealt. ';
+                    } else if(mod.indexOf('persistent effect') == 0) {
+                        summary += 'Attacks again in the same area at the start of your next 2 turns. ';
+                    } else if(mod.indexOf('piercing') == 0) {
+                        if(techStat == 'str' || techStat == 'agi') {
+                            summary += 'Ignores Defense. ';
+                        } else {
+                            summary += 'Ignores Resistance. ';
+                        }
+                    } else if(mod.indexOf('sapping') == 0) {
+                        summary += 'On a hit, the target takes ongoing damage equal to a third of initial damage for 3 turns. ';
+                    } else if(mod.indexOf('transform ally') == 0) {
+                        summary += 'Can transform an ally within 5 spaces. ';
+                        totalModLevel += 2;
+                    } else if(mod.indexOf('unerring attack') == 0) {
+                        summary += 'Can be used again if you miss every target. ';
+                        totalModLevel += 2;
+                    } else if(mod.indexOf('consecutive transform') == 0) {
+                        summary += 'Can stack with another Transformation. ';
+                        totalModLevel += 2 * modLevel;
+                    } else if(mod.indexOf('intimidating transform') == 0) {
+                        var targets = 1 + modLevel;
+                        summary += 'When transformring, roll Resolve (1d10+' + techValues.res + ') or Aura (1d10+' + techValues.aur +
+                        ') to leave up to ' + targets + ' targets within 5 spaces Shaken. ';
+                        totalModLevel += 2 * modLevel;
+                    } else if(mod.indexOf('accurate') == 0) {
+                        if(techStat == 'agi') {
+                            totalModLevel += 3;
+                        } else {
+                            totalModLevel += 4;
+                        }
+                    } else if(mod.indexOf('aura') == 0) {
+                        totalModLevel++;
+                    } else if(mod.indexOf('damage shift') == 0) {
+                        if(techStat == 'str' || techStat == 'agi') {
+                            summary += 'Is affected by Resistance instead of Defense. ';
+                        } else {
+                            summary += 'Is affected by Defense instead of Resistance. ';
+                        }
+                        totalModLevel++;
+                    } else if(mod.indexOf('darkness zone') == 0) {
+                        summary += 'Target area is filled with darkness. ';
+                        totalModLevel++;
+                    } else if(mod.indexOf('dash') == 0) {
+                        var distance = modLevel;
+                        if(techStat == 'agi') {
+                            distance++;
+                        }
+                        summary += 'Move ' + distance + ' spaces before or after attacking. ';
+                        totalModLevel += modLevel;
+                    } else if(mod.indexOf('destruction') == 0) {
+                        var destroy = 2 * modLevel;
+                        summary += '+' + destroy + ' Durability damage to objects. ';
+                        totalModLevel++;
+                    } else if(mod.indexOf('dextrous') == 0) {
+                        totalModLevel++;
+                    } else if(mod.indexOf('drop attack') == 0) {
+                        summary += 'If target is flying, they fall and take ' + di + ' damage. ';
+                        totalModLevel++;
+                    } else if(mod.indexOf('high barrier') == 0) {
+                        summary += 'Flying targets cannot cross the barrier. ';
+                        totalModLevel += 2;
+                    } else if(mod.indexOf('immobiliz') == 0) {
+                        summary += 'On a hit, the target is Immobilized. ';
+                        totalModLevel += 3;
+                    } else if(mod.indexOf('intuitive') == 0) {
+                        totalModLevel++;
+                    } else if(mod.indexOf('knock down') == 0 ||
+                              mod.indexOf('knockdown') == 0) {
+                        summary += 'On a hit, the target is knocked prone. ';
+                        totalModLevel += 3;
+                    } else if(mod.indexOf('light zone') == 0) {
+                        summary += 'Darkness in the target area is eliminated. ';
+                        totalModLevel++;
+                    } else if(mod.indexOf('muscular') == 0) {
+                        totalModLevel++;
+                    } else if(mod.indexOf('ramming attack') == 0) {
+                        summary += 'On a hit, move and drag the target to a space adjacent to you. ';
+                        if(techStat == 'str') {
+                            totalModLevel++;
+                        } else {
+                            totalModLevel += 2;
+                        }
+                    } else if(mod.indexOf('reposition') == 0) {
+                        var distance = 1 + modLevel;
+                        if(techStat == 'str') {
+                            distance++;
+                        }
+                        summary += 'On a hit, move the target up to ' + distance + ' spaces. ';
+                        totalModLevel += modLevel;
+                    } else if(mod.indexOf('throw') == 0) {
+                        summary += 'If you move the target into someone else, attack them as well to deal full damage. ';
+                        if(techStat == 'str') {
+                            totalModLevel++;
+                        } else {
+                            totalModLevel += 2;
+                        }
+                    } else if(mod.indexOf('violentBarrier') == 0) {
+                        summary += 'If someone tries to move through the barrier, they take ' + di + ' damage. ';
+                        totalModLevel++;
+                    } else if(mod.indexOf('launching') == 0) {
+                        summary += 'On a hit, the target is Launched. ';
+                        totalModLevel += 3;
+                    } else if(mod.indexOf('phasing') == 0) {
+                        summary += 'Ignores all obstacles. ';
+                        totalModLevel++;
+                    } else if(mod.indexOf('quick summon') == 0) {
+                        totalModLevel += 3;
+                    } else if(mod.indexOf('selective barrier') == 0) {
+                        summary += 'Allies can move through the barrier freely. ';
+                        totalModLevel++;
+                    } else if(mod.indexOf('terrain disruption')== 0) {
+                        summary += 'Target area becomes Difficult Terrain. ';
+                        totalModLevel++;
+                    } else if(mod.indexOf('terrain repair') == 0) {
+                        summary += 'Difficult Terrain in the target area is eliminated. ';
+                        totalModLevel++;
+                    } else if(mod.indexOf('element') == 0) {
+                        summary += 'Deals elemental damage. ';
+                        if(techStat == 'str' || techStat == 'agi') {
+                            totalModLevel++;
+                        }
+                    } else if(mod.indexOf('custom') == 0) {
+                        totalModLevel += modLevel;
+                    } else if(mod.length > 0) {
+                        warnings += "WARNING: Unrecognized Modifier '" + mod + "'. ";
+                    }
+                });
+                if(techCore == 'ultDamage' || techCore == 'ultTransform') {
+                    totalModLevel = Math.ceil(totalModLevel / 2);
+                }
+                
+                var techLevel = techCoreLevel + totalModLevel;
+                if(techLevel > level + 3 || (techLevel > level && techCore == 'summoning')) {
+                    warnings += 'WARNING: Technique Level is too high for current Character Level. '
+                }
+                
+                summary += '\n';
+                // Display the technique cost and limits
+                var core = techValues.coreLibrary.find(function(c) {
+                    return c.id == techCore;
+                });
+                
+                var limitSummary = '';
+                var limitSt = 0;
+                var limits = techLimits.split('\n');
+                limits.forEach(function(limit) {
+                    // Try to get the level
+                    var split = limit.split(' ');
+                    var limitLevel = parseInt(split[split.length - 1]);
+                    if(limitLevel != limitLevel) {
+                        // NaN, so there's no level listed - assume 1
+                        limitLevel = 1;
+                    }
+                    
+                    if(limit.indexOf('health') == 0) {
+                        var healthLost = 5 * limitLevel;
+                        limitSummary += 'Costs ' + healthLost + ' Health. ';
+                        limitSt += 2 * limitLevel;
+                    } else if(limit.indexOf('ally') == 0) {
+                        limitSummary += 'Cannot target yourself. ';
+                        limitSt++;
+                    } else if(limit.indexOf('ammo') == 0 ||
+                              limit.indexOf('ammunition') == 0) {
+                        var ammo = 4 - limitLevel;
+                        if(ammo == 1) {
+                            limitSummary += 'Can only be used once per scene. ';
+                        } else {
+                            limitSummary += 'Can only be used ' + ammo + ' times per scene. ';
+                        }
+                    } else if(limit.indexOf('companion') == 0) {
+                        limitSummary += 'Only your Companion can use this Technique. ';
+                        limitSt += 2;
+                    } else if(limit.indexOf('cooldown') == 0) {
+                        if(limitLevel == 1) {
+                            limitSummary += 'Must wait for 1 turn before using again. ';
+                        } else {
+                            limitSummary += 'Must wait for ' + limitLevel + ' turns before using again. ';
+                        }
+                        limitSt += 2 * limitLevel;
+                    } else if(limit.indexOf('dark power') == 0) {
+                        limitSummary += 'When you use this Technique, make a Malevolent Entity check. ';
+                        limitSt += 10;
+                    } else if(limit.indexOf('form') == 0) {
+                        limitSummary += 'You must be transformed to use this Technique. ';
+                        limitSt += 2 * limitLevel;
+                    } else if(limit.indexOf('falling') == 0) {
+                        limitSummary += 'Fall prone after using this Technique.';
+                        limitSt += 4;
+                    } else if(limit.indexOf('grant') == 0) {
+                        limitSt += limitLevel;
+                    } else if(limit.indexOf('initiative') == 0) {
+                        limitSummary += 'Initiative redused by ' + limitLevel + ' after using this Technique. ';
+                        limitSt += 3 * limitLevel;
+                    } else if(limit.indexOf('immobile') == 0) {
+                        limitSummary += "Can't be used if you've already moved this turn.";
+                        limitSt += 3;
+                    } else if(limit.indexOf('injury') == 0) {
+                        var threshold = hp - Math.ceil(hp / 5) * limitLevel;
+                        limitSummary += 'Your Health must be ' + threshold + ' or lower to use this Technique. ';
+                        limitSt += 2 * limitLevel;
+                    } else if(limit.indexOf('landbound') == 0) {
+                        limitSummary += 'Cannot target flying characters. ';
+                        limitSt++;
+                    } else if(limit.indexOf('mercy') == 0) {
+                        limitSummary += 'Cannot reduce a target below 1 HP. ';
+                        limitSt += 3;
+                    } else if(limit.indexOf('minimum range') == 0) {
+                        limitSummary += 'Cannot target characters who are ' + limitLevel + ' or fewer spaces away from you. ';
+                        limitSt += limitLevel;
+                    } else if(limit.indexOf('movement') == 0) {
+                        if(limitLevel == 1) {
+                            limitSummary += "Can't be used unless you're at least 1 space away from where you started your turn. ";
+                        } else {
+                            limitSummary += "Can't be used unless you're at least " + limitLevel + ' spaces away from where you started your turn. ';
+                        }
+                        limitSt += limitLevel;
+                    } else if(limit.indexOf('push') == 0) {
+                        limitSummary += 'Each space of movement must move the target further away from you. ';
+                        limitSt++;
+                    } else if(limit.indexOf('pull') == 0) {
+                        limitSummary += 'Each space of movement must move the target closer to you. ';
+                        limitSt++;
+                    } else if(limit.indexOf('reaction') == 0) {
+                        limitSummary += 'Can only be used with the Counterattack skill. ';
+                        limitSt += 3;
+                    } else if(limit.indexOf('reload') == 0) {
+                        limitSummary += 'Must use a Support Action to reload before using again. ';
+                        limitSt += 4;
+                    } else if(limit.indexOf('sequence') == 0) {
+                        limitSummary += 'Must use a specific other Technique before using this one. ';
+                        limitSt += 4;
+                    } else if(limit.indexOf('self') == 0) {
+                        limitSummary += 'Can only target yourself. ';
+                        limitSt++;
+                    } else if(limit.indexOf('setup') == 0 ||
+                              limit.indexOf('set-up') == 0) {
+                        var turn = 1 + limitLevel;
+                        limitSummary += "Can't be used until turn " + turn + ' or later. ';
+                        limitSt += limitLevel;
+                    } else if(limit.indexOf('single companion') == 0) {
+                        limitSummary += 'Only a specific Companion can use this Technique. ';
+                        limitSt += 3;
+                    } else if(limit.indexOf('slow') == 0) {
+                        limitSt += 6;
+                    } else if(limit.indexOf('temporary') == 0) {
+                        limitSummary += 'Only lasts for 2 turns. ';
+                        limitSt += 6;
+                    } else if(limit.indexOf('unstable summon') == 0) {
+                        limitSummary += 'Summon has a ' + limitLevel + 'in 10 chance to ignore orders. ';
+                        limitSt += 4 * limitLevel;
+                    } else if(limit.indexOf('upkeep') == 0) {
+                        limitSummary += 'Must spent ' + limitLevel + 'Stamina at the start of each turn to keep active. ';
+                        limitSt += 4 * limitLevel;
+                    } else if(limit.indexOf('vitality') == 0) {
+                        var threshold = Math.ceil(hp * 0.4);
+                        limitSummary += "Can't be used if you are at or below " + threshold + ' Health. ';
+                        limitSt += 3 * limitLevel;
+                    } else if(limit.indexOf('valor') == 0) {
+                        if(limit.indexOf('valor consumption') > -1) {
+                            limitSummary += 'Valor is reduced by ' + limitLevel + 'after using (can go below 0). ';
+                            limitSt += 5 * limitLevel;
+                        } else {
+                            limitSummary += "Can't be used unless you have at least " + limitLevel + ' Valor. ';
+                            limitSt += 2 * limitLevel;
+                        }
+                    } else if(limit.indexOf('clone') == 0) {
+                        limitSummary += 'You must have an active Clone to use this Technique. ';
+                        limitSt += 2;
+                    } else if(limit.indexOf('node sacrifice') == 0) {
+                        limitSummary += 'Must originate from an Attack Node, and the node is destroyed. ';
+                        limitSt += 8;
+                    } else if(limit.indexOf('refraction') == 0) {
+                        limitSummary += 'Must pass through a Refraction Point to take effect. ';
+                        limitSt += 2;
+                    } else if(limit.indexOf('time') == 0) {
+                        var time = 5 - limitLevel;
+                        limitSummary += 'Transformation ends after ' + time + ' turns. ';
+                        limitSt += 5 * limitLevel;
+                    } else if(limit.indexOf('airborne') == 0) {
+                        limitSummary += 'You must be Flying to use this Technique. ';
+                        limitSt++;
+                    } else if(limit.indexOf('drop') == 0) {
+                        limitSummary += 'You cease Flying after using this Technique. ';
+                        limitSt += 4;
+                    } else if(limit.indexOf('revert') == 0) {
+                        limitSummary += 'Your Transformation ends when you use this Technique. ';
+                        limitSt += 10;
+                    } else if(limit.indexOf('ultimate cooldown') == 0) {
+                        limitSummary += "After using this Technique, you can't use it during the next " + limitLevel + 'scenes. ';
+                        limitSt += 10;
+                    } else if(limit.indexOf('ultimate health') == 0) {
+                        damage = Math.ceil(hp / 5);
+                        limitSummary += 'Costs ' + damage + ' Health. ';
+                        limitSt += 20;
+                    } else if(limit.indexOf('ultimate valor') == 0) {
+                        limitSummary += 'Costs ' + limitLevel + ' Valor. ';
+                        limitSt += 10 * limitLevel;
+                    } else if(limit.indexOf('dark surrender') == 0) {
+                        limitSummary += 'After using this Technique, you automatically surrender to your Malevolent Entity. ';
+                        limitSt += 30;
+                    } else if(limit.indexOf('final') == 0) {
+                        limitSummary += 'After using this Technique, your Health and Valor are both reduced to 0.';
+                        limitSt = 9999;
+                    } else if(limit.indexOf('sacrifice') == 0) {
+                        limitSummary += "Costs " + 10 * limitLevel + " of an ally's Health. ";
+                        limitSt += 2 * limitLevel;
+                    } else if(limit.indexOf('fatigue') == 0) {
+                        limitSummary += 'You become Fatigued after using this Technique. ';
+                        limitSt += 15; 
+                    } else if(limit.indexOf('weapon req') == 0) {
+                        limitSummary += 'You must be holding your weapon to use this Technique. ';
+                        limitSt += 3;
+                    } else if(limit.indexOf('weapon rel') == 0) {
+                        limitSummary += "-10 damage if you aren't holding your weapon. ";
+                        limitSt += 1;
+                    } else if(limit.indexOf('expendable') == 0) {
+                        limitSummary += 'Consumes ammunition that must be purchased or found. ';
+                        limitSt += limitLevel;
+                    } else if(limit.indexOf('sacrifice') == 0) {
+                        limitSummary += 'You must have at least ' + limitLevel + 'Synchronization with your Ego Weapon to use this Technique. ';
+                        limitSt += 2 * limitLevel;
+                    } else if(limit.indexOf('custom') == 0) {
+                        limitSt += limitLevel;
+                    } else if(limit.length > 0 &&
+                              limit.indexOf('slow') == -1 &&
+                              limit.indexOf('grant') == -1) {
+                        warnings += "WARNING: Unrecognized Limit '" + limit + "'. ";
+                    }
+                });
+                
+                if(core && techCore != 'mimic') {
+                    var cost = core.cost + core.levelUp * (techCoreLevel + totalModLevel) - limitSt;
+                    if(cost < 0) {
+                        cost = 0;
+                    }
+                    
+                    summary += 'Costs ' + cost + ' Stamina. '
+                }
+                summary += limitSummary;
+                
+                var attrs = {};
+                attrs['repeating_techs_' + tidarray[i] + '_tech_summary'] = summary;
+                attrs['repeating_techs_' + tidarray[i] + '_tech_warnings'] = warnings;
+                attrs['repeating_techs_' + tidarray[i] + '_tech_mod_level'] = totalModLevel;
+                attrs['repeating_techs_' + tidarray[i] + '_tech_limit_st'] = limitSt;
+                setAttrs(attrs, { silent: true });
+            }
+        });
+    });
+});
+
+on('sheet:opened', function() {
+    log('Initializing libraries...');
+    setAttrs({
+        flawLibrary: [
+            { cost: 1, levelUp: 1, id: 'customFlaw' },
+            { cost: 2, levelUp: 0, id: 'aggravatedWounds' },
+            { cost: 5, levelUp: 0, id: 'berserker' },
+            { cost: 4, levelUp: 0, id: 'compulsion' },
+            { cost: 4, levelUp: 0, id: 'despair' },
+            { cost: 2, levelUp: 1, id: 'energyVulnerability' },
+            { cost: 3, levelUp: 0, id: 'feeble' },
+            { cost: 3, levelUp: 2, id: 'fragile' },
+            { cost: 2, levelUp: 1, id: 'lackOfControl' },
+            { cost: 5, levelUp: 0, id: 'malevolentEntity' },
+            { cost: 1, levelUp: 0, id: 'nonProficient' },
+            { cost: 3, levelUp: 0, id: 'oblivious' },
+            { cost: 2, levelUp: 1, id: 'slow' },
+            { cost: 2, levelUp: 0, id: 'slowHealing' },
+            { cost: 1, levelUp: 0, id: 'slowToAct' },
+            { cost: 3, levelUp: 0, id: 'unthreatening' },
+            { cost: 3, levelUp: 0, id: 'uncoordinated' },
+            { cost: 3, levelUp: 0, id: 'violent' },
+            { cost: 3, levelUp: 0, id: 'weakAura' },
+            { cost: 2, levelUp: 1, id: 'weakDefender' },
+            { cost: 4, levelUp: 3, id: 'weakWilled' },
+            { cost: 1, levelUp: 0, id: 'unprincipled' },
+            { cost: 2, levelUp: 1, id: 'elementalVulnerability' },
+            { cost: 2, levelUp: 1, id: 'armorReliant' },
+            { cost: 2, levelUp: 1, id: 'wardReliant' }
+        ],
+        skillLibrary: [
+            { cost: 1, levelUp: 1, id: 'customSkill' },
+            { cost: 8, levelUp: 0, id: 'balancedFighter' },
+            { cost: 6, levelUp: 6, id: 'bravado' },
+            { cost: 3, levelUp: 0, id: 'discreetAura' },
+            { cost: 4, levelUp: 0, id: 'darksight' },
+            { cost: 6, levelUp: 3, id: 'energyAttacker' },
+            { cost: 4, levelUp: 0, id: 'fastHealing' },
+            { cost: 4, levelUp: 2, id: 'improvedDamageIncrement' }, // ERRATA: Reduced cost for IDI
+            { cost: 2, levelUp: 2, id: 'increasedSize' },
+            { cost: 4, levelUp: 2, id: 'ironDefense' },
+            { cost: 6, levelUp: 3, id: 'physicalAttacker' },
+            { cost: 4, levelUp: 2, id: 'resistant' },
+            { cost: 4, levelUp: 2, id: 'sprinter' },
+            { cost: 5, levelUp: 2, id: 'tireless' },
+            { cost: 6, levelUp: 3, id: 'tough' },
+            { cost: 6, levelUp: 3, id: 'versatileFighter' },
+            { cost: 5, levelUp: 0, id: 'skyAttack' },
+            { cost: 6, levelUp: 0, id: 'breakValorLimit' },
+            { cost: 8, levelUp: 0, id: 'expandedReach' },
+            { cost: 12, levelUp: 0, id: 'extraAction' },
+            { cost: 6, levelUp: 4, id: 'regeneration' },
+            { cost: 4, levelUp: 2, id: 'staminaRecovery' },
+            { cost: 6, levelUp: 0, id: 'teleportation' },
+            { cost: 8, levelUp: 0, id: 'unyieldingDetermination' }, // ERRATA: Reduced cost, different effect
+            { cost: 4, levelUp: 0, id: 'violentAura' },
+            { cost: 5, levelUp: 0, id: 'bounceBack' },
+            { cost: 4, levelUp: 2, id: 'crisis' },
+            { cost: 3, levelUp: 0, id: 'dangerSense' },
+            { cost: 5, levelUp: 0, id: 'desperation' },
+            { cost: 5, levelUp: 0, id: 'digDeep' },
+            { cost: 2, levelUp: 0, id: 'discretion' },
+            { cost: 6, levelUp: 3, id: 'empowerAttack' },
+            { cost: 4, levelUp: 0, id: 'improvedSwimming' },
+            { cost: 4, levelUp: 0, id: 'nimbleMovement' },
+            { cost: 6, levelUp: 0, id: 'overloadLimits' },
+            { cost: 4, levelUp: 0, id: 'passiveHealing' },
+            { cost: 5, levelUp: 0, id: 'protector' },
+            { cost: 3, levelUp: 0, id: 'quickToAct' },
+            { cost: 5, levelUp: 3, id: 'recklessAttack' },
+            { cost: 5, levelUp: 0, id: 'resoluteStrike' },
+            { cost: 5, levelUp: 0, id: 'revenge' },
+            { cost: 4, levelUp: 0, id: 'rollingRecovery' },
+            { cost: 5, levelUp: 0, id: 'teamTactics' },
+            { cost: 6, levelUp: 2, id: 'unmovable' },
+            { cost: 5, levelUp: 0, id: 'abundantCreation' },
+            { cost: 5, levelUp: 0, id: 'cloneTactics' },
+            { cost: 4, levelUp: 0, id: 'combatToss' },
+            { cost: 4, levelUp: 0, id: 'daredevil' },
+            { cost: 5, levelUp: 0, id: 'phasing' },
+            { cost: 4, levelUp: 0, id: 'risingAttack' },
+            { cost: 5, levelUp: 0, id: 'safeStride' },
+            { cost: 6, levelUp: 0, id: 'splitMove' },
+            { cost: 4, levelUp: 0, id: 'transposition' },
+            { cost: 5, levelUp: 0, id: 'underhanded' },
+            { cost: 4, levelUp: 0, id: 'wallWalk' },
+            { cost: 6, levelUp: 0, id: 'waterAdaptation' },
+            { cost: 4, levelUp: 0, id: 'waterWalk' },
+            { cost: 4, levelUp: 0, id: 'xRayVision' },
+            { cost: 6, levelUp: 0, id: 'unshakeable' },
+            { cost: 6, levelUp: 0, id: 'unstoppable' },
+            { cost: 4, levelUp: 0, id: 'extendedRange' },
+            { cost: 3, levelUp: 0, id: 'freeFlight' },
+            { cost: 5, levelUp: 0, id: 'freeSwiftStep' },
+            { cost: 5, levelUp: 2, id: 'attackNode' },
+            { cost: 5, levelUp: 0, id: 'darkHealing' },
+            { cost: 5, levelUp: 0, id: 'dirtyTrick' },
+            { cost: 2, levelUp: 0, id: 'duel' },
+            { cost: 4, levelUp: 3, id: 'effectTransfer' },
+            { cost: 6, levelUp: 0, id: 'feint' },
+            { cost: 5, levelUp: 0, id: 'inspire' }, // ERRATA: Fixed level on Inspire
+            { cost: 5, levelUp: 3, id: 'intimidate' },
+            { cost: 4, levelUp: 0, id: 'jump' },
+            { cost: 5, levelUp: 2, id: 'nullify' },
+            { cost: 4, levelUp: 2, id: 'provoke' },
+            { cost: 5, levelUp: 3, id: 'recharge' },
+            { cost: 3, levelUp: 1, id: 'sizeUp' },
+            { cost: 5, levelUp: 0, id: 'spiritSight' },
+            { cost: 5, levelUp: 2, id: 'toss' },
+            { cost: 6, levelUp: 0, id: 'battleAnalysis' },
+            { cost: 6, levelUp: 0, id: 'clone' },
+            { cost: 4, levelUp: 0, id: 'effectCapture' },
+            { cost: 4, levelUp: 0, id: 'healthTransference' },
+            { cost: 6, levelUp: 3, id: 'portal' },
+            { cost: 4, levelUp: 2, id: 'refractionPoint' },
+            { cost: 6, levelUp: 3, id: 'seal' },
+            { cost: 6, levelUp: 0, id: 'shadowMeld' },
+            { cost: 4, levelUp: 0, id: 'staminaTransference' },
+            { cost: 5, levelUp: 2, id: 'swiftStep' },
+            { cost: 4, levelUp: 0, id: 'attackNodeNetwork' },
+            { cost: 6, levelUp: 0, id: 'exploitWeakness' },
+            { cost: 5, levelUp: 0, id: 'flunkyDomination' },
+            { cost: 6, levelUp: 2, id: 'fly' },
+            { cost: 6, levelUp: 0, id: 'refractionChain' },
+            { cost: 3, levelUp: 0, id: 'swiftJump' },
+            { cost: 6, levelUp: 0, id: 'combinationAttack' },
+            { cost: 6, levelUp: 0, id: 'counterattack' },
+            { cost: 6, levelUp: 2, id: 'cover' },
+            { cost: 5, levelUp: 0, id: 'ignoreEffect' },
+            { cost: 3, levelUp: 2, id: 'interruptAttack' },
+            { cost: 4, levelUp: 0, id: 'afterimage' },
+            { cost: 4, levelUp: 0, id: 'areaShield' },
+            { cost: 3, levelUp: 0, id: 'clash' },
+            { cost: 5, levelUp: 0, id: 'damageFeedback' },
+            { cost: 5, levelUp: 2, id: 'divingEscape' },
+            { cost: 6, levelUp: 0, id: 'finalAttack' },
+            { cost: 5, levelUp: 0, id: 'lineDeflect' },
+            { cost: 5, levelUp: 0, id: 'mobileCover' },
+            { cost: 4, levelUp: 0, id: 'mobileDodge' },
+            { cost: 6, levelUp: 0, id: 'opportunisticDodge' },
+            { cost: 4, levelUp: 2, id: 'pushAway' },
+            { cost: 4, levelUp: 0, id: 'rangedInterrupt' },
+            { cost: 6, levelUp: 0, id: 'shrugOff' },
+            { cost: 4, levelUp: 0, id: 'defensiveClash' },
+            { cost: 4, levelUp: 0, id: 'deflectingShield' },
+            { cost: 6, levelUp: 0, id: 'prepared' },
+            { cost: 5, levelUp: 0, id: 'acceleration' },
+            { cost: 5, levelUp: 0, id: 'analysis' },
+            { cost: 6, levelUp: 3, id: 'blazingMight' },
+            { cost: 5, levelUp: 0, id: 'burningPassion' },
+            { cost: 6, levelUp: 3, id: 'fightingSpirit' },
+            { cost: 6, levelUp: 3, id: 'hardenedDefense' },
+            { cost: 6, levelUp: 3, id: 'hardenedResistance' },
+            { cost: 5, levelUp: 0, id: 'resoluteAura' },
+            { cost: 5, levelUp: 0, id: 'strengthOfWill' },
+            { cost: 3, levelUp: 0, id: 'asset' },
+            { cost: 3, levelUp: 0, id: 'challengeTechnique' },
+            { cost: 3, levelUp: 0, id: 'favorableInsight' },
+            { cost: 2, levelUp: 0, id: 'proficiency' },
+            { cost: 3, levelUp: 0, id: 'recovery' },
+            { cost: 4, levelUp: 0, id: 'favorableSuccess' },
+            { cost: 6, levelUp: 4, id: 'companion' },
+            { cost: 2, levelUp: 1, id: 'fastCompanion' },
+            { cost: 4, levelUp: 2, id: 'hiddenCompanion' },
+            { cost: 3, levelUp: 1, id: 'mount' },
+            { cost: 2, levelUp: 0, id: 'senseMalice' },
+            { cost: 3, levelUp: 1, id: 'allyMount' },
+            { cost: 4, levelUp: 4, id: 'companionZoneOfControl' },
+            { cost: 4, levelUp: 0, id: 'extendedRevival' },
+            { cost: 4, levelUp: 0, id: 'flankAttack' },
+            { cost: 2, levelUp: 0, id: 'protectAlly' },
+            { cost: 4, levelUp: 0, id: 'protectMaster' },
+            { cost: 3, levelUp: 0, id: 'rangedRevival' },
+            { cost: 3, levelUp: 1, id: 'tossingCompanion' },
+            { cost: 4, levelUp: 0, id: 'trustingCompanion' },
+            { cost: 2, levelUp: 0, id: 'companionSense' },
+            { cost: 3, levelUp: 3, id: 'flyingCompanion' },
+            { cost: 3, levelUp: 0, id: 'instantMount' },
+            { cost: 4, levelUp: 0, id: 'reactiveCompanion' },
+            { cost: 12, levelUp: 0, id: 'limitlessPower' },
+            { cost: 8, levelUp: 0, id: 'invisibility' },
+            { cost: 8, levelUp: 3, id: 'revive' },
+            { cost: 2, levelUp: 0, id: 'principled' },
+            { cost: 6, levelUp: 3, id: 'illusoryAssailant' },
+            { cost: 3, levelUp: 0, id: 'illusoryDisguise' },
+            { cost: 4, levelUp: 2, id: 'illusoryTerrain' },
+            { cost: 4, levelUp: 0, id: 'pierceIllusion' },
+            { cost: 4, levelUp: 2, id: 'elementalResistance' },
+            { cost: 3, levelUp: 0, id: 'elementalAttunement' },
+            { cost: 5, levelUp: 0, id: 'polearmWielder' },
+            { cost: 4, levelUp: 2, id: 'rangedWeaponWielder' }
+        ],
+        coreLibrary: [
+            { cost: 2, levelUp: 1, id: 'damage' },
+            { cost: 1, levelUp: 1, id: 'barrier' },
+            { cost: 0, levelUp: 2, id: 'boost' },
+            { cost: 1, levelUp: 1, id: 'healing' },
+            { cost: 0, levelUp: 0, id: 'mimic' },
+            { cost: 3, levelUp: 2, id: 'summoning' },
+            { cost: 1, levelUp: 1, id: 'weaken' },
+            { cost: 4, levelUp: 2, id: 'ultDamage' },
+            { cost: 0, levelUp: 3, id: 'ultTransform' }
+        ]
+    });
+    
+    calculateStats();
+});
+
+</script>
+
+
+<!-- Sheet header -->
+<table class="header">
+    <tr>
+        <td class="label">
+            <div>Level:</div>
+        </td>
+        <td>
+            <input type="number" class="short-number" name="attr_level" value="1">
+        </td>
+    </tr>
+    <tr>
+        <td class="label">
+            <div>Experience:</div>
+        </td>
+        <td>
+            <input type="number" class="long-number" name="attr_exp" value="0">
+        </td>
+    </tr>
+    <tr>
+        <td class="label">
+            <div>Type:</div>
+        </td>
+        <td>
+            <select name="attr_type">
+                <option value="flunky">Flunky</option>
+                <option value="soldier">Summon/Soldier</option>
+                <option value="swarm">Swarm</option>
+                <option value="elite" selected="selected">PC/Elite</option>
+                <option value="master">Master</option>
+            </select>
+        </td>
+    </tr>
+</table>
+
+<br />
+
+<!-- Main statblock -->
+<table class="stats">
+    <tr>
+        <td class="label" colspan="2">
+            Base
+        </td>
+        <td class="label" colspan="2">
+            Active
+        </td>
+        <td class="label" colspan="2">
+            Attack
+        </td>
+        <td class="label" colspan="2">
+            Statistics
+        </td>
+        <td class="label" colspan="2">
+            Increments
+        </td>
+    </tr>
+    <tr>
+        <td>Strength:</td>
+        <td>
+            <input type="number" class="short-number" name="attr_str" value="5">
+        </td>
+        <td>Muscle:</td>
+        <td class="derived-value">
+            <span name="attr_mus" />
+        </td>
+        <td>Strength:</td>
+        <td class="derived-value">
+            <span name="attr_strAtk" />
+        </td>
+        <td>Health:</td>
+        <td class="derived-value">
+            <span name="attr_hp_max" />
+        </td>
+        <td>HP Inc:</td>
+        <td class="derived-value">
+            <span name="attr_hpInc" />
+        </td>
+    </tr>
+    <tr>
+        <td>Agility:</td>
+        <td>
+            <input type="number" class="short-number" name="attr_agi" value="5">
+        </td>
+        <td>Dexterity:</td>
+        <td class="derived-value">
+            <span name="attr_dex" />
+        </td>
+        <td>Agility:</td>
+        <td class="derived-value">
+            <span name="attr_agiAtk" />
+        </td>
+        <td>Stamina:</td>
+        <td class="derived-value">
+            <span name="attr_st_max" />
+        </td>
+        <td>ST Inc:</td>
+        <td class="derived-value">
+            <span name="attr_stInc" />
+        </td>
+    </tr>
+    <tr>
+        <td>Spirit:</td>
+        <td>
+            <input type="number" class="short-number" name="attr_spr" value="5">
+        </td>
+        <td>Aura:</td>
+        <td class="derived-value">
+            <span name="attr_aur" />
+        </td>
+        <td>Spirit:</td>
+        <td class="derived-value">
+            <span name="attr_sprAtk" />
+        </td>
+        <td>Defense:</td>
+        <td class="important-value">
+            <span name="attr_defense" />
+        </td>
+        <td>Critical HP:</td>
+        <td class="derived-value">
+            <span name="attr_hpCrit" />
+        </td>
+    </tr>
+    <tr>
+        <td>Mind:</td>
+        <td>
+            <input type="number" class="short-number" name="attr_mnd" value="5">
+        </td>
+        <td>Intuition:</td>
+        <td class="derived-value">
+            <span name="attr_int" />
+        </td>
+        <td>Mind:</td>
+        <td class="derived-value">
+            <span name="attr_mndAtk" />
+        </td>
+        <td>Resistance:</td>
+        <td class="important-value">
+            <span name="attr_resistance" />
+        </td>
+        <td>Damage Inc:</td>
+        <td class="derived-value">
+            <span name="attr_di" />
+        </td>
+    </tr>
+    <tr>
+        <td>Guts:</td>
+        <td>
+            <input type="number" class="short-number" name="attr_gut" value="5">
+        </td>
+        <td>Resolve:</td>
+        <td class="derived-value">
+            <span name="attr_res" />
+        </td>
+        <td colspan="2"></td> <!-- No Guts attack -->
+        <td>Speed:</td>
+        <td class="derived-value">
+            <span name="attr_speed" />
+        </td>
+    </tr>
+</table>
+
+<br />
+
+<div class="label">
+    Unspent Attribute Points: <span name="attr_unspentAP"></span>
+</div>
+
+<br />
+
+<div class="label">Flaws:</div>
+<fieldset class="repeating_flaws">
+    <div>
+        <select name="attr_flawname" selected="customFlaw">
+            <option value="customFlaw">Custom Flaw</option>
+            <option value="aggravatedWounds">Aggravated Wounds (+2)</option>
+            <option value="berserker">Berserker (+5)</option>
+            <option value="compulsion">Compulsion (+4)</option>
+            <option value="despair">Despair (+4)</option>
+            <option value="energyVulnerability">Energy Vulnerability (+2/+1)</option>
+            <option value="feeble">Feeble (+3)</option>
+            <option value="fragile">Fragile (+3/+2)</option>
+            <option value="lackOfControl">Lack of Control (+2/+1)</option>
+            <option value="malevolentEntity">Malevolent Entity (+5)</option>
+            <option value="nonProficient">Non-Proficient (+1)</option>
+            <option value="oblivious">Oblivious (+3)</option>
+            <option value="slow">Slow (+2/+1)</option>
+            <option value="slowHealing">Slow Healing (+2)</option>
+            <option value="slowToAct">Slow to Act (+1)</option>
+            <option value="unthreatening">Unthreatening (+3)</option>
+            <option value="uncoordinated">Uncoordinated (+3)</option>
+            <option value="violent">Violent (+3)</option>
+            <option value="weakAura">Weak Aura (+3)</option>
+            <option value="weakDefender">Weak Defender (+2/+1)</option>
+            <option value="weakWilled">Weak Willed (+4/+3)</option>
+            <optgroup label="Optional Rules">
+                <option value="armorReliant">Armor Reliant (+2/+1)</option>
+                <option value="elementalVulnerability">Elemental Vulnerability (+2/+1)</option>
+                <option value="unprincipled">Unprincipled (+1)</option>
+                <option value="wardReliant">Ward Reliant (+2/+1)</option>
+            </optgroup>
+            <optgroup label="NPC Only">
+                <option value="battleDamage">Battle Damage (+3)</option>
+            </optgroup>
+        </select>
+        Level: <input type="number" name="attr_flawlevel" value="1" />
+    </div>
+</fieldset>
+
+<br />
+
+<div class="label">Skills:</div>
+<fieldset class="repeating_skills">
+    <div>
+        <select name="attr_skillname" selected="customSkill">
+            <option value="customSkill">Custom Skill</option>
+            <optgroup label="Season 1 Skills">
+                <option value="acceleration">Acceleration (5)</option>
+                <option value="analysis">Analysis (5)</option>
+                <option value="asset">Asset (3)</option>
+                <option value="attackNode">Attack Node (5/2)</option>
+                <option value="balancedFighter">Balanced Fighter (8)</option>
+                <option value="blazingMight">Blazing Might (6/3)</option>
+                <option value="bounceBack">Bounce Back (6)</option>
+                <option value="bravado">Bravado (6/6)</option>
+                <option value="burningPassion">Burning Passion (5)</option>
+                <option value="challengeTechnique">Challenge Technique (3)</option>
+                <option value="combinationAttack">Combination Attack (6)</option>
+                <option value="companion">Companion (6/4)</option>
+                <option value="counterattack">Counterattack (6)</option>
+                <option value="cover">Cover (6/2)</option>
+                <option value="crisis">Crisis (4/2)</option>
+                <option value="dangerSense">Danger Sense (3)</option>
+                <option value="darkHealing">Dark Healing (5)</option>
+                <option value="darksight">Darksight (4)</option>
+                <option value="desperation">Desperation (5)</option>
+                <option value="digDeep">Dig Deep (5)</option>
+                <option value="dirtyTrick">Dirty Trick (5)</option>
+                <option value="discreetAura">Discreet Aura (3)</option>
+                <option value="discretion">Discretion (2)</option>
+                <option value="duel">Duel (2)</option>
+                <option value="effectTransfer">Effect Transfer (4/3)</option>
+                <option value="empowerAttack">Empower Attack (6/3)</option>
+                <option value="energyAttacker">Energy Attacker (6/3)</option>
+                <option value="fastCompanion">Fast Companion (2/1)</option>
+                <option value="fastHealing">Fast Healing (4)</option>
+                <option value="favorableInsight">Favorable Insight (3)</option>
+                <option value="feint">Feint (6)</option>
+                <option value="fightingSpirit">Fighting Spirit (6/3)</option>
+                <option value="hardenedDefense">Hardened Defense (6/3)</option>
+                <option value="hardenedResistance">Hardened Resistance (6/3)</option>
+                <option value="hiddenCompanion">Hidden Companion (4/2)</option>
+                <option value="ignoreEffect">Ignore Effect (5)</option>
+                <option value="improvedDamageIncrement">Improved Damage Inc. (4/2)</option>
+                <option value="improvedSwimming">Improved Swimming (4)</option>
+                <option value="increasedSize">Increased Size (2/2)</option>
+                <option value="inspire">Inspire (5)</option>
+                <option value="interruptAttack">Interrupt Attack (3/2)</option>
+                <option value="intimidate">Intimidate (5/3)</option>
+                <option value="ironDefense">Iron Defense (4/2)</option>
+                <option value="Jump">Jump (4)</option>
+                <option value="mount">Mount (3/1)</option>
+                <option value="nimbleMovement">Nimble Movement (4)</option>
+                <option value="nullify">Nullify (5/3)</option>
+                <option value="overloadLimits">Overload Limits (6)</option>
+                <option value="passiveHealing">Passive Healing (4)</option> (6)
+                <option value="physicalAttacker">Physical Attacker (6/3)</option>
+                <option value="proficiency">Proficiency (2)</option>
+                <option value="protector">Protector (5)</option>
+                <option value="provoke">Provoke (4/2)</option>
+                <option value="quickToAct">Quick to Act (3)</option>
+                <option value="recharge">Recharge (5/3)</option>
+                <option value="recklessAttack">Reckless Attack (5/3)</option>
+                <option value="recovery">Recovery (3)</option>
+                <option value="resistant">Resistant (4/2)</option>
+                <option value="resoluteAura">Resolute Aura (5)</option>
+                <option value="resoluteStrike">Resolute Strike (5)</option>
+                <option value="revenge">Revenge (5)</option>
+                <option value="rollingRecovery">Rolling Recovery (4)</option>
+                <option value="senseMalice">Sense Malice (2)</option>
+                <option value="sizeUp">Size Up (3/1)</option>
+                <option value="spiritSight">Spirit Sight (5)</option>
+                <option value="sprinter">Sprinter (4/2)</option>
+                <option value="strengthOfWill">Strength of Will (5)</option>
+                <option value="teamTactics">Team Tactics (6)</option>
+                <option value="tireless">Tireless (5/2)</option>
+                <option value="tough">Tough (6/3)</option>
+                <option value="toss">Toss (5/2)</option>
+                <option value="unmovable">Unmovable (6/2)</option>
+                <option value="versatileFighter">Versatile Fighter (6/3)</option>
+            </optgroup>
+            <optgroup label="Season 2 Skills">
+                <option value="allyMount">Ally Mount (3/1)</option>
+                <option value="afterimage">Afterimage (4)</option>
+                <option value="areaShield">Area Shield (4)</option>
+                <option value="battleAnalysis">Battle Analysis (6)</option>
+                <option value="clash">Clash (3)</option>
+                <option value="clone">Clone (6/3)</option>
+                <option value="companionZoneOfControl">Companion ZOC (4/4)</option>
+                <option value="damageFeedback">Damage Feedback (5)</option>
+                <option value="daredevil">Daredevil (4)</option>
+                <option value="divingEscape">Diving Escape (5/2)</option>
+                <option value="effectCapture">Effect Capture (4)</option>
+                <option value="extendedRevival">Extended Revival (4)</option>
+                <option value="favorableSuccess">Favorable Success (4)</option>
+                <option value="finalAttack">Final Attack (6)</option>
+                <option value="flankAttack">Flank Attack (4)</option>
+                <option value="healthTransference">Health Transference (6)</option>
+                <option value="lineDeflect">Line Deflect (5)</option>v
+                <option value="mobileCover">Mobile Cover (5)</option>
+                <option value="mobileDodge">Mobile Dodge (4)</option>
+                <option value="opportunisticDodge">Opportunistic Dodge (6)</option>
+                <option value="portal">Portal (6/3)</option>
+                <option value="protectAlly">Protect Ally (2)</option>
+                <option value="protectMaster">Protect Master (3)</option>
+                <option value="pushAway">Push Away (4/2)</option>
+                <option value="rangedInterrupt">Ranged Interrupt (4)</option>
+                <option value="rangedRevival">Ranged Revival (3)</option>
+                <option value="refractionPoint">Refraction Point (4/2)</option>
+                <option value="seal">Seal (6/3)</option>
+                <option value="shadowMeld">Shadow Meld (6)</option>
+                <option value="shrugOff">Shrug Off (6)</option>
+                <option value="spiritSight">Split Move (6)</option>
+                <option value="staminaTransference">Stamina Transference (6)</option>
+                <option value="swiftStep">Swift Step (5/2)</option>
+                <option value="tossingCompanion">Tossing Companion (3/1)</option>
+                <option value="transposition">Transposition (4)</option>
+                <option value="trustingCompanion">Trusting Companion (4)</option>
+                <option value="underhanded">Underhanded (5)</option>
+                <option value="wallWalk">Wall Walk (4)</option>
+                <option value="waterWalk">Water Adaptation (6)</option>
+                <option value="waterWalk">Water Walk (4)</option>
+                <option value="xRayVision">X-Ray Vision (4)</option>
+            </optgroup>
+            <optgroup label="Season 3 Skills">
+                <option value="attackNodeNetwork">Attack Node Network (4)</option>
+                <option value="companionSense">Companion Sense (2)</option>
+                <option value="defensiveClash">Defensive Clash (4)</option>
+                <option value="deflectingShield">Deflecting Shield (4)</option>
+                <option value="exploitWeakness">Exploit Weakness (6)</option>
+                <option value="flunkyDomination">Flunky Domination (5)</option>
+                <option value="fly">Fly (6/2)</option>
+                <option value="flyingCompanion">Flying Companion (3/3)</option>
+                <option value="instantMonut">Instant Mount (3)</option>
+                <option value="prepared">Prepared (6)</option>
+                <option value="reactiveCompanion">Reactive Companion (4)</option>
+                <option value="refractionChain">Refraction Chain (6)</option>
+                <option value="swiftJump">Swift Jump (3)</option>
+                <option value="unshakeable">Unshakeable (6)</option>
+                <option value="unstoppable">Unstoppable (6)</option>
+            </optgroup>
+            <optgroup label="Season 4 Skills">
+                <option value="breakValorLimit">Break Valor Limit (6)</option>
+                <option value="expandedReach">Expanded Reach (8)</option>
+                <option value="extendedRange">Extended Range (4)</option>
+                <option value="extraAction">Extra Action (12)</option>
+                <option value="freeFlight">Free Flight (3)</option>
+                <option value="freeSwiftStep">Free Swift Step (5)</option>
+                <option value="regeneration">Regeneration (6/4)</option>
+                <option value="staminaRecovery">Stamina Recovery (4/2)</option>
+                <option value="teleportation">Teleportation (6)</option>
+                <option value="unyieldingDetermination">Unyielding Determination (6)</option>
+                <option value="violentAura">Violent Aura (4)</option>
+            </optgroup>
+            <optgroup label="Season 1 (Optional Rules)">
+                <option value="elementalResistance">Elemental Resistance (4/2)</option>
+                <option value="elementalAttunement">Elemental Attunement (3)</option>
+                <option value="illusoryDisguise">Illusory Disguise (3)</option>
+                <option value="illusoryTerrain">Illusory Terrain (4/2)</option>
+                <option value="pierceIllusion">Pierce Illusion (4)</option>
+                <option value="principled">Principled (2)</option>
+                <option value="polearmWielder">Polearm Wielder (5)</option>
+                <option value="rangedWeaponWielder">Ranged Weapon Wielder (4/2)</option>
+            </optgroup>
+            <optgroup label="Season 2 (Optional Rules)">
+                <option value="illusoryAssailant">Illusory Assailant (6/3)</option>
+            </optgroup>
+            <optgroup label="Season 1 (NPC Only)">
+                <option value="invisibility">Invisibility (8)</option>
+            </optgroup>
+            <optgroup label="Season 2 (NPC Only)">
+                <option value="revive">Revive (8/3)</option>
+            </optgroup>
+            <optgroup label="Season 4 (NPC Only)">
+                <option value="limitlessPower">Limitless Power (12)</option>
+            </optgroup>
+        </select>
+        Level: <input type="number" name="attr_skilllevel" value="1" />
+    </div>
+</fieldset>
+
+<br />
+
+<div class="label">
+    Unspent Skill Points: <span name="attr_unspentSP"></span>
+</div>
+
+<br />
+
+
+<div class="label">Techniques:</div>
+<hr>
+<fieldset class="repeating_techs">
+    <div class="sheet-2colrow">
+        <div class="sheet-col">
+            <table>
+                <tr>
+                    <td>
+                        <input type="text" class="tech-field" name="attr_tech_name" value="New Technique" />
+                    </td>
+                    <td>Tech Level:</td>
+                    <td><span class="derived-value" name="attr_tech_level"></span></td>
+                </tr>
+                <tr>
+                    <td>
+                        <select name="attr_tech_core">
+                            <option value="barrier">Barrier Core</option>
+                            <option value="boost">Boost Core</option>
+                            <option value="damage" selected="selected">Damage Core</option>
+                            <option value="healing">Healing Core</option>
+                            <option value="mimic">Mimic Core</option>
+                            <option value="summoning">Summoning Core</option>
+                            <option value="weaken">Weaken Core</option>
+                            <option value="ultDamage">Ultimate Attack</option>
+                            <option value="ultTransform">Transformation</option>
+                        </select>
+                    </td>
+                    <td>Core Level:</td>
+                    <td>
+                        <input type="number" name="attr_tech_core_level" value="1" />
+                    </td>
+                </tr>
+            </table>
+            <div class="tech-row">
+                Attribute: <select name="attr_tech_stat">
+                    <option value="none" selected="selected">None</option>
+                    <option value="str">Strength</option>
+                    <option value="agi">Agility</option>
+                    <option value="spr">Spirit</option>
+                    <option value="mnd">Mind</option>
+                    <option value="gut">Guts</option>
+                </select>
+            </div><div class="label tech-row">Description</div>
+            <div>
+                <textarea class="smallertext" name="attr_tech_description"></textarea>
+            </div>
+        </div>
+        <div class="sheet-col">
+            <div><span class="label" name="attr_tech_name"></span></div>
+            <div><span name="attr_tech_summary"></span></div>
+            <div><span name="attr_tech_warnings"></span></div>
+        </div>
+    </div>
+    <div class="sheet-2colrow tech-block">
+        <div class="sheet-col">
+            <div class="label tech-row">Modifiers (one per line)</div>
+            <div>
+                <textarea class="smalltext" name="attr_tech_mods" rows="3" cols="40"></textarea>
+            </div>
+            <div>
+                Total Mod Levels: <span name="attr_tech_mod_level" class="derived-value"></span>
+            </div>
+        </div>
+        <div class="sheet-col">
+            <div class="label tech-row">Limits (one per line)</div>
+            <div>
+                <textarea class="smalltext" name="attr_tech_limits" rows="3" cols="40"></textarea>
+            </div>
+            <div>
+                Total Cost Reduction: <span name="attr_tech_limit_st" class="derived-value"></span>
+            </div>
+        </div>
+    </div>
+    <hr>
+</fieldset>
+
+<br />
+
+<div class="label">
+    Unspent Tech Points: <span name="attr_unspentTP"></span>
+</div>

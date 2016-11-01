@@ -1,0 +1,49 @@
+.sheet-label {
+    font-weight: bold;
+}
+
+.sheet-derived-value {
+    font-weight: bold;
+    color: Gray;
+    width: 3em;
+}
+
+.sheet-important-value {
+    font-weight: bold;
+    color: Maroon;
+    width: 3em;
+}
+
+.sheet-smalltext {
+    width: 240px;
+    height: 58px;
+}
+
+.sheet-smallertext {
+    width: 240px;
+    height: 40px;
+}
+
+.sheet-long-number {
+    width: 5em !important;
+}
+
+.sheet-short-number {
+    width: 3em !important;
+}
+
+.sheet-tech-row {
+    padding-bottom: 5px;
+}
+
+.sheet-tech-block {
+    padding-bottom: 15px;
+}
+
+.sheet-tech-field {
+    width: 220px !important;
+}
+
+td {
+    padding-right: 10px;
+}
