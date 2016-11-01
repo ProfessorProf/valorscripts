@@ -40,22 +40,27 @@ This is a collection of scripts that will automate a lot of important Valor logi
 
 ####Scan
 Syntax: `!scan`
+
 Displays, in the API Output Console, the current player ID and the URLs for the token images of all character-connected tokens in the game.
 
 ####Rest
 Syntax: `!rest`
+
 Recovers resources for the end of a scene. Valor will be set to 0, or lower/higher if they have the Weak-Willed Flaw or the Bravado Skill. Recovery is one Increment of Health and Stamina, with additional HP if they have the Fast Healing Skill. All of these are connected to the Valor Character Sheet above.
 
 ####Full Rest
 Syntax: `!fullrest`
+
 As above, but all Health and Stamina is recovered.
 
 ####Set Bravado
 Syntax: `!set-bravado 1`
+
 **Only use this if you are NOT using the Valor Character Sheet.** Gives any selected characters a Bravado Skill level equal to the number set in the command, to be used with the Rest and Full Rest commands. This will be ignored if they have a Valor Character Sheet, in which case the skill list on the character sheet will be used instead.
 
 ####Set Valor Rate
 Syntax: `!set-valor-rate 2`
+
 Sets any selected characters to gain an amount of Valor per turn equal to the provided number. Use for Masters or anyone with the Limitless Power skill.
 
 ###Automatic Features
