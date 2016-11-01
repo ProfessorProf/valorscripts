@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.0.2
+ * v1.0.4
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -30,6 +30,15 @@
  * 
  * v1.0.2:
  * - Added extra skills, flaws, mods and limits from the GM Section.
+ * 
+ * v1.0.3:
+ * - Added notes section for Skills/Flaws.
+ * 
+ * v1.0.4:
+ * - Various bugfixes.
+ * - Give Barrier Core a free level of Line Attack or Blast Radius.
+ * - Added Initiative Bonus to sheet.
+ * - Add 2 free mod levels for ultimates.
  * 
  **/
 
@@ -92,6 +101,7 @@ function calculateStats() {
         var resistance = level * 2 + spr + mnd;
         var speed = Math.ceil(agi / 4) + 2;
         var di = level + 4;
+        var init = dex;
         
         var valor = 10;
         var unspentSP = 14 + 6 * level;
@@ -186,6 +196,9 @@ function calculateStats() {
                         case 'weakDefender':
                             defense -= 2 + 2 * flawLevel;
                             break;
+                        case 'slowToAct':
+                            init -= 2;
+                            break;
                     }
                     
                     // Gain SP
@@ -265,6 +278,9 @@ function calculateStats() {
                                     break;
                                 case 'breakValorLimit':
                                     valor += 10;
+                                    break;
+                                case 'quickToAct':
+                                    init += 2;
                                     break;
                             }
                             
@@ -369,6 +385,7 @@ function calculateStats() {
                                     stInc: Math.ceil(st / 5),
                                     hpCrit: Math.ceil(hp / 5) * 2,
                                     di: di,
+                                    init: init,
                                     unspentAP: unspentAP,
                                     unspentSP: unspentSP,
                                     unspentTP: unspentTP
@@ -410,6 +427,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
         getAttrs(techFieldNames, function(techValues) {
             var level = parseInt(techValues.level);
             var hp = parseInt(techValues.hp_max);
+            var di = parseInt(techValues.di);
             var str = parseInt(techValues.str);
             var agi = parseInt(techValues.agi);
             var spr = parseInt(techValues.spr);
@@ -439,6 +457,8 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                 // Build tech summary
                 var summary = '';
                 var warnings = ' ';
+                
+                var barrierFreebie = false;
                 
                 if(techCoreLevel < 1) {
                     warnings += 'WARNING: Core Level cannot be less than 1. ';
@@ -588,6 +608,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                         break;
                     case 'barrier':
                         summary += 'Create a Barrier of power ' + techCoreLevel + '. ';
+                        barrierFreebie = true;
                         break;
                     case 'mimic':
                         summary += 'Mimics a witnessed enemy Technique at Tech Level ' + techCoreLevel + '. ';
@@ -636,11 +657,20 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                         totalModLevel += modLevel;
                     } else if(mod.indexOf('blast') == 0) {
                         summary += 'Blast Radius ' + modLevel + '. ';
+                        var blastCost = 0;
                         if(techStat == 'spr') {
-                            totalModLevel += 2 * modLevel - 1;
+                            blastCost = 2 * modLevel - 1;
                         } else {
-                            totalModLevel += 2 * modLevel;
+                            blastCost = 2 * modLevel;
                         }
+                        if(barrierFreebie) {
+                            blastCost -= 2;
+                            if(blastCost < 0) {
+                                blastCost = 0;
+                            }
+                            barrierFreebie = false;
+                        }
+                        totalModLevel += blastCost;
                     } else if(mod.indexOf('chain attack') == 0) {
                         if(modLevel == 1) {
                             summary += 'Chains once. ';
@@ -663,6 +693,10 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                         }
                         summary += 'Targets in a line of length ' + line + '. ';
                         totalModLevel += modLevel;
+                        if(barrierFreebie) {
+                            totalModLevel--;
+                            barrierFreebie = false;
+                        }
                         log('added ' + modLevel);
                     } else if(mod.indexOf('line variation') == 0) {
                         var variations = modLevel;
@@ -806,7 +840,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                         } else {
                             totalModLevel += 2;
                         }
-                    } else if(mod.indexOf('violentBarrier') == 0) {
+                    } else if(mod.indexOf('violent') == 0) {
                         summary += 'If someone tries to move through the barrier, they take ' + di + ' damage. ';
                         totalModLevel++;
                     } else if(mod.indexOf('launching') == 0) {
@@ -838,6 +872,8 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                     }
                 });
                 if(techCore == 'ultDamage' || techCore == 'ultTransform') {
+                    totalModLevel -= 2;
+                    if(totalModLevel < 0) totalModLevel = 0;
                     totalModLevel = Math.ceil(totalModLevel / 2);
                 }
                 
@@ -879,6 +915,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                         } else {
                             limitSummary += 'Can only be used ' + ammo + ' times per scene. ';
                         }
+                        limitSt += 4 * limitLevel;
                     } else if(limit.indexOf('companion') == 0) {
                         limitSummary += 'Only your Companion can use this Technique. ';
                         limitSt += 2;
@@ -1310,6 +1347,9 @@ on('sheet:opened', function() {
 
 <!-- Main statblock -->
 <table class="stats">
+    <colgroup>
+        <col span="2" class="orange-column">
+    </colgroup>
     <tr>
         <td class="label" colspan="2">
             Base
@@ -1429,6 +1469,10 @@ on('sheet:opened', function() {
         <td class="derived-value">
             <span name="attr_speed" />
         </td>
+        <td>Initiative:</td>
+        <td class="derived-value">
+            <span name="attr_init" />
+        </td>
     </tr>
 </table>
 
@@ -1476,6 +1520,7 @@ on('sheet:opened', function() {
             </optgroup>
         </select>
         Level: <input type="number" name="attr_flawlevel" value="1" />
+        Notes: <input type="text" name="attr_skillnotes" />
     </div>
 </fieldset>
 
@@ -1658,6 +1703,7 @@ on('sheet:opened', function() {
             </optgroup>
         </select>
         Level: <input type="number" name="attr_skilllevel" value="1" />
+        Notes: <input type="text" name="attr_skillnotes" />
     </div>
 </fieldset>
 
