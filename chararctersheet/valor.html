@@ -104,7 +104,7 @@ function calculateStats() {
         var resistance = level * 2 + spr + mnd;
         var speed = Math.ceil(agi / 4) + 2;
         var di = level + 4;
-        var init = dex;
+        var initMod = 0;
         
         var valor = 10;
         var unspentSP = 14 + 6 * level;
@@ -200,7 +200,7 @@ function calculateStats() {
                             defense -= 2 + 2 * flawLevel;
                             break;
                         case 'slowToAct':
-                            init -= 2;
+                            initMod -= 2;
                             break;
                     }
                     
@@ -283,7 +283,7 @@ function calculateStats() {
                                     valor += 10;
                                     break;
                                 case 'quickToAct':
-                                    init += 2;
+                                    initMod += 2;
                                     break;
                             }
                             
@@ -388,7 +388,7 @@ function calculateStats() {
                                     stInc: Math.ceil(st / 5),
                                     hpCrit: Math.ceil(hp / 5) * 2,
                                     di: di,
-                                    init: init,
+                                    init: dex + initMod,
                                     unspentAP: unspentAP,
                                     unspentSP: unspentSP,
                                     unspentTP: unspentTP
@@ -1050,7 +1050,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                         limitSummary += 'Only lasts for 2 turns. ';
                         limitSt += 6;
                     } else if(limit.indexOf('unstable summon') == 0) {
-                        limitSummary += 'Summon has a ' + limitLevel + 'in 10 chance to ignore orders. ';
+                        limitSummary += 'Summon has a ' + limitLevel + ' in 10 chance to ignore orders. ';
                         limitSt += 4 * limitLevel;
                     } else if(limit.indexOf('upkeep') == 0) {
                         limitSummary += 'Must spent ' + limitLevel + 'Stamina at the start of each turn to keep active. ';
