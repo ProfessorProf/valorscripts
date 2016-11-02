@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.0.5
+ * v1.0.6
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -41,7 +41,11 @@
  * - Add 2 free mod levels for ultimates.
  * 
  * v1.0.5:
- * -Various adjustments to the tech description system.
+ * - Various adjustments to the tech description system.
+ * 
+ * v1.0.6:
+ * - Masters now have x2 to max Stamina.
+ * - Fix: Phasing missing from skill list.
  * 
  **/
 
@@ -305,6 +309,7 @@ function calculateStats() {
                                 break;
                             case 'master':
                                 hp *= 2;
+                                st *= 2;
                                 break;
                         }
                         
@@ -1090,8 +1095,12 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                         limitSummary += 'Your Transformation ends when you use this Technique. ';
                         limitSt += 10;
                     } else if(limit.indexOf('ultimate cooldown') == 0) {
-                        limitSummary += "After using this Technique, you can't use it during the next " + limitLevel + 'scenes. ';
-                        limitSt += 10;
+                        if(limitLevel == 1) {
+                            limitSummary += "After using this Technique, you can't use it during the next scene. ';
+                        } else {
+                            limitSummary += "After using this Technique, you can't use it during the next " + limitLevel + ' scenes. ';
+                        }
+                        limitSt += 10 * limitLevel;
                     } else if(limit.indexOf('ultimate health') == 0) {
                         damage = Math.ceil(hp / 5);
                         limitSummary += 'Costs ' + damage + ' Health. ';
@@ -1682,6 +1691,7 @@ on('sheet:opened', function() {
                 <option value="mobileCover">Mobile Cover (5)</option>
                 <option value="mobileDodge">Mobile Dodge (4)</option>
                 <option value="opportunisticDodge">Opportunistic Dodge (6)</option>
+                <option value="phasing">Phasing (5)</option>
                 <option value="portal">Portal (6/3)</option>
                 <option value="protectAlly">Protect Ally (2)</option>
                 <option value="protectMaster">Protect Master (3)</option>

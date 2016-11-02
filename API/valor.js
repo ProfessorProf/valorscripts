@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.3.2
+ * v1.3.3
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -67,7 +67,7 @@
  **/
 
 // Run !scan and replace this value with your player ID
-state.gmID = '-KSJ7FD4vYrOmQ7bG0EF';
+state.gmID = '-KVGs5IzQvHNQwIjflbi';
 
 // Settings for passive functions - 'true' for on, 'false' for off.
 state.statusTrackerEnabled = true;
@@ -120,55 +120,6 @@ function trackStatuses(obj) {
     
     var newStatusMarkersJoin = newStatusMarkers.join(',');
     lastChar.set('statusmarkers', newStatusMarkersJoin);
-}
-
-// Valor updater
-// To use: Put a label on the turn tracker called 'Round' at the end of the
-// round. When you reach the end of the round, all characters with a red
-// bar max value will gain 1 Valor.
-// Does not consider Masters or Limitless Power skill.
-function updateValor(obj) {
-    if(!state.valorUpdaterEnabled) {
-        // Settings check
-        return;
-    }
-    
-    var turnorder = JSON.parse(obj.get('turnorder'));
-    if(!turnorder || turnorder.length === 0) {
-        // Do nothing if initiative tracker is empty
-        return;
-    }
-    
-    var topChar = turnorder[0];
-    if(!topChar || topChar.custom != 'Round') {
-        // Only continue if the 'Round' counter is at the top of the init order
-        return;
-    }
-
-    if(!state.charData) {
-        state.charData = {};
-    }
-    
-    var page = Campaign().get('playerpageid');
-    var tokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
-    tokens.forEach(function(token) {
-        var maxValor = parseInt(token.get('bar3_max'));
-        if(maxValor) {
-            // If it has a max Valor, it's tracking Valor - raise it
-            var valor = parseInt(token.get('bar3_value'));
-            var valorRate = 1;
-            if(state.charData[token.get('represents')] &&
-                state.charData[token.get('represents')].valorRate) {
-                valorRate = parseInt(state.charData[token.get('represents')].valorRate);
-            }
-            token.set('bar3_value', valor + valorRate);
-            if(valor > maxValor) {
-                token.set('bar3_value', maxValor);
-            }
-        }
-    });
-    
-    log('Valor updated for new round.')
 }
 
 // Internal function - gets a list of skills and their levels for a character ID.
@@ -259,6 +210,70 @@ function getFlaws(charId) {
     return flaws;
 }
 
+// Valor updater
+// To use: Put a label on the turn tracker called 'Round' at the end of the
+// round. When you reach the end of the round, all characters with a red
+// bar max value will gain 1 Valor.
+// Does not consider Masters or Limitless Power skill.
+function updateValor(obj) {
+    if(!state.valorUpdaterEnabled) {
+        // Settings check
+        return;
+    }
+    
+    var turnorder = JSON.parse(obj.get('turnorder'));
+    if(!turnorder || turnorder.length === 0) {
+        // Do nothing if initiative tracker is empty
+        return;
+    }
+    
+    var topChar = turnorder[0];
+    if(!topChar || topChar.custom != 'Round') {
+        // Only continue if the 'Round' counter is at the top of the init order
+        return;
+    }
+
+    if(!state.charData) {
+        state.charData = {};
+    }
+    
+    var page = Campaign().get('playerpageid');
+    var tokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
+    tokens.forEach(function(token) {
+        var charId = token.get('represents');
+        var maxValor = parseInt(token.get('bar3_max'));
+        if(maxValor) {
+            // If it has a max Valor, it's tracking Valor - raise it
+            var valor = parseInt(token.get('bar3_value'));
+            var valorRate = 1;
+            if(state.charData[charId] &&
+                state.charData[charId].valorRate) {
+                valorRate = parseInt(state.charData[charId].valorRate);
+            }
+            
+            valor += valorRate;
+            var skills = getSkills(charId);
+            
+            if(skills && skills.length > 0) {
+                var bounceBack = skills.find(function(s) {
+                    return s.name == 'bounceBack';
+                });
+                if(bounceBack && valor < 0) {
+                    valor++;
+                }
+            }
+            
+            token.set('bar3_value', valor);
+            if(valor > maxValor) {
+                token.set('bar3_value', maxValor);
+            }
+            
+        }
+    });
+    
+    log('Valor updated for new round.')
+}
+
 // !scan command
 // Enter !scan in the chat to output each character's token image URL to the 
 // logs.
@@ -297,18 +312,28 @@ on('chat:message', function(msg) {
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!rest') == 0
         && msg.playerid === state.gmID) {
-        var page = Campaign().get('playerpageid');
-        var tokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
+        var tokens = filterObjs(function(obj) {
+            return obj.get('_type') == 'graphic' &&
+                   obj.get('represents');
+        });
        
         tokens.forEach(function(token) {
+            var charId = token.get('represents');
+            
             var hp = parseInt(token.get('bar1_value'));
             var maxHp = parseInt(token.get('bar1_max'));
             var st = parseInt(token.get('bar2_value'));
             var maxSt = parseInt(token.get('bar2_max'));
             
-            var skills = getSkills(token.get('represents'));
-            var flaws = getFlaws(token.get('represents'));
-            log(flaws);
+            if(!hp) {
+                hp = 0;
+            }
+            if(!st) {
+                st = 0;
+            }
+            
+            var skills = getSkills(charId);
+            var flaws = getFlaws(charId);
             
             // Restore Health
             if(maxHp) {
@@ -322,7 +347,7 @@ on('chat:message', function(msg) {
                 if(skills.find(function(s) {
                     return s.name == 'fastHealing';
                 })) {
-                    var di = getAttrByName(token.get('represents'), 'di');
+                    var di = getAttrByName(charId, 'di');
                     if(di) {
                         hpRestore += di;
                     }
@@ -385,8 +410,10 @@ on('chat:message', function(msg) {
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!fullrest') == 0
         && msg.playerid === state.gmID) {
-        var page = Campaign().get('playerpageid');
-        var tokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
+        var tokens = filterObjs(function(obj) {
+            return obj.get('_type') == 'graphic' &&
+                   obj.get('represents');
+        });
        
         if(!state.charData) {
             state.charData = {};
@@ -514,6 +541,7 @@ on('change:graphic', function(obj, prev) {
     
     var character = getObj('character', obj.get('represents'));
     var player = character.get('controlledby');
+    
     if(player != '') {
         var bar1Value = obj.get('bar1_value');
         var bar2Value = obj.get('bar2_value');
@@ -680,13 +708,15 @@ on('change:campaign:turnorder', function(obj) {
  * 
  * v1.1:
  * - New feature: Auto-processing of ongoing damage and HP regeneration.
- * - Bugfix: Valor gains at end of round would sometimes be calculated multiple times.
+ * - Bugfix: Valor gains at end of round would sometimes be calculated multiple
+ * times.
  * 
  * v1.2:
  * - New command: !set-vrate
  * 
  * v1.2.1:
- * - Bugfix: Script would crash if you used Valor auto-tracking before ever using !set-bravado.
+ * - Bugfix: Script would crash if you used Valor auto-tracking before ever
+ * using !set-bravado.
  * 
  * v1.2.2:
  * - Bugfix: Strange behavior from token sync when changing the names of tokens.
@@ -700,5 +730,12 @@ on('change:campaign:turnorder', function(obj) {
  * - Update current HP when Max HP changes.
  * 
  * v1.3.2:
- * - Bugfix: Max sync and associating values with character sheets could crash the script.
+ * - Bugfix: Max sync and associating values with character sheets could crash
+ * the script.
+ * 
+ * v1.3.3:
+ * - Allowed !rest and !fullrest to heal characters who aren't on the same page
+ * as the players, or who are on the GM layer.
+ * - Bounce Back skill now honored by valor updater.
+ * 
  **/
