@@ -453,19 +453,28 @@ on('chat:message', function(msg) {
         } else {
             // They put a string, pull up tech by name
             var matchingTech = techs.find(function(t) {
-                return t.name.toLowerCase().indexOf(techId.toLowerCase()) > -1;
+                return t.name.toLowerCase().indexOf(techId.toLowerCase()) == 0;
             });
             
             if(matchingTech) {
                 tech = matchingTech;
             } else {
-                log('Tech does not exist.');
+				matchingTech = techs.find(function(t) {
+					return t.name.toLowerCase().indexOf(techId.toLowerCase()) > -1;
+				});
+				if(matchingTech) {
+					tech = matchingTech;
+				} else {
+					// Look for string anywhere in tech name
+					log('Tech does not exist.');
+				}
             }
         }
         
         var rollText = '';
         
         if(tech.core == 'damage' ||
+           tech.core == 'ultDamage' ||
            tech.core == 'weaken') {
             var targets = 1;
             var rollBonus = 0;
@@ -474,6 +483,9 @@ on('chat:message', function(msg) {
                 if(inputTargets == inputTargets) {
                     targets = inputTargets;
                 }
+				if(targets > 20) {
+					targets = 20;
+				}
             }
             if(split.length > 3) {
                 var inputRollBonus = split[3];
