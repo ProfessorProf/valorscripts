@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.0.6
+ * v1.0.7
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -46,6 +46,10 @@
  * v1.0.6:
  * - Masters now have x2 to max Stamina.
  * - Fix: Phasing missing from skill list.
+ * 
+ * v1.0.7:
+ * - Save further data in techs for use by API.
+ * - Typo fixed in Valor Consumption Limit.
  * 
  **/
 
@@ -464,6 +468,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                 
                 // Build tech summary
                 var summary = '';
+                var microSummary = '';
                 var warnings = ' ';
                 
                 var barrierFreebie = false;
@@ -500,16 +505,16 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                 
                 // Display core functionality
                 var rollStat = techStat;
-                if(techMods.indexOf('muscular strike') > -1) {
+                if(techMods.indexOf('muscular') > -1) {
                     rollStat = 'str';
                 }
-                if(techMods.indexOf('dexterous strike') > -1) {
+                if(techMods.indexOf('dexterous') > -1) {
                     rollStat = 'agi';
                 }
-                if(techMods.indexOf('aura strike') > -1) {
+                if(techMods.indexOf('aura') > -1) {
                     rollStat = 'spr';
                 }
-                if(techMods.indexOf('intuitive strike') > -1) {
+                if(techMods.indexOf('intuitive') > -1) {
                     rollStat = 'mnd';
                 }
                 if(techCore == 'damage' ||
@@ -567,6 +572,12 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                                     damage = 24 + 8 * techCoreLevel + techValues.strAtk;
                                 }
                                 summary += 'On a hit, deal ' + damage + ' physical damage to the target. '
+                                
+                                if(techMods.indexOf('piercing') > -1) {
+                                    microSummary = 'Damage: **' + damage + '**';
+                                } else {
+                                    microSummary = 'Damage: **' + damage + '** - Defense';
+                                }
                                 break;
                             case 'agi':
                                 if(specialAttack && techCore == 'damage') {
@@ -577,6 +588,12 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                                     damage = 24 + 8 * techCoreLevel + techValues.agiAtk;
                                 }
                                 summary += 'On a hit, deal ' + damage + ' physical damage to the target. '
+                                
+                                if(techMods.indexOf('piercing') > -1) {
+                                    microSummary = 'Damage: **' + damage + '**';
+                                } else {
+                                    microSummary = 'Damage: **' + damage + '** - Defense';
+                                }
                                 break;
                             case 'spr':
                                 if(specialAttack && techCore == 'damage') {
@@ -587,6 +604,12 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                                     damage = 24 + 8 * techCoreLevel + techValues.sprAtk;
                                 }
                                 summary += 'On a hit, deal ' + damage + ' energy damage to the target. '
+                                
+                                if(techMods.indexOf('piercing') > -1) {
+                                    microSummary = 'Damage: **' + damage + '**';
+                                } else {
+                                    microSummary = 'Damage: **' + damage + '** - Resistance';
+                                }
                                 break;
                             case 'mnd':
                                 if(specialAttack && techCore == 'damage') {
@@ -597,6 +620,12 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                                     damage = 24 + 8 * techCoreLevel + techValues.mndAtk;
                                 }
                                 summary += 'On a hit, deal ' + damage + ' energy damage to the target. '
+                                
+                                if(techMods.indexOf('piercing') > -1) {
+                                    microSummary = 'Damage: **' + damage + '**';
+                                } else {
+                                    microSummary = 'Damage: **' + damage + '** - Resistance';
+                                }
                                 break;
                         }
                         break;
@@ -613,6 +642,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                                 break;
                         }
                         summary += 'Restore ' + healing + ' Health to the target. '
+                        microSummary += 'Restores **' + healing + '** Health';
                         break;
                     case 'barrier':
                         summary += 'Create a Barrier of power ' + techCoreLevel + '. ';
@@ -627,6 +657,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                     case 'ultTransform':
                         var bonusHp = level * 10;
                         summary += 'Transform, gaining ' + bonusHp + ' HP and +1 to all Active Attributes. ';
+                        microSummary += 'HP +' + bonusHp;
                         break;
                     case 'boost':
                     case 'weaken':
@@ -1066,7 +1097,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                         limitSt += 3 * limitLevel;
                     } else if(limit.indexOf('valor') == 0) {
                         if(limit.indexOf('valor consumption') > -1) {
-                            limitSummary += 'Valor is reduced by ' + limitLevel + 'after using (can go below 0). ';
+                            limitSummary += 'Valor is reduced by ' + limitLevel + ' after using (can go below 0). ';
                             limitSt += 5 * limitLevel;
                         } else {
                             limitSummary += "Can't be used unless you have at least " + limitLevel + ' Valor. ';
@@ -1156,6 +1187,9 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                 attrs['repeating_techs_' + tidarray[i] + '_tech_warnings'] = warnings;
                 attrs['repeating_techs_' + tidarray[i] + '_tech_mod_level'] = totalModLevel;
                 attrs['repeating_techs_' + tidarray[i] + '_tech_limit_st'] = limitSt;
+                attrs['repeating_techs_' + tidarray[i] + '_tech_cost'] = cost;
+                attrs['repeating_techs_' + tidarray[i] + '_tech_core_type'] = techCore;
+                attrs['repeating_techs_' + tidarray[i] + '_tech_micro_summary'] = microSummary;
                 setAttrs(attrs, { silent: true });
             }
         });

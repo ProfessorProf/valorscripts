@@ -1,13 +1,13 @@
 /**
  * VALOR API SCRIPTS
- * v1.3.3
+ * v1.4.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
  * 2. Create a new script, and paste the contents of this file into it.
  * 3. Keeping the API window open, enter game, and run the !scan command.
  * 4. Check the API output console below to get your player ID.
- * 5. Set gmID on line 70 to your player ID.
+ * 5. Set gmID on line 77 to your player ID.
  * 
  * PASSIVE FUNCTIONALITY
  * Status Tracker
@@ -44,6 +44,15 @@
  * !scan
  * - Outputs to the logs the current player ID.
  * - Outputs URLs for the token images for all characters.
+ * 
+ * !t [tech] [targets] [bonus]
+ * - Performs a Technique. Requires Valor Character sheet.
+ * - For "tech", put either a number or the beginning of the tech name. If you go
+ * over one word, put it in quotation marks.
+ * - Identifies the actor via selected token or 'As:' field or who you control.
+ * - Rolls against the indicated number of targets (Default 1).
+ * - Adds a bonus value to all rolls (Default 0).
+ * - Automatically subtracks Stamina, Health and Valor from cost/limits.
  * 
  * !set-bravado [value]
  * - Select one or more characters and enter '!set-bravado X'
@@ -210,6 +219,81 @@ function getFlaws(charId) {
     return flaws;
 }
 
+// Internal function - gets a list of flaws and their levels for a character ID.
+// Uses the Valor Character Sheet structure.
+function getTechs(charId) {
+    var rawTechs = filterObjs(function(obj) {
+        if(obj.get('_type') == 'attribute' &&
+           obj.get('_characterid') == charId &&
+           obj.get('name').indexOf('repeating_techs') > -1) {
+               return true;
+        }
+        return false;
+    });
+    // ID
+    // Name
+    // Core
+    // Limits
+    // Cost
+    // Micro-summary
+    var techs = [];
+    rawTechs.forEach(function(rawTech) {
+        var techName = rawTech.get('name');
+        var techId = techName.split('_')[2];
+        
+        var oldTech = techs.find(function(s) {
+            return s.id == techId
+        });
+        
+        if(techName.indexOf('tech_name') > -1) {
+            if(oldTech) {
+                oldTech.name = rawTech.get('current');
+            } else {
+                techs.push({ id: techId, name: rawTech.get('current')});
+            }
+        } else if(techName.indexOf('tech_core_type') > -1) {
+            if(oldTech) {
+                oldTech.core = rawTech.get('current');
+            } else {
+                techs.push({ id: techId, core: rawTech.get('current')});
+            }
+        } else if(techName.indexOf('tech_stat') > -1) {
+            if(oldTech) {
+                oldTech.stat = rawTech.get('current');
+            } else {
+                techs.push({ id: techId, stat: rawTech.get('current')});
+            }
+        } else if(techName.indexOf('tech_micro_summary') > -1) {
+            if(oldTech) {
+                oldTech.summary = rawTech.get('current');
+            } else {
+                techs.push({ id: techId, summary: rawTech.get('current')});
+            }
+        } else if(techName.indexOf('tech_cost') > -1) {
+            var cost = parseInt(rawTech.get('current'));
+            if(cost != cost) {
+                cost = 0;
+            }
+            
+            if(oldTech) {
+                oldTech.cost = cost;
+            } else {
+                techs.push({ id: techId, cost: cost});
+            }
+        } else if(techName.indexOf('tech_limits') > -1) {
+            var limits = rawTech.get('current').split('\n');
+            
+            if(oldTech) {
+                oldTech.limits = limits;
+            } else {
+                techs.push({ id: techId, limits: limits});
+            }
+        }
+    });
+    
+    return techs;
+}
+
 // Valor updater
 // To use: Put a label on the turn tracker called 'Round' at the end of the
 // round. When you reach the end of the round, all characters with a red
@@ -302,6 +386,219 @@ on('chat:message', function(msg) {
                 }
             }
        });
+    }
+});
+
+// !tech command
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!t ') == 0 || 
+    msg.type == 'api' && msg.content.indexOf('!tech') == 0) {
+        // Get params
+        var split = msg.content.match(/(".*?")|(\S+)/g);
+        if(split.length < 2) {
+            log('Not enough arguments.');
+            return;
+        }
+
+        // Figure out who's using a tech
+        var actor;
+        if(msg.selected && msg.selected.length > 0) {
+            // The first selected character is the actor
+            token = getObj('graphic', msg.selected[0]._id);
+            actor = getObj('character', token.get('represents'));
+        } else {
+            // Try to find a character who matches the "Who" block for the sepaker
+            var characters = filterObjs(function(obj) {
+                return obj.get('_type') === 'character' &&
+                       obj.get('name') === msg.who;
+            });
+            
+            if(characters.length > 0) {
+                // The first character with a matching name is the actor
+                actor = characters[0];
+            } else {
+                // Try to find a character controlled by the speaker
+                characters = filterObjs(function(obj) {
+                    return obj.get('_type') === 'character' &&
+                           obj.get('controlledBy') &&
+                           obj.get('controlledBy').indexOf(msg.playerid) > -1;
+                });
+                
+                if(characters.length > 0) {
+                    actor = characters[0];
+                } else {
+                    log('No usable character found for ' + msg.playerid);
+                    return;
+                }
+            }
+        }
+        
+        // Identify the technique
+        var techs = getTechs(actor.get('_id'));
+        var tech;
+        
+        var techId = split[1];
+        if(techId[0] == '"') {
+            techId = techId.substring(1, techId.length - 1);
+        }
+        
+        var techIdInt = parseInt(techId);
+        if(techIdInt == techIdInt) {
+            // They put an integer, pull up tech by order
+            if(techIdInt <= techs.length) {
+                tech = techs[techIdInt - 1];
+            } else {
+                log('Tech does not exist.');
+            }
+        } else {
+            // They put a string, pull up tech by name
+            var matchingTech = techs.find(function(t) {
+                return t.name.toLowerCase().indexOf(techId.toLowerCase()) > -1;
+            });
+            
+            if(matchingTech) {
+                tech = matchingTech;
+            } else {
+                log('Tech does not exist.');
+            }
+        }
+        
+        var rollText = '';
+        
+        if(tech.core == 'damage' ||
+           tech.core == 'weaken') {
+            var targets = 1;
+            var rollBonus = 0;
+            if(split.length > 2) {
+                var inputTargets = parseInt(split[2]);
+                if(inputTargets == inputTargets) {
+                    targets = inputTargets;
+                }
+            }
+            if(split.length > 3) {
+                var inputRollBonus = split[3];
+                if(inputRollBonus.indexOf('+') == 0) {
+                    inputRollBonus = inputRollBonus.substring(1);
+                }
+                var parsedBonus = parseInt(inputRollBonus);
+                if(parsedBonus == parsedBonus) {
+                    rollBonus = parsedBonus;
+                }
+            }
+            
+            var roll = 0;
+            switch(tech.stat) {
+                case 'str':
+                    rollText += 'Rolling Muscle';
+                    roll = parseInt(getAttrByName(actor.get('_id'), 'mus')) + rollBonus;
+                    break;
+                case 'agi':
+                    rollText += 'Rolling Dexterity';
+                    roll = parseInt(getAttrByName(actor.get('_id'), 'mus')) + rollBonus;
+                    break;
+                case 'spr':
+                    rollText += 'Rolling Aura';
+                    roll = parseInt(getAttrByName(actor.get('_id'), 'mus')) + rollBonus;
+                    break;
+                case 'mnd':
+                    rollText += 'Rolling Intuition';
+                    roll = parseInt(getAttrByName(actor.get('_id'), 'mus')) + rollBonus;
+                    break;
+                case 'gut':
+                    rollText += 'Rolling Resolve';
+                    roll = parseInt(getAttrByName(actor.get('_id'), 'mus')) + rollBonus;
+                    break;
+            }
+            
+            if(rollBonus > 0) {
+                rollText += '+' + rollBonus;
+            } else if(rollBonus < 0) {
+                rollText += '-' + (-rollBonus);
+            }
+            
+            if(targets > 1) {
+                rollText += ', left to right';
+            }
+            
+            rollText += ':';
+            
+            for(i = 0; i < targets; i++) {
+                rollText += ' [[1d10+' + roll + ']]';
+            }
+        }
+        
+        // Pay costs
+        // Use selected token or first token on active page that represents character
+        var token;
+        if(msg.selected && msg.selected.length > 0) {
+            token = getObj('graphic', msg.selected[0]._id);
+        } else {
+            var tokens = findObjs({
+                _pageid: Campaign().get("playerpageid"),                              
+                _type: "graphic",                   
+            });
+            if(tokens.length > 0) {
+                token = tokens[0];
+            }
+        }
+        
+        if(token) {
+            var st = parseInt(token.get('bar2_value'));
+            if(st != st) {
+                st = 0;
+            }
+            
+            st -= tech.cost;
+            
+            token.set('bar2_value', st);
+            
+            var healthLimit = tech.limits.find(function(l) {
+                return l.toLowerCase().indexOf('health') == 0;
+            });
+            if(healthLimit) {
+                var healthLimitSplit = healthLimit.split(' ');
+                var healthLimitLevel = parseInt(healthLimitSplit[healthLimitSplit.length - 1]);
+                if(healthLimitLevel != healthLimitLevel) {
+                    healthLimitLevel = 1;
+                }
+                
+                var hp = parseInt(token.get('bar1_value'));
+                if(hp != hp) {
+                    hp = 0;
+                }
+                
+                hp -= healthLimitLevel * 5;
+                
+                token.set('bar1_value', hp);
+            }
+            
+            var valorLimit = tech.limits.find(function(l) {
+                return l.toLowerCase().indexOf('valor c') == 0 ||
+                l.toLowerCase().indexOf('ult valor') == 0 ||
+                l.toLowerCase().indexOf('ultimate valor') == 0;
+            });
+            
+            if(valorLimit) {
+                var valorLimitSplit = valorLimit.split(' ');
+                var valorLimitLevel = parseInt(valorLimitSplit[valorLimitSplit.length - 1]);
+                if(valorLimitLevel != valorLimitLevel) {
+                    valorLimitLevel = 1;
+                }
+                
+                var valor = parseInt(token.get('bar3_value'));
+                if(valor != valor) {
+                    valor = 0;
+                }
+                
+                valor -= valorLimitLevel;
+                
+                token.set('bar3_value', valor);
+            }
+        }
+        
+        sendChat('character|' + actor.get('_id'), 'Performing Technique: **' + tech.name + '**\n' +
+                 rollText + '\n' +
+                 tech.summary);
     }
 });
 
@@ -738,4 +1035,6 @@ on('change:campaign:turnorder', function(obj) {
  * as the players, or who are on the GM layer.
  * - Bounce Back skill now honored by valor updater.
  * 
+ * v1.4.0:
+ * - Added the !tech command.
  **/
