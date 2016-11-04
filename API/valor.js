@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.4.0
+ * v1.4.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -1049,4 +1049,8 @@ on('change:campaign:turnorder', function(obj) {
  * 
  * v1.4.0:
  * - Added the !tech command.
+ * 
+ * v1.4.1:
+ * - Bugfixes on !t.
+ * - Tweaked algorithm for identifying which technique you wanted to use.
  **/
