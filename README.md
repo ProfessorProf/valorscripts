@@ -53,7 +53,7 @@ Examples:
 * `!tech Fi` Performs the first technique on your tech list starting with 'Fi' (i.e. Fireball).
 * `!technique "Doom Fist"` Performs the first technique on your tech list starting with 'Doom Fist'.
 * `!t Fireball 3` Performs the Fireball technique and rolls against 3 targets.
-* `!t Fireball 1 +1` Performs the Fireball technique and rolls against 1 target with a +1 bonus to the attack roll.
+* `!t Fireball +1` Performs the Fireball technique and rolls against 1 target with a +1 bonus to the attack roll (if the second parameter starts with + or -, it'll read it as a roll bonus instead of a target count).
 * `!t "Doom F" 2 -1` Performs the Doom Fist technique and rolls against 2 targets with a -2 penalty to the attack roll.
 
 #### Rest

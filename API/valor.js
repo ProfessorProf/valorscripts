@@ -1,13 +1,13 @@
 /**
  * VALOR API SCRIPTS
- * v1.4.1
+ * v1.4.2
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
  * 2. Create a new script, and paste the contents of this file into it.
  * 3. Keeping the API window open, enter game, and run the !scan command.
  * 4. Check the API output console below to get your player ID.
- * 5. Set gmID on line 77 to your player ID.
+ * 5. Set gmID on line 83 to your player ID.
  * 
  * PASSIVE FUNCTIONALITY
  * Status Tracker
@@ -53,6 +53,10 @@
  * - Rolls against the indicated number of targets (Default 1).
  * - Adds a bonus value to all rolls (Default 0).
  * - Automatically subtracks Stamina, Health and Valor from cost/limits.
+ * 
+ * !t-undo
+ * - Reverts usage of previous technique, restoring all lost resources.
+ * - Can remember up to 20 technique usages.
  * 
  * !set-bravado [value]
  * - Select one or more characters and enter '!set-bravado X'
@@ -478,7 +482,8 @@ on('chat:message', function(msg) {
            tech.core == 'weaken') {
             var targets = 1;
             var rollBonus = 0;
-            if(split.length > 2) {
+            if(split.length > 2 && 
+                (split[2].indexOf('+') == -1 && split[2].indexOf('-') == -1)) {
                 var inputTargets = parseInt(split[2]);
                 if(inputTargets == inputTargets) {
                     targets = inputTargets;
@@ -487,8 +492,9 @@ on('chat:message', function(msg) {
 					targets = 20;
 				}
             }
-            if(split.length > 3) {
-                var inputRollBonus = split[3];
+            if(split.length > 3 || 
+                (split.length == 3 && (split[2].indexOf('+') > -1 || split[2].indexOf('-') > -1))) {
+                var inputRollBonus = split.length == 3 ? split[2] : split[3];
                 if(inputRollBonus.indexOf('+') == 0) {
                     inputRollBonus = inputRollBonus.substring(1);
                 }
@@ -555,6 +561,10 @@ on('chat:message', function(msg) {
         }
         
         if(token) {
+            var hpCost = 0;
+            var stCost = tech.cost;
+            var valorCost = 0;
+            
             var st = parseInt(token.get('bar2_value'));
             if(st != st) {
                 st = 0;
@@ -579,7 +589,8 @@ on('chat:message', function(msg) {
                     hp = 0;
                 }
                 
-                hp -= healthLimitLevel * 5;
+                hpCost = healthLimitLevel * 5;
+                hp -= hpCost;
                 
                 token.set('bar1_value', hp);
             }
@@ -602,15 +613,82 @@ on('chat:message', function(msg) {
                     valor = 0;
                 }
                 
-                valor -= valorLimitLevel;
+                valorCost = valorLimitLevel;
+                valor -= valorCost;
                 
                 token.set('bar3_value', valor);
+            }
+            
+            // Add used tech to the technique usage history
+            if(!state.techHistory) {
+                state.techHistory = [];
+            }
+            
+            state.techHistory.push({
+                id: token.get('_id'),
+                techName: tech.name,
+                hpCost: hpCost,
+                stCost: stCost,
+                valorCost: valorCost
+            });
+            
+            if(state.techHistory.length > 20) {
+                // Don't let the tech history get too long
+                state.techHistory = state.techHistory.slice(1);
             }
         }
         
         sendChat('character|' + actor.get('_id'), 'Performing Technique: **' + tech.name + '**\n' +
                  rollText + '\n' +
                  tech.summary);
+        log('Technique ' + tech.name + ' performed by ' + actor.get('name') + '.');
+    }
+});
+
+// !tech-undo command
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!t-undo') == 0 || 
+    msg.type == 'api' && msg.content.indexOf('!tech-undo') == 0) {
+        // Get the last tech's data out of the tech history
+        if(!state.techHistory) {
+            state.techHistory = [];
+        }
+        
+        if(state.techHistory.length == 0) {
+            log ("Can't remember any more tech usage.");
+            return;
+        }
+        
+        var techLog = state.techHistory[state.techHistory.length - 1];
+        
+        var token = getObj('graphic', techLog.id);
+        
+        // Refund lost resources
+        var hp = parseInt(token.get('bar1_value'));
+        var st = parseInt(token.get('bar2_value'));
+        var valor = parseInt(token.get('bar3_value'));
+        
+        if(hp != hp) {
+            hp = 0;
+        }
+        if(st != st) {
+            st = 0;
+        }
+        if(valor != valor) {
+            valor = 0;
+        }
+        
+        hp += techLog.hpCost;
+        st += techLog.stCost;
+        valor += techLog.valorCost;
+        
+        token.set('bar1_value', hp);
+        token.set('bar2_value', st);
+        token.set('bar3_value', valor);
+        
+        // Remove tech from history
+        state.techHistory = state.techHistory.slice(0, state.techHistory.length - 1);
+        log('Reverted technique ' + techLog.techName + ' used by ' + token.get('name') + '. ' + state.techHistory.length + ' techs remaining in history log.');
     }
 });
 
@@ -1053,4 +1131,8 @@ on('change:campaign:turnorder', function(obj) {
  * v1.4.1:
  * - Bugfixes on !t.
  * - Tweaked algorithm for identifying which technique you wanted to use.
+ * 
+ * v1.4.2
+ * - Added more lenient text parsing on !t command.
+ * - Added !t-undo command.
  **/
