@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.4.2
+ * v1.4.3
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -512,19 +512,19 @@ on('chat:message', function(msg) {
                     break;
                 case 'agi':
                     rollText += 'Rolling Dexterity';
-                    roll = parseInt(getAttrByName(actor.get('_id'), 'mus')) + rollBonus;
+                    roll = parseInt(getAttrByName(actor.get('_id'), 'dex')) + rollBonus;
                     break;
                 case 'spr':
                     rollText += 'Rolling Aura';
-                    roll = parseInt(getAttrByName(actor.get('_id'), 'mus')) + rollBonus;
+                    roll = parseInt(getAttrByName(actor.get('_id'), 'aur')) + rollBonus;
                     break;
                 case 'mnd':
                     rollText += 'Rolling Intuition';
-                    roll = parseInt(getAttrByName(actor.get('_id'), 'mus')) + rollBonus;
+                    roll = parseInt(getAttrByName(actor.get('_id'), 'int')) + rollBonus;
                     break;
                 case 'gut':
                     rollText += 'Rolling Resolve';
-                    roll = parseInt(getAttrByName(actor.get('_id'), 'mus')) + rollBonus;
+                    roll = parseInt(getAttrByName(actor.get('_id'), 'res')) + rollBonus;
                     break;
             }
             
@@ -553,7 +553,8 @@ on('chat:message', function(msg) {
         } else {
             var tokens = findObjs({
                 _pageid: Campaign().get("playerpageid"),                              
-                _type: "graphic",                   
+                _type: "graphic",
+				represents: actor.get('_id')
             });
             if(tokens.length > 0) {
                 token = tokens[0];
@@ -1132,7 +1133,10 @@ on('change:campaign:turnorder', function(obj) {
  * - Bugfixes on !t.
  * - Tweaked algorithm for identifying which technique you wanted to use.
  * 
- * v1.4.2
+ * v1.4.2:
  * - Added more lenient text parsing on !t command.
  * - Added !t-undo command.
+ * 
+ * v1.4.3:
+ * - Bugfix: !t only worked a tiny amount of the time.
  **/
