@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.0.7
+ * v1.0.8
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -50,6 +50,9 @@
  * v1.0.7:
  * - Save further data in techs for use by API.
  * - Typo fixed in Valor Consumption Limit.
+ * 
+ * v1.0.8:
+ * - Calculation errors: Damage Increment, Ammunition Limit.
  * 
  **/
 
@@ -111,7 +114,7 @@ function calculateStats() {
         var defense = level * 2 + str + gut;
         var resistance = level * 2 + spr + mnd;
         var speed = Math.ceil(agi / 4) + 2;
-        var di = level + 4;
+        var di = level + 5;
         var initMod = 0;
         
         var valor = 10;
@@ -1006,7 +1009,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                         } else {
                             limitSummary += 'Can only be used ' + ammo + ' times per scene. ';
                         }
-                        limitSt += 4 * limitLevel;
+                        limitSt += 3 * limitLevel;
                     } else if(limit.indexOf('companion') == 0) {
                         limitSummary += 'Only your Companion can use this Technique. ';
                         limitSt += 2;
