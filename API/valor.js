@@ -1,21 +1,18 @@
 /**
  * VALOR API SCRIPTS
- * v1.4.4
+ * v1.5.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
  * 2. Create a new script, and paste the contents of this file into it.
- * 3. Keeping the API window open, enter game, and run the !scan command.
- * 4. Check the API output console below to get your player ID.
- * 5. Set gmID on line 83 to your player ID.
+ * 3. Click Save Script.
  * 
  * PASSIVE FUNCTIONALITY
  * Status Tracker
- * - When adding status markers to a token for temporary effects, add a number
- * to it via pressing a number key.
- * - After their turn, the number will automatically decrement.
- * - When it reaches 0, the marker will vanish.
- * - Useful for self-boosts.
+ * - When a character gains a temporary status, add it to the init tracker as
+ * a label after their turn and a Round Calculation of -1.
+ * - When its timer ticks down to 0, it will automatically be removed from the
+ * list, and the chat will be informed.
  * 
  * Valor Updater
  * - After filling out the turn order, add a new label called "Round".
@@ -42,13 +39,11 @@
  * 
  * NEW COMMANDS
  * !scan
- * - Outputs to the logs the current player ID.
  * - Outputs URLs for the token images for all characters.
  * 
  * !t [tech] [targets] [bonus]
  * - Performs a Technique. Requires Valor Character sheet.
- * - For "tech", put either a number or the beginning of the tech name. If you go
- * over one word, put it in quotation marks.
+ * - For "tech", put either a number or the beginning of the tech name. 
  * - Identifies the actor via selected token or 'As:' field or who you control.
  * - Rolls against the indicated number of targets (Default 1).
  * - Adds a bonus value to all rolls (Default 0).
@@ -57,6 +52,11 @@
  * !t-undo
  * - Reverts usage of previous technique, restoring all lost resources.
  * - Can remember up to 20 technique usages.
+ * 
+ * !e [Label] [duration]
+ * - Adds a temporary effect created by the selected character to the turn 
+ * tracker.
+ * - By default, the duration is 3 turns.
  * 
  * !set-bravado [value]
  * - Select one or more characters and enter '!set-bravado X'
@@ -79,9 +79,6 @@
  * - Use with !set-bravado.
  **/
 
-// Run !scan and replace this value with your player ID
-state.gmID = '-KVGs5IzQvHNQwIjflbi';
-
 // Settings for passive functions - 'true' for on, 'false' for off.
 state.statusTrackerEnabled = true;
 state.valorUpdaterEnabled = true;
@@ -93,46 +90,34 @@ state.tokenSyncEnabled = false;
 // While this is active, any numbered status markers will automatically
 // decrement after their turn, vanishing when the number hits 0.
 // Warning: Doesn't quite match Valor effect duration rules.
-function trackStatuses(obj) {
+function trackStatuses(turnOrder) {
     if(!state.statusTrackerEnabled) {
         // Settings check
         return;
     }
     
-    var turnorder = JSON.parse(obj.get('turnorder'));
-    if(!turnorder || turnorder.length === 0) {
+    var newTurnOrder = turnOrder;
+    if(!newTurnOrder || newTurnOrder.length === 0) {
         // Do nothing if the init tracker is empty
         return;
     }
     
-    var lastCharId = turnorder[turnorder.length - 1].id;
-    var lastChar = findObjs({id: lastCharId})[0];
-    if(!lastChar) {
-        // Do nothing if the last actor wasn't a character
+    if(newTurnOrder[0].id != '-1') {
+        // Do nothing if the last actor was a character
         return;
     }
     
-    var statusMarkers = lastChar.get('statusmarkers').split(',');
-    var newStatusMarkers = [];
-    statusMarkers.forEach(function(status) {
-        if(status.indexOf('@') > -1) {
-            // Reduce counter by 1
-            var splits = status.split('@');
-            var time = parseInt(splits[1]);
-            time--;
-            if(time > 0) {
-                // Only persist marker if counter > 0
-                status = splits[0] + '@' + time;
-                newStatusMarkers.push(status);
-            }
-        } else {
-            // Leave un-counted markers alone
-            newStatusMarkers.push(status);
+    if(newTurnOrder[0].pr == 0 && newTurnOrder[0].formula == '-1') {
+        // A countdown effect ended
+        sendChat('Valor', "Effect '" + newTurnOrder[0].custom + "' has ended.");
+        newTurnOrder = newTurnOrder.slice(1);
+        // Auto-reduce the next item if it's an effect too
+        if(newTurnOrder[0].formula == '-1') {
+            newTurnOrder[0].pr--;
         }
-    })
-    
-    var newStatusMarkersJoin = newStatusMarkers.join(',');
-    lastChar.set('statusmarkers', newStatusMarkersJoin);
+        Campaign().set('turnorder', JSON.stringify(newTurnOrder));
+        trackStatuses(newTurnOrder);
+    }
 }
 
 // Internal function - gets a list of skills and their levels for a character ID.
@@ -298,6 +283,43 @@ function getTechs(charId) {
     return techs;
 }
 
+// Actor Identifier
+// Takes a message and identifies the character associated with it.
+// Priority 1: Selected token.
+// Priority 2: 'As:' field.
+// Priority 3: Any character controlled by the player.
+function getActor(msg) {
+	var actor;
+	if(msg.selected && msg.selected.length > 0) {
+		// The first selected character is the actor
+		var token = getObj('graphic', msg.selected[0]._id);
+		actor = getObj('character', token.get('represents'));
+	} else {
+		// Try to find a character who matches the "Who" block for the speaker
+		var characters = filterObjs(function(obj) {
+			return obj.get('_type') === 'character' &&
+				   obj.get('name') === msg.who;
+		});
+		
+		if(characters.length > 0) {
+			// The first character with a matching name is the actor
+			actor = characters[0];
+		} else {
+			// Try to find a character controlled by the speaker
+			characters = filterObjs(function(obj) {
+				return obj.get('_type') === 'character' &&
+					   obj.get('controlledBy') &&
+					   obj.get('controlledBy').indexOf(msg.playerid) > -1;
+			});
+			
+			if(characters.length > 0) {
+				actor = characters[0];
+			}
+		}
+	}
+	return actor;
+}
+
 // Valor updater
 // To use: Put a label on the turn tracker called 'Round' at the end of the
 // round. When you reach the end of the round, all characters with a red
@@ -368,9 +390,6 @@ function updateValor(obj) {
 // Also displays the speaking player's ID.
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!scan') == 0) {
-        // Get GM ID
-        log('Your player ID: ' + msg.playerid);
-        
         var tokens = findObjs({_type: 'graphic'});
         var usedNames = [];
         
@@ -405,38 +424,12 @@ on('chat:message', function(msg) {
         }
 
         // Figure out who's using a tech
-        var actor;
-        if(msg.selected && msg.selected.length > 0) {
-            // The first selected character is the actor
-            token = getObj('graphic', msg.selected[0]._id);
-            actor = getObj('character', token.get('represents'));
-        } else {
-            // Try to find a character who matches the "Who" block for the sepaker
-            var characters = filterObjs(function(obj) {
-                return obj.get('_type') === 'character' &&
-                       obj.get('name') === msg.who;
-            });
-            
-            if(characters.length > 0) {
-                // The first character with a matching name is the actor
-                actor = characters[0];
-            } else {
-                // Try to find a character controlled by the speaker
-                characters = filterObjs(function(obj) {
-                    return obj.get('_type') === 'character' &&
-                           obj.get('controlledBy') &&
-                           obj.get('controlledBy').indexOf(msg.playerid) > -1;
-                });
-                
-                if(characters.length > 0) {
-                    actor = characters[0];
-                } else {
-                    log('No usable character found for ' + msg.playerid);
-                    return;
-                }
-            }
-        }
-        
+        var actor = getActor(msg);
+		if(!actor) {
+			log('No usable character found for ' + msg.playerid);
+			return;
+		}
+		
         // Identify the technique
         var techs = getTechs(actor.get('_id'));
         var tech;
@@ -700,13 +693,74 @@ on('chat:message', function(msg) {
     }
 });
 
+// !effect command
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!e ') == 0 || 
+    msg.type == 'api' && msg.content.indexOf('!effect') == 0) {
+        // Get params
+        var split = msg.content.split(' ');
+        if(split.length < 2) {
+            log('Not enough arguments.');
+            return;
+        }
+
+		var turnOrder = JSON.parse(Campaign().get('turnorder'));
+		if(!turnOrder || turnOrder.length == 0) {
+			// Nothing to do
+			log('Turn Tracker is not enabled.');
+		}
+		
+        // Figure out who the actor is
+        var actor = getActor(msg);
+		if(!actor) {
+			log('No usable character found for ' + msg.playerid);
+			return;
+		}
+        
+        var effectName = split[1];
+		var nextParam = 2;
+		while(nextParam < split.length && parseInt(split[nextParam]) != parseInt(split[nextParam])) {
+			effectName += ' ' + split[nextParam];
+			nextParam++;
+		}
+		
+		var duration = 3;
+		if(split.length > nextParam) {
+			var inputDuration = parseInt(split[nextParam]);
+			if(inputDuration == inputDuration) {
+				duration = inputDuration;
+			}
+        }
+		
+		// Add a new item to the turn log
+		for(i = 0; i < turnOrder.length; i++) {
+			if(turnOrder[i].id != '-1') {
+				var token = getObj('graphic', turnOrder[i].id);
+				if(token.get('represents') == actor.get('_id')) {
+					var effect = {
+						id: '-1',
+						custom: effectName,
+						pr: duration,
+						formula: '-1'
+					};
+					var newTurnOrder = turnOrder.slice(0, i + 1).concat([effect]).concat(turnOrder.slice(i + 1));
+					Campaign().set('turnorder', JSON.stringify(newTurnOrder));
+					log('Effect ' + effectName + ' added to Turn Tracker.');
+					return;
+				}
+			}
+		}
+		log('Actor not found on Turn Tracker.');
+    }
+});
+
 // !rest command
 // Enter !rest in the chat to recover an Increment of HP/ST for each character.
 // Also sets everyone's Valor to starting value.
 // Does not consider Fast Healer skill.
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!rest') == 0
-        && msg.playerid === state.gmID) {
+        && playerIsGM(msg.playerid)) {
         var tokens = filterObjs(function(obj) {
             return obj.get('_type') == 'graphic' &&
                    obj.get('represents');
@@ -804,7 +858,7 @@ on('chat:message', function(msg) {
 // Also sets everyone's Valor to starting values.
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!fullrest') == 0
-        && msg.playerid === state.gmID) {
+        && playerIsGM(msg.playerid)) {
         var tokens = filterObjs(function(obj) {
             return obj.get('_type') == 'graphic' &&
                    obj.get('represents');
@@ -847,7 +901,7 @@ on('chat:message', function(msg) {
 // skill of level X.
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!set-bravado') == 0
-        && msg.playerid === state.gmID) {
+        && playerIsGM(msg.playerid)) {
         var args = msg.content.split(/\s+/);
         
         if(args.length < 2) {
@@ -880,7 +934,7 @@ on('chat:message', function(msg) {
 // X valor each round.
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!set-vrate') == 0
-        && msg.playerid === state.gmID) {
+        && playerIsGM(msg.playerid)) {
         var args = msg.content.split(/\s+/);
         if(args.length < 2) {
             log('Format: !set-vrate 2');
@@ -1063,13 +1117,13 @@ function processOngoingEffects(obj) {
 // initiative list changes.
 // Prevents repeat events when adjusting other things on the init list.
 on('change:campaign:turnorder', function(obj) {
-    var turnorder = JSON.parse(obj.get('turnorder'));
-    if(!turnorder || turnorder.length === 0) {
+    var turnOrder = JSON.parse(obj.get('turnorder'));
+    if(!turnOrder || turnOrder.length === 0) {
         // Do nothing if the init tracker is empty
         return;
     }
     
-    var topChar = turnorder[0];
+    var topChar = turnOrder[0];
     
     if(state.lastActor) {
         var nextActor;
@@ -1084,7 +1138,7 @@ on('change:campaign:turnorder', function(obj) {
         if(state.lastActor !== nextActor) {
             state.lastActor = nextActor;
             updateValor(obj);
-            trackStatuses(obj);
+            trackStatuses(turnOrder);
             processOngoingEffects(obj);
         }
     } else {
@@ -1149,4 +1203,9 @@ on('change:campaign:turnorder', function(obj) {
  * 
  * v1.4.4:
  * - Even more !t bugfixes.
+ * 
+ * v1.5.0:
+ * - Replaced the old Status Tracker with a new one.
+ * - Got rid of the need for the gmID field.
+ * - Added the !effect command.
  **/

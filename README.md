@@ -28,20 +28,15 @@ This is a collection of scripts that will automate a lot of important Valor logi
 ### Installation
 1. From your campaign's main page, click Settings, and go to API Scripts.
 2. Click New Script, and copy the contents of valor.js into the editor.
-3. Save Script.
-4. Keep this window open, and in another tab, open the campaign Roll20 editor.
-5. In the chat box, type "!scan".
-6. Back in the API Scripts tab, look in the API Output Console to find your Player ID.
-7. Find the line right near the top of the script file that starts with `state.gmID =`, and replace the string in there with your player ID.
-8. On the lines below that, decide which features you want to be on or off by setting them to 'true' or 'false'.
-9. Save Script.
+3. On the lines below the initial documentation, decide which features you want to be on or off by setting them to 'true' or 'false'.
+4. Save Script.
 
 ### New Commands
 
 #### Scan
 Syntax: `!scan`
 
-Displays, in the API Output Console, the current player ID and the URLs for the token images of all character-connected tokens in the game.
+Displays, in the API Output Console, the URLs for the token images of all character-connected tokens in the game.
 
 #### Use Tech
 Syntax: `!t Fireball 3 +1`
@@ -56,6 +51,11 @@ Examples:
 * `!t Fireball +1` Performs the Fireball technique and rolls against 1 target with a +1 bonus to the attack roll (if the second parameter starts with + or -, it'll read it as a roll bonus instead of a target count).
 * `!t "Doom F" 2 -1` Performs the Doom Fist technique and rolls against 2 targets with a -2 penalty to the attack roll.
 * `!t Doom Fist +2 3` Performs the Doom Fist technique and rolls against 3 targets with a +2 bonus to the attack roll.
+
+#### Add Effect
+Syntax: `!e Poison 2`
+
+Adds a temporary effect to the Turn Tracker for the current selected character. If desired, add a number to the end of the command to specify a duration - if none is added, it will default to 3 turns. **Select the character creating the effect, NOT the target.**
 
 #### Rest
 Syntax: `!rest`
@@ -79,9 +79,7 @@ Sets any selected characters to gain an amount of Valor per turn equal to the pr
 
 ### Automatic Features
 #### Status Tracker
-A convenient tool for tracking self-targeted boosts. When a character gains such an effect, click their token, then put your mouse over the desired status marker and press 3. This will give it a 3-turn timer that will tick down every time their turn ends. When it reaches 0, the marker will vanish.
-
-Note that this does not quite produce accurate behavior for effects placed by one character on another character, such as Weakens. For these, I recommend adding a label to the initiative tracker.
+Track temporary field effects by adding them as custom labels to the Turn Tracker, with a Round Calculation set to -1 (or use !e to do this automatically). The turn tracker will drop its remaining turns by 1 each turn, and when it reaches 0, it will automatically be removed from the Turn Tracker.
 
 #### Valor Updater
 After you finish adding all characters to the turn order, add a label to the bottom called 'Round' - this will mark when one round ends and the next begins. Every time it passes, characters will automatically gain Valor for the new round. The red bar is assumed to be Valor, and it won't give characters Valor unless they have a defined max Valor.
