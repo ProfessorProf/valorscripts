@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.4.3
+ * v1.4.4
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -440,8 +440,14 @@ on('chat:message', function(msg) {
         // Identify the technique
         var techs = getTechs(actor.get('_id'));
         var tech;
-        
+		
         var techId = split[1];
+		var nextParam = 2;
+		while(nextParam < split.length && parseInt(split[nextParam]) != parseInt(split[nextParam])) {
+			techId += ' ' + split[nextParam];
+			nextParam++;
+		}
+		
         if(techId[0] == '"') {
             techId = techId.substring(1, techId.length - 1);
         }
@@ -451,8 +457,6 @@ on('chat:message', function(msg) {
             // They put an integer, pull up tech by order
             if(techIdInt <= techs.length) {
                 tech = techs[techIdInt - 1];
-            } else {
-                log('Tech does not exist.');
             }
         } else {
             // They put a string, pull up tech by name
@@ -468,11 +472,14 @@ on('chat:message', function(msg) {
 				});
 				if(matchingTech) {
 					tech = matchingTech;
-				} else {
-					// Look for string anywhere in tech name
-					log('Tech does not exist.');
 				}
             }
+        }
+        
+        if(!tech) {
+		    log('Tech does not exist.');
+		    sendChat('Valor', '/w "' + msg.who + "\" I can't find that technique.");
+		    return;
         }
         
         var rollText = '';
@@ -482,28 +489,28 @@ on('chat:message', function(msg) {
            tech.core == 'weaken') {
             var targets = 1;
             var rollBonus = 0;
-            if(split.length > 2 && 
-                (split[2].indexOf('+') == -1 && split[2].indexOf('-') == -1)) {
-                var inputTargets = parseInt(split[2]);
-                if(inputTargets == inputTargets) {
-                    targets = inputTargets;
-                }
-				if(targets > 20) {
-					targets = 20;
+            while(split.length > nextParam) {
+                if(split[nextParam].indexOf('+') == -1 && split[nextParam].indexOf('-') == -1) {
+					var inputTargets = parseInt(split[nextParam]);
+					if(inputTargets == inputTargets) {
+						targets = inputTargets;
+					}
+					if(targets > 20) {
+						targets = 20;
+					}
+				} else {
+					var inputRollBonus = split[nextParam]
+					if(inputRollBonus.indexOf('+') == 0) {
+						inputRollBonus = inputRollBonus.substring(1);
+					}
+					var parsedBonus = parseInt(inputRollBonus);
+					if(parsedBonus == parsedBonus) {
+						rollBonus = parsedBonus;
+					}
 				}
+				nextParam++;
             }
-            if(split.length > 3 || 
-                (split.length == 3 && (split[2].indexOf('+') > -1 || split[2].indexOf('-') > -1))) {
-                var inputRollBonus = split.length == 3 ? split[2] : split[3];
-                if(inputRollBonus.indexOf('+') == 0) {
-                    inputRollBonus = inputRollBonus.substring(1);
-                }
-                var parsedBonus = parseInt(inputRollBonus);
-                if(parsedBonus == parsedBonus) {
-                    rollBonus = parsedBonus;
-                }
-            }
-            
+
             var roll = 0;
             switch(tech.stat) {
                 case 'str':
@@ -527,7 +534,7 @@ on('chat:message', function(msg) {
                     roll = parseInt(getAttrByName(actor.get('_id'), 'res')) + rollBonus;
                     break;
             }
-            
+			
             if(rollBonus > 0) {
                 rollText += '+' + rollBonus;
             } else if(rollBonus < 0) {
@@ -788,7 +795,7 @@ on('chat:message', function(msg) {
             token.set('bar3_value', startingValor);
         });
         
-        log('Partial rest complete.')
+        log('Partial rest complete.');
     }
 });
 
@@ -831,7 +838,7 @@ on('chat:message', function(msg) {
             token.set('bar3_value', startingValor);
         });
         
-        log('Full rest complete.')
+        log('Full rest complete.');
     }
 });
 
@@ -1139,4 +1146,7 @@ on('change:campaign:turnorder', function(obj) {
  * 
  * v1.4.3:
  * - Bugfix: !t only worked a tiny amount of the time.
+ * 
+ * v1.4.4:
+ * - Even more !t bugfixes.
  **/

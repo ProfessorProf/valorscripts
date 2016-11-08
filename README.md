@@ -46,15 +46,16 @@ Displays, in the API Output Console, the current player ID and the URLs for the 
 #### Use Tech
 Syntax: `!t Fireball 3 +1`
 
-Performs a technique as your character. If you're the GM, it'll pick one based on selected tokens. Tech can be indicated by number (1 is the top of the list), name (use quotation marks if it's more than one word), or start of name. Optionally, add a number after that if you want to roll against multiple targets. Finally, optionally indicate a bonus to add to the attack roll. Stamina, Health and Valor on the user will be used up automatically. `!t`, `!tech` and `!technique` can be used interchangeably.
+Performs a technique as your character. If you're the GM, it'll pick one based on selected tokens. Tech can be indicated by number (1 is the top of the list), name, or start of name. Optionally, add a number indicating the number of targets, and/or a number with a + or - before it indicating a bonus or penalty to the roll (order doesn't matter). Stamina, Health and Valor on the user will be used up automatically. `!t`, `!tech` and `!technique` can be used interchangeably.
 
 Examples:
 * `!t 1` Performs the first technique on your tech list.
 * `!tech Fi` Performs the first technique on your tech list starting with 'Fi' (i.e. Fireball).
-* `!technique "Doom Fist"` Performs the first technique on your tech list starting with 'Doom Fist'.
+* `!technique Doom Fist` Performs the first technique on your tech list starting with 'Doom Fist'.
 * `!t Fireball 3` Performs the Fireball technique and rolls against 3 targets.
 * `!t Fireball +1` Performs the Fireball technique and rolls against 1 target with a +1 bonus to the attack roll (if the second parameter starts with + or -, it'll read it as a roll bonus instead of a target count).
 * `!t "Doom F" 2 -1` Performs the Doom Fist technique and rolls against 2 targets with a -2 penalty to the attack roll.
+* `!t Doom Fist +2 3` Performs the Doom Fist technique and rolls against 3 targets with a +2 bonus to the attack roll.
 
 #### Rest
 Syntax: `!rest`
