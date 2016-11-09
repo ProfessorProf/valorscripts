@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.5.0
+ * v1.5.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -460,11 +460,21 @@ on('chat:message', function(msg) {
             if(matchingTech) {
                 tech = matchingTech;
             } else {
+				// Drop the Starts With requirement and try again
 				matchingTech = techs.find(function(t) {
 					return t.name.toLowerCase().indexOf(techId.toLowerCase()) > -1;
 				});
 				if(matchingTech) {
 					tech = matchingTech;
+				} else {
+					// Drop all non-alphanumeric characters and try again
+					var alphaTechId = techId.replace(/\W/g, '');
+					matchingTech = techs.find(function(t) {
+						return t.name.toLowerCase().replace(/\W/g, '').indexOf(alphaTechId.toLowerCase()) > -1;
+					});
+					if(matchingTech) {
+						tech = matchingTech;
+					}
 				}
             }
         }
@@ -575,50 +585,52 @@ on('chat:message', function(msg) {
             
             token.set('bar2_value', st);
             
-            var healthLimit = tech.limits.find(function(l) {
-                return l.toLowerCase().indexOf('health') == 0;
-            });
-            if(healthLimit) {
-                var healthLimitSplit = healthLimit.split(' ');
-                var healthLimitLevel = parseInt(healthLimitSplit[healthLimitSplit.length - 1]);
-                if(healthLimitLevel != healthLimitLevel) {
-                    healthLimitLevel = 1;
-                }
-                
-                var hp = parseInt(token.get('bar1_value'));
-                if(hp != hp) {
-                    hp = 0;
-                }
-                
-                hpCost = healthLimitLevel * 5;
-                hp -= hpCost;
-                
-                token.set('bar1_value', hp);
-            }
-            
-            var valorLimit = tech.limits.find(function(l) {
-                return l.toLowerCase().indexOf('valor c') == 0 ||
-                l.toLowerCase().indexOf('ult valor') == 0 ||
-                l.toLowerCase().indexOf('ultimate valor') == 0;
-            });
-            
-            if(valorLimit) {
-                var valorLimitSplit = valorLimit.split(' ');
-                var valorLimitLevel = parseInt(valorLimitSplit[valorLimitSplit.length - 1]);
-                if(valorLimitLevel != valorLimitLevel) {
-                    valorLimitLevel = 1;
-                }
-                
-                var valor = parseInt(token.get('bar3_value'));
-                if(valor != valor) {
-                    valor = 0;
-                }
-                
-                valorCost = valorLimitLevel;
-                valor -= valorCost;
-                
-                token.set('bar3_value', valor);
-            }
+			if(tech.limits) {
+				var healthLimit = tech.limits.find(function(l) {
+					return l.toLowerCase().indexOf('health') == 0;
+				});
+				if(healthLimit) {
+					var healthLimitSplit = healthLimit.split(' ');
+					var healthLimitLevel = parseInt(healthLimitSplit[healthLimitSplit.length - 1]);
+					if(healthLimitLevel != healthLimitLevel) {
+						healthLimitLevel = 1;
+					}
+					
+					var hp = parseInt(token.get('bar1_value'));
+					if(hp != hp) {
+						hp = 0;
+					}
+					
+					hpCost = healthLimitLevel * 5;
+					hp -= hpCost;
+					
+					token.set('bar1_value', hp);
+				}
+				
+				var valorLimit = tech.limits.find(function(l) {
+					return l.toLowerCase().indexOf('valor c') == 0 ||
+					l.toLowerCase().indexOf('ult valor') == 0 ||
+					l.toLowerCase().indexOf('ultimate valor') == 0;
+				});
+				
+				if(valorLimit) {
+					var valorLimitSplit = valorLimit.split(' ');
+					var valorLimitLevel = parseInt(valorLimitSplit[valorLimitSplit.length - 1]);
+					if(valorLimitLevel != valorLimitLevel) {
+						valorLimitLevel = 1;
+					}
+					
+					var valor = parseInt(token.get('bar3_value'));
+					if(valor != valor) {
+						valor = 0;
+					}
+					
+					valorCost = valorLimitLevel;
+					valor -= valorCost;
+					
+					token.set('bar3_value', valor);
+				}
+			}
             
             // Add used tech to the technique usage history
             if(!state.techHistory) {
@@ -656,7 +668,7 @@ on('chat:message', function(msg) {
         }
         
         if(state.techHistory.length == 0) {
-            log ("Can't remember any more tech usage.");
+            log("Can't remember any more tech usage.");
             return;
         }
         
@@ -1208,4 +1220,8 @@ on('change:campaign:turnorder', function(obj) {
  * - Replaced the old Status Tracker with a new one.
  * - Got rid of the need for the gmID field.
  * - Added the !effect command.
+ * 
+ * v1.5.1:
+ * - Bugfix: Techs with no limits block could crash the !t parser.
+ * - Tech parser no longer requires punctuation/spaces to be right for tech name.
  **/
