@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.0.8
+ * v1.0.9
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -53,6 +53,9 @@
  * 
  * v1.0.8:
  * - Calculation errors: Damage Increment, Ammunition Limit.
+ * 
+ * v1.0.9:
+ * - Color styling for !tech descriptions.
  * 
  **/
 
@@ -577,9 +580,9 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                                 summary += 'On a hit, deal ' + damage + ' physical damage to the target. '
                                 
                                 if(techMods.indexOf('piercing') > -1) {
-                                    microSummary = 'Damage: **' + damage + '**';
+                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span>';
                                 } else {
-                                    microSummary = 'Damage: **' + damage + '** - Defense';
+                                    microSummary = 'Damage:  <span style="color: darkred">**' + damage + '**</span> - Defense';
                                 }
                                 break;
                             case 'agi':
@@ -593,9 +596,9 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                                 summary += 'On a hit, deal ' + damage + ' physical damage to the target. '
                                 
                                 if(techMods.indexOf('piercing') > -1) {
-                                    microSummary = 'Damage: **' + damage + '**';
+                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span>';
                                 } else {
-                                    microSummary = 'Damage: **' + damage + '** - Defense';
+                                    microSummary = 'Damage:  <span style="color: darkred">**' + damage + '**</span> - Defense';
                                 }
                                 break;
                             case 'spr':
@@ -609,9 +612,9 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                                 summary += 'On a hit, deal ' + damage + ' energy damage to the target. '
                                 
                                 if(techMods.indexOf('piercing') > -1) {
-                                    microSummary = 'Damage: **' + damage + '**';
+                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span>';
                                 } else {
-                                    microSummary = 'Damage: **' + damage + '** - Resistance';
+                                    microSummary = 'Damage:  <span style="color: darkred">**' + damage + '**</span> - Resistance';
                                 }
                                 break;
                             case 'mnd':
@@ -625,9 +628,9 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                                 summary += 'On a hit, deal ' + damage + ' energy damage to the target. '
                                 
                                 if(techMods.indexOf('piercing') > -1) {
-                                    microSummary = 'Damage: **' + damage + '**';
+                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span>';
                                 } else {
-                                    microSummary = 'Damage: **' + damage + '** - Resistance';
+                                    microSummary = 'Damage:  <span style="color: darkred">**' + damage + '**</span> - Resistance';
                                 }
                                 break;
                         }
@@ -645,7 +648,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                                 break;
                         }
                         summary += 'Restore ' + healing + ' Health to the target. '
-                        microSummary += 'Restores **' + healing + '** Health';
+                        microSummary += 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP';
                         break;
                     case 'barrier':
                         summary += 'Create a Barrier of power ' + techCoreLevel + '. ';
@@ -660,7 +663,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                     case 'ultTransform':
                         var bonusHp = level * 10;
                         summary += 'Transform, gaining ' + bonusHp + ' HP and +1 to all Active Attributes. ';
-                        microSummary += 'HP +' + bonusHp;
+                        microSummary += 'HP +<span style="color:darkgreen">' + bonusHp + '</span>';
                         break;
                     case 'boost':
                     case 'weaken':
