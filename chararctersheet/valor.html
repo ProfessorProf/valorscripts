@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.0.9
+ * v1.1.0
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -57,11 +57,16 @@
  * v1.0.9:
  * - Color styling for !tech descriptions.
  * 
+ * v1.1.0:
+ * - Add button to auto-roll techniques.
+ * - Add buttons to auto-roll active attributes.
+ * 
  **/
 
 function calculateStats() {
     // Base calculations
-    getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type', 'flawLibrary', 'skillLibrary', 'coreLibrary'], function(values) {
+    getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type', 'flawLibrary', 'skillLibrary', 'coreLibrary', 'name'], function(values) {
+        log(values.name);
         var level = parseInt(values.level);
         var str = parseInt(values.str);
         var agi = parseInt(values.agi);
@@ -1477,8 +1482,9 @@ on('sheet:opened', function() {
             <input type="number" class="short-number" name="attr_str" value="5">
         </td>
         <td>Muscle:</td>
-        <td class="derived-value">
-            <span name="attr_mus" />
+        <td nowrap="nowrap">
+            <span class="derived-value" name="attr_mus"></span>
+            <button type="roll" value="/roll 1d10+@{mus} Muscle" name="roll_mus"></button>
         </td>
         <td>Strength:</td>
         <td class="derived-value">
@@ -1499,8 +1505,9 @@ on('sheet:opened', function() {
             <input type="number" class="short-number" name="attr_agi" value="5">
         </td>
         <td>Dexterity:</td>
-        <td class="derived-value">
-            <span name="attr_dex" />
+        <td nowrap="nowrap">
+            <span class="derived-value" name="attr_dex"></span>
+            <button type="roll" value="/roll 1d10+@{dex} Dexterity" name="roll_dex"></button>
         </td>
         <td>Agility:</td>
         <td class="derived-value">
@@ -1521,8 +1528,9 @@ on('sheet:opened', function() {
             <input type="number" class="short-number" name="attr_spr" value="5">
         </td>
         <td>Aura:</td>
-        <td class="derived-value">
-            <span name="attr_aur" />
+        <td nowrap="nowrap">
+            <span class="derived-value" name="attr_aur"></span>
+            <button type="roll" value="/roll 1d10+@{aur} Aura" name="roll_aur"></button>
         </td>
         <td>Spirit:</td>
         <td class="derived-value">
@@ -1543,8 +1551,9 @@ on('sheet:opened', function() {
             <input type="number" class="short-number" name="attr_mnd" value="5">
         </td>
         <td>Intuition:</td>
-        <td class="derived-value">
-            <span name="attr_int" />
+        <td nowrap="nowrap">
+            <span class="derived-value" name="attr_int"></span>
+            <button type="roll" value="/roll 1d10+@{int} Intuition" name="roll_int"></button>
         </td>
         <td>Mind:</td>
         <td class="derived-value">
@@ -1565,8 +1574,9 @@ on('sheet:opened', function() {
             <input type="number" class="short-number" name="attr_gut" value="5">
         </td>
         <td>Resolve:</td>
-        <td class="derived-value">
-            <span name="attr_res" />
+        <td nowrap="nowrap">
+            <span class="derived-value" name="attr_res"></span>
+            <button type="roll" value="/roll 1d10+@{res} Resolve" name="roll_res"></button>
         </td>
         <td colspan="2"></td> <!-- No Guts attack -->
         <td>Speed:</td>
@@ -1869,6 +1879,12 @@ on('sheet:opened', function() {
             </div>
         </div>
         <div class="sheet-col">
+            <div>
+                <button type='roll' value='!t --as "@{attr_name}" "@{tech_name}" @{tech_targets} +@{tech_bonus}' name='roll_useTech'>Use Technique</button>
+                Targets: <input type='number' value='1' name='attr_tech_targets'>
+                Bonus: <input type='number' value='0' name='attr_tech_bonus'>
+            </div>
+            <br />
             <div><span class="label" name="attr_tech_name"></span></div>
             <div><span name="attr_tech_summary"></span></div>
             <div><span name="attr_tech_warnings"></span></div>

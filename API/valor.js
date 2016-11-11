@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.5.1
+ * v1.5.2
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -422,9 +422,32 @@ on('chat:message', function(msg) {
             log('Not enough arguments.');
             return;
         }
-
+		
         // Figure out who's using a tech
-        var actor = getActor(msg);
+		var actor;
+		
+		// Check for --as parameter
+		var asParam = split.indexOf('--as') > -1;
+		if(asParam > -1 && split.length > asParam + 1) {
+			var asInput = split[asParam + 1];
+			if(asInput[0] == '"') {
+				asInput = asInput.substring(1, asInput.length - 1);
+			}
+			// Find a character with this name			
+			var characters = filterObjs(function(obj) {
+				return obj.get('_type') === 'character' &&
+					   obj.get('name') === asInput;
+			});
+			if(characters.length > 0) {
+				actor = characters[0];
+				split = split.splice(asParam, 2);
+			}
+		}
+
+		// --as failed or wasn't used, find through other means
+		if(!actor) {
+			actor = getActor(msg);
+		}
 		if(!actor) {
 			log('No usable character found for ' + msg.playerid);
 			return;
@@ -502,9 +525,13 @@ on('chat:message', function(msg) {
 						targets = 20;
 					}
 				} else {
-					var inputRollBonus = split[nextParam]
+					var inputRollBonus = split[nextParam];
 					if(inputRollBonus.indexOf('+') == 0) {
 						inputRollBonus = inputRollBonus.substring(1);
+						// Roll button can potentially add a second +, so check again
+    					if(inputRollBonus.indexOf('+') == 0) {
+    						inputRollBonus = inputRollBonus.substring(1);
+    					}
 					}
 					var parsedBonus = parseInt(inputRollBonus);
 					if(parsedBonus == parsedBonus) {
@@ -1223,5 +1250,8 @@ on('change:campaign:turnorder', function(obj) {
  * 
  * v1.5.1:
  * - Bugfix: Techs with no limits block could crash the !t parser.
- * - Tech parser no longer requires punctuation/spaces to be right for tech name.
+ * 
+ * v1.5.2:
+ * - Small bugfix to support the new roll tech buttons
+ * - Added --as parameter for tech roll
  **/
