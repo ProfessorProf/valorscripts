@@ -433,14 +433,16 @@ on('chat:message', function(msg) {
 			if(asInput[0] == '"') {
 				asInput = asInput.substring(1, asInput.length - 1);
 			}
+			
 			// Find a character with this name			
 			var characters = filterObjs(function(obj) {
 				return obj.get('_type') === 'character' &&
-					   obj.get('name') === asInput;
+					   obj.get('_id') === asInput;
 			});
+			
 			if(characters.length > 0) {
 				actor = characters[0];
-				split = split.splice(asParam, 2);
+				split.splice(asParam, 2);
 			}
 		}
 
@@ -456,8 +458,9 @@ on('chat:message', function(msg) {
         // Identify the technique
         var techs = getTechs(actor.get('_id'));
         var tech;
-		
+        
         var techId = split[1];
+        log(split);
 		var nextParam = 2;
 		while(nextParam < split.length && parseInt(split[nextParam]) != parseInt(split[nextParam])) {
 			techId += ' ' + split[nextParam];
