@@ -65,7 +65,7 @@
 
 function calculateStats() {
     // Base calculations
-    getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type', 'flawLibrary', 'skillLibrary', 'coreLibrary', 'name'], function(values) {
+    getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type', 'flawLibrary', 'skillLibrary', 'coreLibrary'], function(values) {
         log(values.name);
         var level = parseInt(values.level);
         var str = parseInt(values.str);
@@ -1880,7 +1880,7 @@ on('sheet:opened', function() {
         </div>
         <div class="sheet-col">
             <div>
-                <button type='roll' value='!t --as "@{attr_name}" "@{tech_name}" @{tech_targets} +@{tech_bonus}' name='roll_useTech'>Use Technique</button>
+                <button type='roll' value='!t --as "@{character_name}" "@{tech_name}" @{tech_targets} +@{tech_bonus}' name='roll_useTech'>Use Technique</button>
                 Targets: <input type='number' value='1' name='attr_tech_targets'>
                 Bonus: <input type='number' value='0' name='attr_tech_bonus'>
             </div>
