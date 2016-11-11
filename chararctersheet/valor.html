@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.1.0
+ * v1.1.1
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -61,6 +61,8 @@
  * - Add button to auto-roll techniques.
  * - Add buttons to auto-roll active attributes.
  * 
+ * v1.1.1:
+ * - Added initiative roller button.
  **/
 
 function calculateStats() {
@@ -1584,8 +1586,9 @@ on('sheet:opened', function() {
             <span name="attr_speed" />
         </td>
         <td>Initiative:</td>
-        <td class="derived-value">
-            <span name="attr_init" />
+        <td nowrap="nowrap">
+            <span class="derived-value" name="attr_init"></span>
+            <button type="roll" value="/roll 1d10+@{init} Initiative" name="roll_res"></button>
         </td>
     </tr>
 </table>

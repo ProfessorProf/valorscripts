@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.5.2
+ * v1.5.3
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -1257,4 +1257,7 @@ on('change:campaign:turnorder', function(obj) {
  * v1.5.2:
  * - Small bugfix to support the new roll tech buttons
  * - Added --as parameter for tech roll
+ * 
+ * v1.5.3:
+ * - Roll techs from character sheet buttons by ID instead of name
  **/
