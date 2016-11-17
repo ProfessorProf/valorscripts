@@ -44,6 +44,19 @@
     width: 220px !important;
 }
 
+
 td {
     padding-right: 10px;
+}
+
+.sheet-conditional-check {
+    display: none;
+}
+
+.sheet-conditional-block {
+    display: none;
+}
+
+.sheet-conditional-check:checked ~ .sheet-conditional-block {
+    display: inline;
 }

@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.1.1
+ * v1.2.0
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -63,6 +63,10 @@
  * 
  * v1.1.1:
  * - Added initiative roller button.
+ * 
+ * v1.2.0:
+ * - Added Granted Skills / Inflicted Flaws / Mimicked Tech fields.
+ * - Whirlwind now reduces cost for agility attacks.
  **/
 
 function calculateStats() {
@@ -447,6 +451,8 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
             techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_mods');
             techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_limits');
             techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_description');
+            techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_granted_skills');
+            techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_inflicted_flaws');
         }
         
         getAttrs(techFieldNames, function(techValues) {
@@ -461,6 +467,8 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
             for(var i=0; i < tidarray.length; i++) {
                 var techName = techValues['repeating_techs_' + tidarray[i] + '_tech_name'];
                 var techStat = techValues['repeating_techs_' + tidarray[i] + '_tech_stat'];
+                var techGrantedSkills = techValues['repeating_techs_' + tidarray[i] + '_tech_granted_skills'];
+                var techInflictedFlaws = techValues['repeating_techs_' + tidarray[i] + '_tech_inflicted_flaws'];
                 var techDescription = techValues['repeating_techs_' + tidarray[i] + '_tech_description'];
                 var techCore = 'damage';
                 if(techValues['repeating_techs_' + tidarray[i] + '_tech_core']) {
@@ -589,7 +597,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                                 if(techMods.indexOf('piercing') > -1) {
                                     microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span>';
                                 } else {
-                                    microSummary = 'Damage:  <span style="color: darkred">**' + damage + '**</span> - Defense';
+                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span> - Defense';
                                 }
                                 break;
                             case 'agi':
@@ -605,7 +613,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                                 if(techMods.indexOf('piercing') > -1) {
                                     microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span>';
                                 } else {
-                                    microSummary = 'Damage:  <span style="color: darkred">**' + damage + '**</span> - Defense';
+                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span> - Defense';
                                 }
                                 break;
                             case 'spr':
@@ -621,7 +629,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                                 if(techMods.indexOf('piercing') > -1) {
                                     microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span>';
                                 } else {
-                                    microSummary = 'Damage:  <span style="color: darkred">**' + damage + '**</span> - Resistance';
+                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span> - Resistance';
                                 }
                                 break;
                             case 'mnd':
@@ -637,7 +645,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                                 if(techMods.indexOf('piercing') > -1) {
                                     microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span>';
                                 } else {
-                                    microSummary = 'Damage:  <span style="color: darkred">**' + damage + '**</span> - Resistance';
+                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span> - Resistance';
                                 }
                                 break;
                         }
@@ -670,10 +678,35 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                     case 'ultTransform':
                         var bonusHp = level * 10;
                         summary += 'Transform, gaining ' + bonusHp + ' HP and +1 to all Active Attributes. ';
+                        if(techGrantedSkills) {
+                            summary += 'Grants Skills: ' + techGrantedSkills;
+                            microSummary += 'Skills: ' + techGrantedSkills;
+                            if(!summary.endsWith('.')) {
+                                summary += '.';
+                            }
+                            summary += ' ';
+                        }
                         microSummary += 'HP +<span style="color:darkgreen">' + bonusHp + '</span>';
                         break;
                     case 'boost':
+                        if(techGrantedSkills) {
+                            summary += 'Grants Skills: ' + techGrantedSkills;
+                            microSummary += 'Skills: ' + techGrantedSkills;
+                            if(!summary.endsWith('.')) {
+                                summary += '.';
+                            }
+                            summary += ' ';
+                        }
+                        break;
                     case 'weaken':
+                        if(techInflictedFlaws) {
+                            summary += 'Inflicts Flaws: ' + techInflictedFlaws;
+                            microSummary += 'Flaws: ' + techInflictedFlaws;
+                            if(!summary.endsWith('.')) {
+                                summary += '.';
+                            }
+                            summary += ' ';
+                        }
                         break;
                     default:
                         warnings += "WARNING: Unknown Core '" + techCore + "'. ";
@@ -682,8 +715,8 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                 
                 summary += '\n';
                 
-                var totalModLevel = 0;
                 // Display mods
+                var totalModLevel = 0;
                 var mods = techMods.split('\n');
                 mods.forEach(function(mod) {
                     // Try to get the level
@@ -829,7 +862,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                         }
                     } else if(mod.indexOf('whirlwind') == 0) {
                         summary += 'Targets all enemies in your Zone of Control. ';
-                        if(techStat == 'str') {
+                        if(techStat == 'str' || techStat == 'agi') {
                             totalModLevel++;
                         } else {
                             totalModLevel += 2;
@@ -1042,7 +1075,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                     } else if(limit.indexOf('grant') == 0) {
                         limitSt += limitLevel;
                     } else if(limit.indexOf('initiative') == 0) {
-                        limitSummary += 'Initiative redused by ' + limitLevel + ' after using this Technique. ';
+                        limitSummary += 'Initiative reduced by ' + limitLevel + ' after using this Technique. ';
                         limitSt += 3 * limitLevel;
                     } else if(limit.indexOf('immobile') == 0) {
                         limitSummary += "Can't be used if you've already moved this turn.";
@@ -1199,10 +1232,17 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                 attrs['repeating_techs_' + tidarray[i] + '_tech_summary'] = summary;
                 attrs['repeating_techs_' + tidarray[i] + '_tech_warnings'] = warnings;
                 attrs['repeating_techs_' + tidarray[i] + '_tech_mod_level'] = totalModLevel;
+                attrs['repeating_techs_' + tidarray[i] + '_tech_tech_level'] = techLevel;
                 attrs['repeating_techs_' + tidarray[i] + '_tech_limit_st'] = limitSt;
                 attrs['repeating_techs_' + tidarray[i] + '_tech_cost'] = cost;
-                attrs['repeating_techs_' + tidarray[i] + '_tech_core_type'] = techCore;
                 attrs['repeating_techs_' + tidarray[i] + '_tech_micro_summary'] = microSummary;
+                attrs['repeating_techs_' + tidarray[i] + '_tech_is_mimic'] = techCore == 'mimic'
+                    ? 'on' : 'off';
+                attrs['repeating_techs_' + tidarray[i] + '_tech_has_flaws'] = techCore == 'weaken'
+                    ? 'on' : 'off';
+                attrs['repeating_techs_' + tidarray[i] + '_tech_has_skills'] = techCore == 'boost' || techCore == 'ultTransform'
+                    ? 'on' : 'off';
+                log(attrs);
                 setAttrs(attrs, { silent: true });
             }
         });
@@ -1486,7 +1526,7 @@ on('sheet:opened', function() {
         <td>Muscle:</td>
         <td nowrap="nowrap">
             <span class="derived-value" name="attr_mus"></span>
-            <button type="roll" value="/roll 1d10+@{mus} Muscle" name="roll_mus"></button>
+            <button type="roll" value="[[1d10+@{mus}]] Muscle" name="roll_mus"></button>
         </td>
         <td>Strength:</td>
         <td class="derived-value">
@@ -1509,7 +1549,7 @@ on('sheet:opened', function() {
         <td>Dexterity:</td>
         <td nowrap="nowrap">
             <span class="derived-value" name="attr_dex"></span>
-            <button type="roll" value="/roll 1d10+@{dex} Dexterity" name="roll_dex"></button>
+            <button type="roll" value="[[1d10+@{dex}]] Dexterity" name="roll_dex"></button>
         </td>
         <td>Agility:</td>
         <td class="derived-value">
@@ -1532,7 +1572,7 @@ on('sheet:opened', function() {
         <td>Aura:</td>
         <td nowrap="nowrap">
             <span class="derived-value" name="attr_aur"></span>
-            <button type="roll" value="/roll 1d10+@{aur} Aura" name="roll_aur"></button>
+            <button type="roll" value="[[1d10+@{aur}]] Aura" name="roll_aur"></button>
         </td>
         <td>Spirit:</td>
         <td class="derived-value">
@@ -1555,7 +1595,7 @@ on('sheet:opened', function() {
         <td>Intuition:</td>
         <td nowrap="nowrap">
             <span class="derived-value" name="attr_int"></span>
-            <button type="roll" value="/roll 1d10+@{int} Intuition" name="roll_int"></button>
+            <button type="roll" value="[[1d10+@{int}]] Intuition" name="roll_int"></button>
         </td>
         <td>Mind:</td>
         <td class="derived-value">
@@ -1578,7 +1618,7 @@ on('sheet:opened', function() {
         <td>Resolve:</td>
         <td nowrap="nowrap">
             <span class="derived-value" name="attr_res"></span>
-            <button type="roll" value="/roll 1d10+@{res} Resolve" name="roll_res"></button>
+            <button type="roll" value="[[1d10+@{res}]] Resolve" name="roll_res"></button>
         </td>
         <td colspan="2"></td> <!-- No Guts attack -->
         <td>Speed:</td>
@@ -1588,7 +1628,7 @@ on('sheet:opened', function() {
         <td>Initiative:</td>
         <td nowrap="nowrap">
             <span class="derived-value" name="attr_init"></span>
-            <button type="roll" value="/roll 1d10+@{init} Initiative" name="roll_res"></button>
+            <button type="roll" value="[[1d10+@{init}]] Initiative" name="roll_res"></button>
         </td>
     </tr>
 </table>
@@ -1867,6 +1907,15 @@ on('sheet:opened', function() {
                     </td>
                 </tr>
             </table>
+        </div>
+        <div class="sheet-col">
+            <button type='roll' value='!t --as "@{character_id}" "@{tech_name}" @{tech_targets} +@{tech_bonus}' name='roll_useTech'> Use Technique</button>
+            Targets: <input type='number' value='1' name='attr_tech_targets'>
+            Bonus: <input type='number' value='0' name='attr_tech_bonus'>
+        </div>
+    </div>
+    <div class="sheet-2colrow">
+        <div class="sheet-col">
             <div class="tech-row">
                 Attribute: <select name="attr_tech_stat">
                     <option value="none" selected="selected">None</option>
@@ -1876,18 +1925,34 @@ on('sheet:opened', function() {
                     <option value="mnd">Mind</option>
                     <option value="gut">Guts</option>
                 </select>
-            </div><div class="label tech-row">Description</div>
+            </div>
+            <div class="label tech-row">Description</div>
             <div>
                 <textarea class="smallertext" name="attr_tech_description"></textarea>
             </div>
+            <div>
+                <input type="checkbox" class="conditional-check" name="attr_tech_has_skills">
+                <div class="tech-block conditional-block">
+                    <span class="label">Granted Skils: </span>
+                    <input type="text" name="attr_tech_granted_skills" />
+                </div>
+            </div>
+            <div>
+                <input type="checkbox" class="conditional-check" name="attr_tech_has_flaws">
+                <div class="tech-block conditional-block">
+                    <span class="label">Inflicted Flaws: </span>
+                    <input type="text" name="attr_tech_inflicted_flaws" />
+                </div>
+            </div>
+            <div>
+                <input type="checkbox" class="conditional-check" name="attr_tech_is_mimic">
+                <div class="tech-block conditional-block">
+                    <span class="label">Mimicked Tech: </span>
+                    <input type="text" name="attr_tech_mimic_target" />
+                </div>
+            </div>
         </div>
         <div class="sheet-col">
-            <div>
-                <button type='roll' value='!t --as "@{character_id}" "@{tech_name}" @{tech_targets} +@{tech_bonus}' name='roll_useTech'>Use Technique</button>
-                Targets: <input type='number' value='1' name='attr_tech_targets'>
-                Bonus: <input type='number' value='0' name='attr_tech_bonus'>
-            </div>
-            <br />
             <div><span class="label" name="attr_tech_name"></span></div>
             <div><span name="attr_tech_summary"></span></div>
             <div><span name="attr_tech_warnings"></span></div>

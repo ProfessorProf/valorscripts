@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.5.3
+ * v1.5.4
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -208,12 +208,12 @@ function getFlaws(charId) {
     return flaws;
 }
 
-// Internal function - gets a list of flaws and their levels for a character ID.
+// Internal function - gets a list of techs and their levels for a character ID.
 // Uses the Valor Character Sheet structure.
 function getTechs(charId) {
     var rawTechs = filterObjs(function(obj) {
         if(obj.get('_type') == 'attribute' &&
-           obj.get('_characterid') == charId &&
+           (!charId || obj.get('_characterid') == charId) &&
            obj.get('name').indexOf('repeating_techs') > -1) {
                return true;
         }
@@ -277,10 +277,143 @@ function getTechs(charId) {
             } else {
                 techs.push({ id: techId, limits: limits});
             }
+        } else if(techName.indexOf('tech_mods') > -1) {
+            var mods = rawTech.get('current').split('\n');
+            
+            if(oldTech) {
+                oldTech.mods = mods;
+            } else {
+                techs.push({ id: techId, mods: mods});
+            }
+        } else if(techName.indexOf('tech_micro_summary') > -1) {
+            if(oldTech) {
+                oldTech.summary = rawTech.get('current');
+            } else {
+                techs.push({ id: techId, summary: rawTech.get('current')});
+            }
+        } else if(techName.indexOf('tech_is_mimic') > -1) {
+            if(oldTech) {
+                oldTech.isMimic = rawTech.get('current');
+            } else {
+                techs.push({ id: techId, isMimic: rawTech.get('current')});
+            }
+        } else if(techName.indexOf('tech_mimic_target') > -1) {
+            if(oldTech) {
+                oldTech.mimicTarget = rawTech.get('current');
+            } else {
+                techs.push({ id: techId, mimicTarget: rawTech.get('current')});
+            }
+        } else if(techName.indexOf('tech_core_level') > -1) {
+            var coreLevel = parseInt(rawTech.get('current'));
+            if(coreLevel != coreLevel) {
+                coreLevel = 0;
+            }
+            if(oldTech) {
+                oldTech.coreLevel = coreLevel;
+            } else {
+                techs.push({ id: techId, coreLevel: coreLevel});
+            }
+        } else if(techName.indexOf('tech_level') > -1) {
+            var techLevel = parseInt(rawTech.get('current'));
+            if(techLevel != techLevel) {
+                techLevel = 0;
+            }
+            if(oldTech) {
+                oldTech.techLevel = techLevel;
+            } else {
+                techs.push({ id: techId, techLevel: techLevel});
+            }
+        } else if(techName.indexOf('tech_tech_stat') > -1) {
+            if(oldTech) {
+                oldTech.techStat = rawTech.get('current');
+            } else {
+                techs.push({ id: techId, techLevel: rawTech.get('current')});
+            }
         }
     });
     
     return techs;
+}
+
+function getTechByName(techId, charId) {
+    var techs = getTechs(charId);
+    var tech;
+    // They put a string, pull up tech by name
+    var matchingTech = techs.find(function(t) {
+        return t.name.toLowerCase().indexOf(techId.toLowerCase()) == 0;
+    });
+    
+    if(matchingTech) {
+        tech = matchingTech;
+    } else {
+		// Drop the Starts With requirement and try again
+		matchingTech = techs.find(function(t) {
+			return t.name.toLowerCase().indexOf(techId.toLowerCase()) > -1;
+		});
+		if(matchingTech) {
+			tech = matchingTech;
+		} else {
+			// Drop all non-alphanumeric characters and try again
+			var alphaTechId = techId.replace(/\W/g, '');
+			matchingTech = techs.find(function(t) {
+				return t.name.toLowerCase().replace(/\W/g, '').indexOf(alphaTechId.toLowerCase()) > -1;
+			});
+			if(matchingTech) {
+				tech = matchingTech;
+			}
+		}
+    }
+    
+    if(tech.core == 'mimic' && tech.mimicTarget && charId) {
+        // Re-get the mimicked technique
+        var mimicTech = tech;
+        tech = getTechByName(tech.mimicTarget);
+        tech.name = mimicTech.name + ' [' + tech.name + ']';
+
+        // Revise core level
+        tech.coreLevel = mimicTech.coreLevel - (tech.techLevel - tech.coreLevel);
+        
+        if(tech.coreLevel <= 0) {
+            tech.summary = "Failure - Mimic Core level too low"
+        } else {
+            // Recalculate healing/damage
+            switch(tech.core) {
+                case 'damage':
+                    var piercing = tech.mods.find(function(m) {
+                        return m.toLowerCase().indexOf('piercing') > -1;
+                    });
+                    var damage = (tech.coreLevel + 3) * 5;
+                    var atk = getAttrByName(charId, tech.stat + 'Atk');
+                    if(piercing) {
+                        damage = (tech.coreLevel + 3) * 4;
+                        atk = Math.ceil(atk / 2);
+                    }
+                    damage += atk;
+                    
+                    tech.summary = 'Damage: <span style="color: darkred">**' + 
+                                   damage +
+                                   ((tech.stat == 'str' || tech.stat == 'agi') ?
+                                   '**</span> - Defense' :
+                                   '**</span> - Resistance');
+                    break;
+                case 'healing':
+                    var healing = (tech.coreLevel + 3) * 5;
+                    var power = getAttrByName(charId, tech.stat);
+                    healing += power;
+                    
+                    tech.summary = 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP'
+                    break;
+            }
+        }
+        
+        // Roll using the chosen stat
+        tech.stat = mimicTech.stat;
+    }
+    
+    if(!tech.core) {
+        tech.core = 'damage';
+    }
+    return tech;
 }
 
 // Actor Identifier
@@ -456,61 +589,21 @@ on('chat:message', function(msg) {
 		}
 		
         // Identify the technique
-        var techs = getTechs(actor.get('_id'));
-        var tech;
-        
         var techId = split[1];
-        log(split);
 		var nextParam = 2;
 		while(nextParam < split.length && parseInt(split[nextParam]) != parseInt(split[nextParam])) {
 			techId += ' ' + split[nextParam];
 			nextParam++;
 		}
 		
-        if(techId[0] == '"') {
-            techId = techId.substring(1, techId.length - 1);
-        }
-        
-        var techIdInt = parseInt(techId);
-        if(techIdInt == techIdInt) {
-            // They put an integer, pull up tech by order
-            if(techIdInt <= techs.length) {
-                tech = techs[techIdInt - 1];
-            }
-        } else {
-            // They put a string, pull up tech by name
-            var matchingTech = techs.find(function(t) {
-                return t.name.toLowerCase().indexOf(techId.toLowerCase()) == 0;
-            });
-            
-            if(matchingTech) {
-                tech = matchingTech;
-            } else {
-				// Drop the Starts With requirement and try again
-				matchingTech = techs.find(function(t) {
-					return t.name.toLowerCase().indexOf(techId.toLowerCase()) > -1;
-				});
-				if(matchingTech) {
-					tech = matchingTech;
-				} else {
-					// Drop all non-alphanumeric characters and try again
-					var alphaTechId = techId.replace(/\W/g, '');
-					matchingTech = techs.find(function(t) {
-						return t.name.toLowerCase().replace(/\W/g, '').indexOf(alphaTechId.toLowerCase()) > -1;
-					});
-					if(matchingTech) {
-						tech = matchingTech;
-					}
-				}
-            }
-        }
-        
+        var tech = getTechByName(techId, actor.get('_id'));
+		
         if(!tech) {
 		    log('Tech does not exist.');
 		    sendChat('Valor', '/w "' + msg.who + "\" I can't find that technique.");
 		    return;
         }
-        
+		
         var rollText = '';
         
         if(tech.core == 'damage' ||
@@ -682,7 +775,7 @@ on('chat:message', function(msg) {
         }
         
         sendChat('character|' + actor.get('_id'), 'Performing Technique: **' + tech.name + '**\n' +
-                 rollText + '\n' +
+                 rollText + (rollText ? '\n' : '') +
                  tech.summary);
         log('Technique ' + tech.name + ' performed by ' + actor.get('name') + '.');
     }
@@ -740,7 +833,7 @@ on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!e ') == 0 || 
     msg.type == 'api' && msg.content.indexOf('!effect') == 0) {
         // Get params
-        var split = msg.content.split(' ');
+        var split = msg.content.match(/(".*?")|(\S+)/g);
         if(split.length < 2) {
             log('Not enough arguments.');
             return;
@@ -764,6 +857,10 @@ on('chat:message', function(msg) {
 		while(nextParam < split.length && parseInt(split[nextParam]) != parseInt(split[nextParam])) {
 			effectName += ' ' + split[nextParam];
 			nextParam++;
+		}
+		
+		if(effectName[0] == '"') {
+			effectName = effectName.substring(1, effectName.length - 1);
 		}
 		
 		var duration = 3;
@@ -1260,4 +1357,8 @@ on('change:campaign:turnorder', function(obj) {
  * 
  * v1.5.3:
  * - Roll techs from character sheet buttons by ID instead of name
+ * 
+ * v1.5.4:
+ * - Add support for mimic tech rolling
+ * - Cleaning up of tech roll output for some cores
  **/
