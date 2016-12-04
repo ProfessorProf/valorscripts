@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.2.0
+ * v1.2.1
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -67,6 +67,9 @@
  * v1.2.0:
  * - Added Granted Skills / Inflicted Flaws / Mimicked Tech fields.
  * - Whirlwind now reduces cost for agility attacks.
+ * 
+ * v1.2.1:
+ * - Added Flaws/Skills display for Debilitating Strike, Grant Flaw Limit, and Grant Skill Limit.
  **/
 
 function calculateStats() {
@@ -491,7 +494,9 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                 var summary = '';
                 var microSummary = '';
                 var warnings = ' ';
-                
+				
+				var hasSkills = false;
+				var hasFlaws = false;
                 var barrierFreebie = false;
                 
                 if(techCoreLevel < 1) {
@@ -687,6 +692,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                             summary += ' ';
                         }
                         microSummary += 'HP +<span style="color:darkgreen">' + bonusHp + '</span>';
+						hasSkills = true;
                         break;
                     case 'boost':
                         if(techGrantedSkills) {
@@ -697,6 +703,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                             }
                             summary += ' ';
                         }
+						hasSkills = true;
                         break;
                     case 'weaken':
                         if(techInflictedFlaws) {
@@ -707,6 +714,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                             }
                             summary += ' ';
                         }
+						hasFlaws = true;
                         break;
                     default:
                         warnings += "WARNING: Unknown Core '" + techCore + "'. ";
@@ -868,7 +876,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                             totalModLevel += 2;
                         }
                     } else if(mod.indexOf('debilitating') == 0) {
-                        // No change to summary or level
+                        hasFlaws = true;
                     } else if(mod.indexOf('drain') == 0) {
                         summary += 'On a hit, recover Health equal to half of damage dealt. ';
                     } else if(mod.indexOf('persistent') == 0) {
@@ -940,6 +948,12 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                     } else if(mod.indexOf('drop') == 0) {
                         summary += 'If target is flying, they fall and take ' + di + ' damage. ';
                         totalModLevel++;
+                    } else if(mod.indexOf('grant flaw') == 0) {
+                        totalModLevel += modLevel;
+						hasFlaws = true;
+                    } else if(mod.indexOf('grant skil') == 0) {
+                        totalModLevel += modLevel;
+						hasSkills = true;
                     } else if(mod.indexOf('high barrier') == 0) {
                         summary += 'Flying targets cannot cross the barrier. ';
                         totalModLevel += 2;
@@ -1238,9 +1252,9 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                 attrs['repeating_techs_' + tidarray[i] + '_tech_micro_summary'] = microSummary;
                 attrs['repeating_techs_' + tidarray[i] + '_tech_is_mimic'] = techCore == 'mimic'
                     ? 'on' : 'off';
-                attrs['repeating_techs_' + tidarray[i] + '_tech_has_flaws'] = techCore == 'weaken'
+                attrs['repeating_techs_' + tidarray[i] + '_tech_has_flaws'] = hasFlaws
                     ? 'on' : 'off';
-                attrs['repeating_techs_' + tidarray[i] + '_tech_has_skills'] = techCore == 'boost' || techCore == 'ultTransform'
+                attrs['repeating_techs_' + tidarray[i] + '_tech_has_skills'] = hasSkills
                     ? 'on' : 'off';
                 log(attrs);
                 setAttrs(attrs, { silent: true });

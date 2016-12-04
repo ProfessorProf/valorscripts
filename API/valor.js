@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.5.4
+ * v1.5.5
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -929,7 +929,7 @@ on('chat:message', function(msg) {
                     hp = 0;
                 }
                 
-                var hpRestore = maxHp / 5;
+                var hpRestore = Math.ceil(maxHp / 5);
                 
                 // Check for Fast Healing
                 if(skills.find(function(s) {
@@ -953,7 +953,7 @@ on('chat:message', function(msg) {
                 if(st < 0) {
                     st = 0;
                 }
-                st += maxSt / 5;
+                st += Math.ceil(maxSt / 5);
                 if(st > maxSt) {
                     st = maxSt;
                 }
@@ -980,9 +980,10 @@ on('chat:message', function(msg) {
                 }
             } else {
                 // No skillset found - use set-bravado value instead
-                if(state.charData[token.get('represents')] &&
-                    state.charData[token.get('represents')].bravado) {
-                    startingValor = state.charData[token.get('represents')].bravado;
+                if(state.charData && 
+                   state.charData[token.get('represents')] &&
+                   state.charData[token.get('represents')].bravado) {
+                   startingValor = state.charData[token.get('represents')].bravado;
                 }
             }
             token.set('bar3_value', startingValor);
@@ -1361,4 +1362,8 @@ on('change:campaign:turnorder', function(obj) {
  * v1.5.4:
  * - Add support for mimic tech rolling
  * - Cleaning up of tech roll output for some cores
+ * 
+ * v1.5.5:
+ * - !rest once again rounds to the nearest integer
+ * - Fixed a bug where !rest sometimes crashed the API
  **/
