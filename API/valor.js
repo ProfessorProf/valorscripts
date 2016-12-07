@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.5.6
+ * v1.5.6.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -235,7 +235,8 @@ function getTechs(charId) {
             } else {
                 techs.push({ id: techId, name: rawTech.get('current')});
             }
-        } else if(techName.indexOf('tech_core') > -1) {
+        } else if(techName.indexOf('tech_core') > -1 && 
+                  techName.indexOf('tech_core_') == -1) {
             if(oldTech) {
                 oldTech.core = rawTech.get('current');
             } else {
