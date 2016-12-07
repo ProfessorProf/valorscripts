@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.5.5
+ * v1.5.6
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -219,12 +219,7 @@ function getTechs(charId) {
         }
         return false;
     });
-    // ID
-    // Name
-    // Core
-    // Limits
-    // Cost
-    // Micro-summary
+    
     var techs = [];
     rawTechs.forEach(function(rawTech) {
         var techName = rawTech.get('name');
@@ -240,7 +235,7 @@ function getTechs(charId) {
             } else {
                 techs.push({ id: techId, name: rawTech.get('current')});
             }
-        } else if(techName.indexOf('tech_core_type') > -1) {
+        } else if(techName.indexOf('tech_core') > -1) {
             if(oldTech) {
                 oldTech.core = rawTech.get('current');
             } else {
@@ -364,7 +359,7 @@ function getTechByName(techId, charId) {
 		}
     }
     
-    if(tech.core == 'mimic' && tech.mimicTarget && charId) {
+    if(tech && tech.core == 'mimic' && tech.mimicTarget && charId) {
         // Re-get the mimicked technique
         var mimicTech = tech;
         tech = getTechByName(tech.mimicTarget);
@@ -603,7 +598,7 @@ on('chat:message', function(msg) {
 		    sendChat('Valor', '/w "' + msg.who + "\" I can't find that technique.");
 		    return;
         }
-		
+        
         var rollText = '';
         
         if(tech.core == 'damage' ||
@@ -638,6 +633,7 @@ on('chat:message', function(msg) {
             }
 
             var roll = 0;
+            
             switch(tech.stat) {
                 case 'str':
                     rollText += 'Rolling Muscle';
@@ -862,7 +858,6 @@ on('chat:message', function(msg) {
 		if(effectName[0] == '"') {
 			effectName = effectName.substring(1, effectName.length - 1);
 		}
-		
 		var duration = 3;
 		if(split.length > nextParam) {
 			var inputDuration = parseInt(split[nextParam]);
@@ -981,8 +976,8 @@ on('chat:message', function(msg) {
             } else {
                 // No skillset found - use set-bravado value instead
                 if(state.charData && 
-                   state.charData[token.get('represents')] &&
-                   state.charData[token.get('represents')].bravado) {
+				   state.charData[token.get('represents')] &&
+			       state.charData[token.get('represents')].bravado) {
                    startingValor = state.charData[token.get('represents')].bravado;
                 }
             }
@@ -1366,4 +1361,9 @@ on('change:campaign:turnorder', function(obj) {
  * v1.5.5:
  * - !rest once again rounds to the nearest integer
  * - Fixed a bug where !rest sometimes crashed the API
+ * 
+ * v1.5.6:
+ * - Bugfix: !t wasn't properly parsing tech cores other than Damage for some reason.
+ * - Bugfix: Mimic logic would occasionally crash the API.
+ * - Removed excess logging.
  **/
