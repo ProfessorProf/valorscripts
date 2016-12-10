@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.2.1
+ * v1.2.2
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -70,12 +70,15 @@
  * 
  * v1.2.1:
  * - Added Flaws/Skills display for Debilitating Strike, Grant Flaw Limit, and Grant Skill Limit.
+ * 
+ * v1.2.2: 
+ * - Bugfix: Custom Skill and Custom Flaw sometimes didn't cost/grant SP.
+ * - Removed unnecessary logging.
  **/
 
 function calculateStats() {
     // Base calculations
     getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type', 'flawLibrary', 'skillLibrary', 'coreLibrary'], function(values) {
-        log(values.name);
         var level = parseInt(values.level);
         var str = parseInt(values.str);
         var agi = parseInt(values.agi);
@@ -202,6 +205,9 @@ function calculateStats() {
                 var flawSP = 0;
                 for(var i=0; i < idarray.length; i++) {
                     var flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
+                    if(!flawName) {
+                        flawName = 'customFlaw';
+                    }
                     var flawLevel = 1;
                     if(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']) {
                         flawLevel = parseInt(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']);
@@ -253,6 +259,9 @@ function calculateStats() {
                     getAttrs(skillFieldNames, function(skillValues) {
                         for(var i=0; i < sidarray.length; i++) {
                             var skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                            if(!skillName) {
+                                skillName = 'customSkill';
+                            }
                             var skillLevel = 1;
                             if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
                                 skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
@@ -812,7 +821,6 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                             totalModLevel--;
                             barrierFreebie = false;
                         }
-                        log('added ' + modLevel);
                     } else if(mod.indexOf('line var') == 0) {
                         var variations = modLevel;
                         if(techStat == 'mnd') {
@@ -1256,7 +1264,6 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                     ? 'on' : 'off';
                 attrs['repeating_techs_' + tidarray[i] + '_tech_has_skills'] = hasSkills
                     ? 'on' : 'off';
-                log(attrs);
                 setAttrs(attrs, { silent: true });
             }
         });
