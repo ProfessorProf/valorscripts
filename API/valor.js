@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.5.6.1
+ * v1.5.7
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -67,6 +67,7 @@
  * - Select one or more characters and enter '!set-vrate X'
  * - Selected characters will now gain X valor per round.
  * - Default is 1.
+ * - You can ignore this if you're using the Valor Character Sheet.
  * 
  * !rest
  * - All tokens recover one increment of HP and ST.
@@ -406,7 +407,7 @@ function getTechByName(techId, charId) {
         tech.stat = mimicTech.stat;
     }
     
-    if(!tech.core) {
+    if(tech && !tech.core) {
         tech.core = 'damage';
     }
     return tech;
@@ -453,7 +454,7 @@ function getActor(msg) {
 // To use: Put a label on the turn tracker called 'Round' at the end of the
 // round. When you reach the end of the round, all characters with a red
 // bar max value will gain 1 Valor.
-// Does not consider Masters or Limitless Power skill.
+// Does not consider the Limitless Power skill.
 function updateValor(obj) {
     if(!state.valorUpdaterEnabled) {
         // Settings check
@@ -485,9 +486,17 @@ function updateValor(obj) {
             // If it has a max Valor, it's tracking Valor - raise it
             var valor = parseInt(token.get('bar3_value'));
             var valorRate = 1;
+            
             if(state.charData[charId] &&
-                state.charData[charId].valorRate) {
+                state.charData[charId].valorRate &&
+                parseInt(state.charData[charId].valorRate) != 1) {
                 valorRate = parseInt(state.charData[charId].valorRate);
+            } else {
+                var charClass = getAttrByName(charId, 'type');
+                if(charClass == 'master') {
+                    // Double Valor for masters
+                    valorRate *= 2;
+                }
             }
             
             valor += valorRate;
@@ -632,7 +641,13 @@ on('chat:message', function(msg) {
 				}
 				nextParam++;
             }
-
+            
+            var actorClass = getAttrByName(actor.get('_id'), 'type');
+            if(actorClass == 'master') {
+                // +1 to hit for Masters
+                rollBonus++;
+            }
+            
             var roll = 0;
             
             switch(tech.stat) {
@@ -1367,4 +1382,8 @@ on('change:campaign:turnorder', function(obj) {
  * - Bugfix: !t wasn't properly parsing tech cores other than Damage for some reason.
  * - Bugfix: Mimic logic would occasionally crash the API.
  * - Removed excess logging.
+ * 
+ * v1.5.7:
+ * - Various bugfixes.
+ * - Masters automatically get bonus Valor and +1 to attack rolls.
  **/
