@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.5.7
+ * v1.5.8
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -47,7 +47,7 @@
  * - Identifies the actor via selected token or 'As:' field or who you control.
  * - Rolls against the indicated number of targets (Default 1).
  * - Adds a bonus value to all rolls (Default 0).
- * - Automatically subtracks Stamina, Health and Valor from cost/limits.
+ * - Automatically subtracks Stamina, Health, Initiative and Valor from cost/limits.
  * 
  * !t-undo
  * - Reverts usage of previous technique, restoring all lost resources.
@@ -337,7 +337,8 @@ function getTechByName(techId, charId) {
     var tech;
     // They put a string, pull up tech by name
     var matchingTech = techs.find(function(t) {
-        return t.name.toLowerCase().indexOf(techId.toLowerCase()) == 0;
+        return t && t.name && 
+        t.name.toLowerCase().indexOf(techId.toLowerCase()) == 0;
     });
     
     if(matchingTech) {
@@ -454,7 +455,7 @@ function getActor(msg) {
 // To use: Put a label on the turn tracker called 'Round' at the end of the
 // round. When you reach the end of the round, all characters with a red
 // bar max value will gain 1 Valor.
-// Does not consider the Limitless Power skill.
+// Does not consider Masters or Limitless Power skill.
 function updateValor(obj) {
     if(!state.valorUpdaterEnabled) {
         // Settings check
@@ -494,7 +495,7 @@ function updateValor(obj) {
             } else {
                 var charClass = getAttrByName(charId, 'type');
                 if(charClass == 'master') {
-                    // Double Valor for masters
+                    // +1 to hit for Masters
                     valorRate *= 2;
                 }
             }
@@ -765,6 +766,33 @@ on('chat:message', function(msg) {
 					
 					token.set('bar3_value', valor);
 				}
+				
+				var initLimit = tech.limits.find(function(l) {
+					return l.toLowerCase().indexOf('init') == 0;
+				});
+				
+				if(initLimit) {
+					var initLimitSplit = initLimit.split(' ');
+					var initLimitLevel = parseInt(initLimitSplit[initLimitSplit.length - 1]);
+					if(initLimitLevel != initLimitLevel) {
+						initLimitLevel = 1;
+					}
+					
+					var turnOrder;
+                    if(Campaign().get('turnorder') == '') {
+                        turnOrder = [];
+                    } else {
+                        turnOrder = JSON.parse(Campaign().get('turnorder'));
+                    }
+                    
+                    turnOrder.forEach(function(turn) {
+                        if(turn && turn.id === token.get('_id')) {
+                            turn.pr -= initLimitLevel;
+                        }
+                    });
+                    
+                    Campaign().set('turnorder', JSON.stringify(turnOrder));
+				}
 			}
             
             // Add used tech to the technique usage history
@@ -786,9 +814,17 @@ on('chat:message', function(msg) {
             }
         }
         
-        sendChat('character|' + actor.get('_id'), 'Performing Technique: **' + tech.name + '**\n' +
-                 rollText + (rollText ? '\n' : '') +
-                 tech.summary);
+        var message = '<table>';
+        message += '<tr><td>Performing Technique: **' + tech.name + '**</td></tr>';
+        if(rollText) {
+            message += '<tr><td>' + rollText + '</td></tr>';
+        }
+        if(tech.summary) {
+            message += '<tr><td>' + tech.summary + '</td></tr>';
+        }
+        message += '</table>';
+        
+        sendChat('character|' + actor.get('_id'), message);
         log('Technique ' + tech.name + ' performed by ' + actor.get('name') + '.');
     }
 });
@@ -1386,4 +1422,8 @@ on('change:campaign:turnorder', function(obj) {
  * v1.5.7:
  * - Various bugfixes.
  * - Masters automatically get bonus Valor and +1 to attack rolls.
+ * 
+ * v1.5.8:
+ * - Initiative Limit automatically applied.
+ * - Cleaned up tech rendering.
  **/
