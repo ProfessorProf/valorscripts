@@ -16,7 +16,7 @@ The files in this folder will give you a full functioning in-game character shee
 ### Usage
 Mostly self-explanatory - just put values into boxes, and the sheet will update other values as necessary. For Skills such as Proficiency that require extra info, enter it into the Notes field to the right of the Skill/Flaw. If you want to use a custom Skill or Flaw that isn't in the system, enter Custom Skill or Custom Flaw, and add details to the right. Set the Skill/Flaw level to equal the amount of SP you want the Custom trait to be worth.
 
-For Techniques, Tech Level is automatically calculated based on core level and the list of modifiers. Put each mod on a separate line, ending with the mod level if relevant - if you want a Level 2 Ranged Technique modifier, put in something like "Ranged Technique 2" or "Ranged 2" - as long as it starts with 'ranged' and ends in '2', it'll read correctly. If there's no number listed, it will assume level 1.
+For Techniques, Tech Level is automatically calculated based on core level and the list of modifiers. Put each mod on a separate line, ending with the mod level if relevant - if you want a Level 2 Ranged Technique modifier, put in something like "Ranged Technique 2" or "Ranged 2" - as long as it starts with 'ranged' and ends in '2', it'll read correctly. If there's no number listed, it will assume level 1. Clicking the "Use Technique" button will automatically deduct from your resources as required for the tech's limits.
 
 Limits work the same way. For either one, if you want to use a mod or limit that isn't in the game library, preface it with Custom, i.e. "Custom - Encroachment Limit 4". The number will be used for either how many levels the mod adds to the technique, or as how much the limit reduces the Stamina cost by.
 
@@ -43,19 +43,21 @@ Syntax: `!t Fireball 3 +1`
 
 Performs a technique as your character. If you're the GM, it'll pick one based on selected tokens. Tech can be indicated by number (1 is the top of the list), name, or start of name. Optionally, add a number indicating the number of targets, and/or a number with a + or - before it indicating a bonus or penalty to the roll (order doesn't matter). Stamina, Health and Valor on the user will be used up automatically. `!t`, `!tech` and `!technique` can be used interchangeably.
 
-Examples:
+Any of these will work:
 * `!t 1` Performs the first technique on your tech list.
 * `!tech Fi` Performs the first technique on your tech list starting with 'Fi' (i.e. Fireball).
 * `!technique Doom Fist` Performs the first technique on your tech list starting with 'Doom Fist'.
 * `!t Fireball 3` Performs the Fireball technique and rolls against 3 targets.
 * `!t Fireball +1` Performs the Fireball technique and rolls against 1 target with a +1 bonus to the attack roll (if the second parameter starts with + or -, it'll read it as a roll bonus instead of a target count).
-* `!t "Doom F" 2 -1` Performs the Doom Fist technique and rolls against 2 targets with a -2 penalty to the attack roll.
+* `!t "Doom F" 2 -1` Performs the Doom Fist technique and rolls against 2 targets with a -1 penalty to the attack roll.
 * `!t Doom Fist +2 3` Performs the Doom Fist technique and rolls against 3 targets with a +2 bonus to the attack roll.
 
 #### Add Effect
 Syntax: `!e Poison 2`
 
 Adds a temporary effect to the Turn Tracker for the current selected character. If desired, add a number to the end of the command to specify a duration - if none is added, it will default to 3 turns. **Select the character creating the effect, NOT the target.**
+
+If you want to create an effect with a number in the name, use quotes, i.e. `!e "Ongoing 10"`.
 
 #### Rest
 Syntax: `!rest`
@@ -75,17 +77,14 @@ Syntax: `!set-bravado 1`
 #### Set Valor Rate
 Syntax: `!set-valor-rate 2`
 
-Sets any selected characters to gain an amount of Valor per turn equal to the provided number. Use for Masters or anyone with the Limitless Power skill.
+Sets any selected characters to gain an amount of Valor per turn equal to the provided number. Use for anyone with the Limitless Power skill (Masters will automatically gain 2 Valor per round).
 
 ### Automatic Features
 #### Status Tracker
 Track temporary field effects by adding them as custom labels to the Turn Tracker, with a Round Calculation set to -1 (or use !e to do this automatically). The turn tracker will drop its remaining turns by 1 each turn, and when it reaches 0, it will automatically be removed from the Turn Tracker.
 
 #### Valor Updater
-After you finish adding all characters to the turn order, add a label to the bottom called 'Round' - this will mark when one round ends and the next begins. Every time it passes, characters will automatically gain Valor for the new round. The red bar is assumed to be Valor, and it won't give characters Valor unless they have a defined max Valor.
-
-#### Max Value Sync
-When a character's maximum HP or ST changes for any reason, their current HP or ST will change by the same amount.
+After you finish adding all characters to the turn order, add a label to the bottom called 'Round' - this will mark when one round ends and the next begins. Every time it passes, characters will automatically gain Valor for the new round. The red bar is assumed to be Valor, and it won't give characters Valor unless they have a defined max Valor. Masters will gain double Valor.
 
 #### Ongoing Effect Processor
 When a character gains a regeneration or ongoing damage effect, add a label on the initiative right under them, and it will automatically process the effect after their turn.
