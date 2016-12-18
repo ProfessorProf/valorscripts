@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.5.8
+ * v1.6.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -566,7 +566,7 @@ on('chat:message', function(msg) {
 		var actor;
 		
 		// Check for --as parameter
-		var asParam = split.indexOf('--as') > -1;
+		var asParam = split.indexOf('--as');
 		if(asParam > -1 && split.length > asParam + 1) {
 			var asInput = split[asParam + 1];
 			if(asInput[0] == '"') {
@@ -585,15 +585,42 @@ on('chat:message', function(msg) {
 			}
 		}
 
+		// Check for --override parameter
+		var overrideLimits = split.indexOf('--override') > -1;
+		
 		// --as failed or wasn't used, find through other means
 		if(!actor) {
 			actor = getActor(msg);
 		}
+		
 		if(!actor) {
 			log('No usable character found for ' + msg.playerid);
 			return;
 		}
 		
+		// Get the initiative tracker, we may need it later
+		var turnOrder;
+        if(Campaign().get('turnorder') == '') {
+            turnOrder = [];
+        } else {
+            turnOrder = JSON.parse(Campaign().get('turnorder'));
+        }
+        
+        // Use selected token or first token on active page that represents character
+        var token;
+        if(msg.selected && msg.selected.length > 0) {
+            token = getObj('graphic', msg.selected[0]._id);
+        } else {
+            var tokens = findObjs({
+                _pageid: Campaign().get("playerpageid"),                              
+                _type: "graphic",
+				represents: actor.get('_id')
+            });
+            if(tokens.length > 0) {
+                token = tokens[0];
+            }
+        }
+        
         // Identify the technique
         var techId = split[1];
 		var nextParam = 2;
@@ -609,6 +636,109 @@ on('chat:message', function(msg) {
 		    sendChat('Valor', '/w "' + msg.who + "\" I can't find that technique.");
 		    return;
         }
+        
+        // Check for blocking limits
+		if(tech.limits && !overrideLimits) {
+		    var blocked = false;
+		    var errorMessage = '';
+		    
+		    // Check valor limit
+			var valorLimit = tech.limits.find(function(l) {
+			    var name = l.toLowerCase();
+				return ((name.indexOf('valor') == 0 &&
+				         name.indexOf('valor c') != 0) ||
+				         name.indexOf('ultimate v') == 0);
+			});
+			
+			if(valorLimit) {
+				var valorLimitSplit = valorLimit.split(' ');
+				var valorLimitLevel = parseInt(valorLimitSplit[valorLimitSplit.length - 1]);
+				if(valorLimitLevel != valorLimitLevel) {
+					valorLimitLevel = 1;
+				}
+				
+				var currentValor = getAttrByName(actor.get('_id'), 'valor');
+				if(currentValor < valorLimitLevel) {
+				    errorMessage += 'You need at least ' + valorLimitLevel + ' Valor to use this Technique.<br>';
+				    blocked = true;
+				}
+			}
+			
+			// Check Injury Limit
+			var injuryLimit = tech.limits.find(function(l) {
+				return l.toLowerCase().indexOf('injury') == 0;
+			});
+			
+			if(injuryLimit) {
+				var injuryLimitSplit = injuryLimit.split(' ');
+				var injuryLimitLevel = parseInt(injuryLimitSplit[injuryLimitSplit.length - 1]);
+				if(injuryLimitLevel != injuryLimitLevel) {
+					injuryLimitLevel = 1;
+				}
+				
+				var hp = parseInt(token.get('bar1_value'));
+				var hpMax = parseInt(token.get('bar1_max'));
+				var hpTarget = Math.ceil(hpMax / 5 * (5 - injuryLimitLevel));
+				
+				if(hp > hpTarget) {
+				    errorMessage += 'Your Health must be ' + hpTarget + ' or lower to use this Technique.<br>';
+				    blocked = true;
+				}
+			}
+			
+			// Check Initiative Limit
+			var initiativeLimit = tech.limits.find(function(l) {
+				return l.toLowerCase().indexOf('init') == 0;
+			});
+			
+			if(initiativeLimit) {
+				var initiativeLimitSplit = initiativeLimit.split(' ');
+				var initiativeLimitLevel = parseInt(initiativeLimitSplit[initiativeLimitSplit.length - 1]);
+				if(initiativeLimitLevel != initiativeLimitLevel) {
+					initiativeLimitLevel = 1;
+				}
+				
+                turnOrder.forEach(function(turn) {
+                    if(turn && turn.id === token.get('_id')) {
+                        if(turn.pr <= initiativeLimitLevel) {
+                            errorMessage += 'Your Initiative is too low to use this Technique.<br>';
+                            blocked = true;
+                        }
+                    }
+                });
+			}
+			
+			// Check Set-Up Limit
+			var setUpLimit = tech.limits.find(function(l) {
+				return l.toLowerCase().indexOf('set') == 0;
+			});
+			
+			if(setUpLimit) {
+			    var round = turnOrder.find(function(t) {
+					return t && t.custom && 
+					t.custom.toLowerCase() == 'round';
+				});
+				if(round) {
+    				var setUpLimitSplit = setUpLimit.split(' ');
+    				var setUpLimitLevel = parseInt(setUpLimitSplit[setUpLimitSplit.length - 1]);
+    				if(setUpLimitLevel != setUpLimitLevel) {
+    					setUpLimitLevel = 1;
+    				}
+    				
+    				if(round.pr <= setUpLimitLevel) {
+    				    errorMessage += "You can't use this Technique until round " + (setUpLimitLevel + 1) + '.<br>';
+    				    blocked = true;
+    				}
+				}
+			}
+			
+			if(blocked) {
+			    var cleanButton = msg.content.replace(/\"/g, '&#34;');
+			    errorMessage += '[Override](' + cleanButton + ' --override)';
+			    sendChat('Valor', '/w "' + actor.get('name') + '" ' + errorMessage);
+			    return;
+			}
+		}
         
         var rollText = '';
         
@@ -692,21 +822,6 @@ on('chat:message', function(msg) {
         }
         
         // Pay costs
-        // Use selected token or first token on active page that represents character
-        var token;
-        if(msg.selected && msg.selected.length > 0) {
-            token = getObj('graphic', msg.selected[0]._id);
-        } else {
-            var tokens = findObjs({
-                _pageid: Campaign().get("playerpageid"),                              
-                _type: "graphic",
-				represents: actor.get('_id')
-            });
-            if(tokens.length > 0) {
-                token = tokens[0];
-            }
-        }
-        
         if(token) {
             var hpCost = 0;
             var stCost = tech.cost;
@@ -778,13 +893,6 @@ on('chat:message', function(msg) {
 						initLimitLevel = 1;
 					}
 					
-					var turnOrder;
-                    if(Campaign().get('turnorder') == '') {
-                        turnOrder = [];
-                    } else {
-                        turnOrder = JSON.parse(Campaign().get('turnorder'));
-                    }
-                    
                     turnOrder.forEach(function(turn) {
                         if(turn && turn.id === token.get('_id')) {
                             turn.pr -= initLimitLevel;
@@ -1426,4 +1534,7 @@ on('change:campaign:turnorder', function(obj) {
  * v1.5.8:
  * - Initiative Limit automatically applied.
  * - Cleaned up tech rendering.
+ * 
+ * v1.6.0
+ * - !t command now honors a few limits: Valor, Ultimate Valor, Initiative, Injury, Set-Up.
  **/
