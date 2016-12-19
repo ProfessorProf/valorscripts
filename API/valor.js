@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.6.0
+ * v1.6.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -354,7 +354,8 @@ function getTechByName(techId, charId) {
 			// Drop all non-alphanumeric characters and try again
 			var alphaTechId = techId.replace(/\W/g, '');
 			matchingTech = techs.find(function(t) {
-				return t.name.toLowerCase().replace(/\W/g, '').indexOf(alphaTechId.toLowerCase()) > -1;
+				return t && t.name &&
+				t.name.toLowerCase().replace(/\W/g, '').indexOf(alphaTechId.toLowerCase()) > -1;
 			});
 			if(matchingTech) {
 				tech = matchingTech;
@@ -606,6 +607,12 @@ on('chat:message', function(msg) {
             turnOrder = JSON.parse(Campaign().get('turnorder'));
         }
         
+	    var roundItem = turnOrder.find(function(t) {
+			return t && t.custom && 
+			t.custom.toLowerCase() == 'round';
+		});
+		var round = roundItem ? roundItem.pr : 0;
+		
         // Use selected token or first token on active page that represents character
         var token;
         if(msg.selected && msg.selected.length > 0) {
@@ -637,10 +644,30 @@ on('chat:message', function(msg) {
 		    return;
         }
         
+        // Pull tech usage data from the state
+        var techDataId = actor.get('_id') + '.' + tech.name;
+        if(!state.techData) {
+            state.techData = {};
+        }
+        if(!state.techData[techDataId]) {
+            state.techData[techDataId] = {
+                timesUsed: []
+            };
+        }
+        var techData = state.techData[techDataId];
+        
         // Check for blocking limits
 		if(tech.limits && !overrideLimits) {
 		    var blocked = false;
 		    var errorMessage = '';
+    		    
+            // Check stamina
+		    var st = parseInt(token.get('bar1_value'));
+		    
+		    if(st == st && st < tech.cost) {
+		        errorMessage += "You don't have enough Stamina to use this Technique.<br>";
+		        blocked = true;
+		    }
 		    
 		    // Check valor limit
 			var valorLimit = tech.limits.find(function(l) {
@@ -714,10 +741,6 @@ on('chat:message', function(msg) {
 			});
 			
 			if(setUpLimit) {
-			    var round = turnOrder.find(function(t) {
-					return t && t.custom && 
-					t.custom.toLowerCase() == 'round';
-				});
 				if(round) {
     				var setUpLimitSplit = setUpLimit.split(' ');
     				var setUpLimitLevel = parseInt(setUpLimitSplit[setUpLimitSplit.length - 1]);
@@ -725,15 +748,55 @@ on('chat:message', function(msg) {
     					setUpLimitLevel = 1;
     				}
     				
-    				if(round.pr <= setUpLimitLevel) {
+    				if(round <= setUpLimitLevel) {
     				    errorMessage += "You can't use this Technique until round " + (setUpLimitLevel + 1) + '.<br>';
     				    blocked = true;
     				}
 				}
 			}
 			
+			// Check Ammunition Limit
+			var ammoLimit = tech.limits.find(function(l) {
+				return l.toLowerCase().indexOf('amm') == 0;
+			});
+			
+			if(ammoLimit) {
+				var ammoLimitSplit = ammoLimit.split(' ');
+				var ammoLimitLevel = parseInt(ammoLimitSplit[ammoLimitSplit.length - 1]);
+				if(ammoLimitLevel != ammoLimitLevel) {
+					ammoLimitLevel = 1;
+				}
+				
+				if(techData.timesUsed.length > 3 - ammoLimitLevel) {
+				    errorMessage += 'This Technique is out of ammunition.<br>';
+				    blocked = true;
+				}
+			}
+			
+			
+			// Check Cooldown Limit
+			var cooldownLimit = tech.limits.find(function(l) {
+				return l.toLowerCase().indexOf('cooldown') == 0;
+			});
+			
+			if(cooldownLimit && round) {
+				var cooldownLimitSplit = cooldownLimit.split(' ');
+				var cooldownLimitLevel = parseInt(cooldownLimitSplit[cooldownLimitSplit.length - 1]);
+				if(cooldownLimitLevel != cooldownLimitLevel) {
+					cooldownLimitLevel = 1;
+				}
+				
+				if(techData.timesUsed.length > 0) {
+    				var lastTurnUsed = techData.timesUsed[techData.timesUsed.length - 1];
+    				if(round <= lastTurnUsed + cooldownLimitLevel) {
+    				    errorMessage += 'This Technique is still on cooldown.<br>'
+    				    blocked = true;
+    				}
+				}
+			}
+			
 			if(blocked) {
-			    var cleanButton = msg.content.replace(/\"/g, '&#34;');
+			    var cleanButton = msg.content.replace(/\"/g, '&#34' + ';'); // Concatenated to keep the editor from freaking out
 			    errorMessage += '[Override](' + cleanButton + ' --override)';
 			    sendChat('Valor', '/w "' + actor.get('name') + '" ' + errorMessage);
 			    return;
@@ -915,6 +978,7 @@ on('chat:message', function(msg) {
                 stCost: stCost,
                 valorCost: valorCost
             });
+            state.techData[techDataId].timesUsed.push(round);
             
             if(state.techHistory.length > 20) {
                 // Don't let the tech history get too long
@@ -944,6 +1008,9 @@ on('chat:message', function(msg) {
         // Get the last tech's data out of the tech history
         if(!state.techHistory) {
             state.techHistory = [];
+        }
+        if(!state.techData) {
+            state.techData = {};
         }
         
         if(state.techHistory.length == 0) {
@@ -980,6 +1047,13 @@ on('chat:message', function(msg) {
         
         // Remove tech from history
         state.techHistory = state.techHistory.slice(0, state.techHistory.length - 1);
+        
+        var techDataId = token.get('represents') + '.' + techLog.techName;
+        if(state.techData[techDataId]) {
+            state.techData[techDataId].timesUsed = state.techData[techDataId].timesUsed.slice(0, 
+            state.techData[techDataId].timesUsed.length - 1);
+        }
+        
         log('Reverted technique ' + techLog.techName + ' used by ' + token.get('name') + '. ' + state.techHistory.length + ' techs remaining in history log.');
     }
 });
@@ -1144,6 +1218,8 @@ on('chat:message', function(msg) {
             token.set('bar3_value', startingValor);
         });
         
+        state.techData = {};
+        
         log('Partial rest complete.');
     }
 });
@@ -1186,6 +1262,8 @@ on('chat:message', function(msg) {
             }
             token.set('bar3_value', startingValor);
         });
+        
+        state.techData = {};
         
         log('Full rest complete.');
     }
@@ -1535,6 +1613,10 @@ on('change:campaign:turnorder', function(obj) {
  * - Initiative Limit automatically applied.
  * - Cleaned up tech rendering.
  * 
- * v1.6.0
+ * v1.6.0:
  * - !t command now honors a few limits: Valor, Ultimate Valor, Initiative, Injury, Set-Up.
+ * 
+ * v1.6.1:
+ * - Fixed bug regarding techniques with no names.
+ * - !t command now honors Ammunition Limit, Cooldown Limit and Stamina cost.
  **/
