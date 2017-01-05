@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.6.1
+ * v1.6.2
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -86,6 +86,7 @@ state.valorUpdaterEnabled = true;
 state.maxValueSyncEnabled = true;
 state.ongoingEffectProcessor = true;
 state.tokenSyncEnabled = false;
+state.ignoreLimitsOnMinions = true; // Disables limit blocking for Flunkies and Soldiers.
 
 // Status Tracker
 // While this is active, any numbered status markers will automatically
@@ -333,6 +334,10 @@ function getTechs(charId) {
 }
 
 function getTechByName(techId, charId) {
+    if(!techId) {
+        return undefined;
+    }
+    
     var techs = getTechs(charId);
     var tech;
     // They put a string, pull up tech by name
@@ -373,7 +378,8 @@ function getTechByName(techId, charId) {
         tech.coreLevel = mimicTech.coreLevel - (tech.techLevel - tech.coreLevel);
         
         if(tech.coreLevel <= 0) {
-            tech.summary = "Failure - Mimic Core level too low"
+            // Set core type back to mimic so that invocation can see it
+            tech.core = 'mimic';
         } else {
             // Recalculate healing/damage
             switch(tech.core) {
@@ -524,6 +530,57 @@ function updateValor(obj) {
     log('Valor updated for new round.')
 }
 
+function alertCooldowns() {
+	var turnOrder;
+    if(Campaign().get('turnorder') == '') {
+        turnOrder = [];
+    } else {
+        turnOrder = JSON.parse(Campaign().get('turnorder'));
+    }
+    
+    var roundItem = turnOrder.find(function(t) {
+		return t && t.custom && 
+		t.custom.toLowerCase() == 'round';
+	});
+	var round = roundItem ? roundItem.pr : 0;
+	if(!round) {
+	    return;
+	}
+	
+	if(!state.techData) {
+	    state.techData = {};
+	}
+	
+	for(var key in state.techData) {
+	    if(state.techData.hasOwnProperty(key)) {
+	        var techData = state.techData[key];
+	        var tech = getTechByName(techData.techName, techData.userId);
+	        
+	        // Look for cooldown limit
+	        if(tech.limits) {
+    			var cooldownLimit = tech.limits.find(function(l) {
+    				return l.toLowerCase().indexOf('cooldown') == 0;
+    			});
+    			
+    			if(cooldownLimit) {
+    				var cooldownLimitSplit = cooldownLimit.split(' ');
+    				var cooldownLimitLevel = parseInt(cooldownLimitSplit[cooldownLimitSplit.length - 1]);
+    				if(cooldownLimitLevel != cooldownLimitLevel) {
+    					cooldownLimitLevel = 1;
+    				}
+    				
+    				if(techData.timesUsed.length > 0) {
+        				var lastTurnUsed = techData.timesUsed[techData.timesUsed.length - 1];
+        				if(round == lastTurnUsed + cooldownLimitLevel + 1) {
+    	    			    sendChat('Valor', '/w "' + techData.userName + '" Technique "' + techData.techName + '" is no longer on cooldown.');
+        				}
+    				}
+    			}
+	        }
+	    }
+	}
+}
+
 // !scan command
 // Enter !scan in the chat to output each character's token image URL to the 
 // logs.
@@ -593,12 +650,12 @@ on('chat:message', function(msg) {
 		if(!actor) {
 			actor = getActor(msg);
 		}
-		
 		if(!actor) {
 			log('No usable character found for ' + msg.playerid);
 			return;
 		}
-		
+        var actorClass = getAttrByName(actor.get('_id'), 'type');
+        
 		// Get the initiative tracker, we may need it later
 		var turnOrder;
         if(Campaign().get('turnorder') == '') {
@@ -644,6 +701,12 @@ on('chat:message', function(msg) {
 		    return;
         }
         
+        // Failed mimic check
+        if(tech.core == 'mimic' && tech.coreLevel <= 0) {
+		    sendChat('Valor', '/w "' + actor.get('name') + '" ' + 'Core Level is too low to mimic this technique.');
+            return;
+        }
+        
         // Pull tech usage data from the state
         var techDataId = actor.get('_id') + '.' + tech.name;
         if(!state.techData) {
@@ -651,16 +714,21 @@ on('chat:message', function(msg) {
         }
         if(!state.techData[techDataId]) {
             state.techData[techDataId] = {
-                timesUsed: []
+                timesUsed: [],
+                techName: tech.name,
+                userId: actor.get('_id'),
+                userName: actor.get('name')
             };
         }
         var techData = state.techData[techDataId];
         
         // Check for blocking limits
-		if(tech.limits && !overrideLimits) {
+		if(tech.limits && !overrideLimits && 
+		        (!state.ignoreStaminaOnMinions || 
+                (actorClass != 'flunky' && actorClass != 'soldier'))) {
 		    var blocked = false;
 		    var errorMessage = '';
-    		    
+		    
             // Check stamina
 		    var st = parseInt(token.get('bar1_value'));
 		    
@@ -773,7 +841,6 @@ on('chat:message', function(msg) {
 				}
 			}
 			
-			
 			// Check Cooldown Limit
 			var cooldownLimit = tech.limits.find(function(l) {
 				return l.toLowerCase().indexOf('cooldown') == 0;
@@ -796,7 +863,7 @@ on('chat:message', function(msg) {
 			}
 			
 			if(blocked) {
-			    var cleanButton = msg.content.replace(/\"/g, '&#34' + ';'); // Concatenated to keep the editor from freaking out
+			    var cleanButton = msg.content.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
 			    errorMessage += '[Override](' + cleanButton + ' --override)';
 			    sendChat('Valor', '/w "' + actor.get('name') + '" ' + errorMessage);
 			    return;
@@ -836,7 +903,6 @@ on('chat:message', function(msg) {
 				nextParam++;
             }
             
-            var actorClass = getAttrByName(actor.get('_id'), 'type');
             if(actorClass == 'master') {
                 // +1 to hit for Masters
                 rollBonus++;
@@ -867,6 +933,14 @@ on('chat:message', function(msg) {
                     break;
             }
 			
+            var accurate = tech.mods.find(function(m) {
+                return m.toLowerCase().indexOf('accurate') > -1;
+            });
+            
+            if(accurate) {
+                rollBonus += 2;
+            }
+            
             if(rollBonus > 0) {
                 rollText += '+' + rollBonus;
             } else if(rollBonus < 0) {
@@ -966,20 +1040,6 @@ on('chat:message', function(msg) {
 				}
 			}
             
-            // Add used tech to the technique usage history
-            if(!state.techHistory) {
-                state.techHistory = [];
-            }
-            
-            state.techHistory.push({
-                id: token.get('_id'),
-                techName: tech.name,
-                hpCost: hpCost,
-                stCost: stCost,
-                valorCost: valorCost
-            });
-            state.techData[techDataId].timesUsed.push(round);
-            
             if(state.techHistory.length > 20) {
                 // Don't let the tech history get too long
                 state.techHistory = state.techHistory.slice(1);
@@ -997,6 +1057,39 @@ on('chat:message', function(msg) {
         message += '</table>';
         
         sendChat('character|' + actor.get('_id'), message);
+        
+        // Add used tech to the technique usage history
+        if(!state.techHistory) {
+            state.techHistory = [];
+        }
+        
+        state.techHistory.push({
+            id: token.get('_id'),
+            techName: tech.name,
+            hpCost: hpCost,
+            stCost: stCost,
+            valorCost: valorCost
+        });
+        state.techData[techDataId].timesUsed.push(round);
+        
+        // Inform if Ammo has run out
+        if(tech.limits) {
+    		var ammoLimit = tech.limits.find(function(l) {
+    			return l.toLowerCase().indexOf('amm') == 0;
+    		});
+    		
+    		if(ammoLimit) {
+    			var ammoLimitSplit = ammoLimit.split(' ');
+    			var ammoLimitLevel = parseInt(ammoLimitSplit[ammoLimitSplit.length - 1]);
+    			if(ammoLimitLevel != ammoLimitLevel) {
+    				ammoLimitLevel = 1;
+    			}
+                if(state.techData[techDataId].timesUsed.length == 4 - ammoLimitLevel) {
+    			    sendChat('Valor', '/w "' + actor.get('name') + '" This Technique is now out of ammunition.');
+                }
+    		}
+        }
+		
         log('Technique ' + tech.name + ' performed by ' + actor.get('name') + '.');
     }
 });
@@ -1513,6 +1606,7 @@ on('change:campaign:turnorder', function(obj) {
             updateValor(obj);
             trackStatuses(turnOrder);
             processOngoingEffects(obj);
+            alertCooldowns();
         }
     } else {
         if(topChar.custom) {
@@ -1619,4 +1713,11 @@ on('change:campaign:turnorder', function(obj) {
  * v1.6.1:
  * - Fixed bug regarding techniques with no names.
  * - !t command now honors Ammunition Limit, Cooldown Limit and Stamina cost.
+ * 
+ * v1.6.2:
+ * - Don't enforce Stamina costs on minions by default.
+ * - Bugfix: Don't use resources when failing to mimic a technique.
+ * - !t now honors Accurate Strike.
+ * - Whispered alerts on Cooldown/Ammo Limits.
+ * 
  **/

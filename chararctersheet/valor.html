@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.2.3
+ * v1.2.4
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -78,6 +78,12 @@
  * v1.2.3:
  * - Added a Roll Bonus button on the character sheet.
  * - Initiative rolls are now automatically sent to the init tracker.
+ * 
+ * v1.2.4:
+ * - Transformations now show skills in micro-summary.
+ * - Transformation HP now properly bolded.
+ * - Transformation HP doubled for Masters.
+ * - Transformation micro-summary had no linebreak before bonus HP.
  **/
 
 function calculateStats() {
@@ -457,7 +463,7 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
     var techFieldNames = ['coreLibrary', 'str', 'agi', 'spr', 'mnd', 'gut', 
                           'mus', 'dex', 'aur', 'int', 'res', 
                           'strAtk', 'agiAtk', 'sprAtk', 'mndAtk',
-                          'level', 'hp_max', 'di'];
+                          'level', 'hp_max', 'di', 'type'];
     getSectionIDs('repeating_techs', function(tidarray) {
         for(var i=0; i < tidarray.length; i++) {
             techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_name');
@@ -695,16 +701,19 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                         break;
                     case 'ultTransform':
                         var bonusHp = level * 10;
+                        if(techValues.type == 'master') {
+                            bonusHp *= 2;
+                        }
                         summary += 'Transform, gaining ' + bonusHp + ' HP and +1 to all Active Attributes. ';
                         if(techGrantedSkills) {
                             summary += 'Grants Skills: ' + techGrantedSkills;
-                            microSummary += 'Skills: ' + techGrantedSkills;
+                            microSummary += 'Skills: ' + techGrantedSkills + '<br>';
                             if(!summary.endsWith('.')) {
                                 summary += '.';
                             }
                             summary += ' ';
                         }
-                        microSummary += 'HP +<span style="color:darkgreen">' + bonusHp + '</span>';
+                        microSummary += ' HP +**<span style="color:darkgreen">' + bonusHp + '</span>**';
 						hasSkills = true;
                         break;
                     case 'boost':
