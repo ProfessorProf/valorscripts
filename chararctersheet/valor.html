@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.2.4
+ * v1.2.5
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -84,6 +84,11 @@
  * - Transformation HP now properly bolded.
  * - Transformation HP doubled for Masters.
  * - Transformation micro-summary had no linebreak before bonus HP.
+ * 
+ * v1.2.5:
+ * - Split Move was weird in the skill dropdown.
+ * - Abundant Creation was missing in the skill dropdown.
+ * - Hopefully made mimic tech targetting more responsive.
  **/
 
 function calculateStats() {
@@ -459,6 +464,7 @@ on('change:level change:str change:agi change:spr change:mnd change:gut ' +
 /* Update displayed Technique info - Tech Level, Summary, Warnings, Mod/Limit Levels */
 on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_limit_st ' +
    'change:tech_core change:tech_stat change: tech_mods change:tech_limits change:tech_description ' +
+   'change:tech_mimic_target ' +
    'change:level sheet:opened', function() {
     var techFieldNames = ['coreLibrary', 'str', 'agi', 'spr', 'mnd', 'gut', 
                           'mus', 'dex', 'aur', 'int', 'res', 
@@ -1805,8 +1811,9 @@ on('sheet:opened', function() {
                 <option value="versatileFighter">Versatile Fighter (6/3)</option>
             </optgroup>
             <optgroup label="Season 2 Skills">
-                <option value="allyMount">Ally Mount (3/1)</option>
+                <option value="abundantCreation">Abundant Creation (5)</option>
                 <option value="afterimage">Afterimage (4)</option>
+                <option value="allyMount">Ally Mount (3/1)</option>
                 <option value="areaShield">Area Shield (4)</option>
                 <option value="battleAnalysis">Battle Analysis (6)</option>
                 <option value="clash">Clash (3)</option>
@@ -1836,7 +1843,7 @@ on('sheet:opened', function() {
                 <option value="seal">Seal (6/3)</option>
                 <option value="shadowMeld">Shadow Meld (6)</option>
                 <option value="shrugOff">Shrug Off (6)</option>
-                <option value="spiritSight">Split Move (6)</option>
+                <option value="splitMove">Split Move (6)</option>
                 <option value="staminaTransference">Stamina Transference (6)</option>
                 <option value="swiftStep">Swift Step (5/2)</option>
                 <option value="tossingCompanion">Tossing Companion (3/1)</option>

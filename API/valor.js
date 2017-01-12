@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.6.2
+ * v1.6.3
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -18,13 +18,6 @@
  * - After filling out the turn order, add a new label called "Round".
  * - When Round reaches the top of the initiative, all characters with
  * a max Valor (red bar) will gain 1 Valor (or more if you've used !set-vrate).
- * 
- * Token Sync
- * - When a token's HP, ST, or Valor change, any other token with the same
- * attached character will have their values automatically set to match.
- * - Only applies to player-controlled characters.
- * - Disabled by default. Turn this on if you're not using the Valor Character 
- * Sheet.
  * 
  * Max Value Sync
  * - When a token's Max HP or Max ST changes, its current HP or ST will change
@@ -81,12 +74,13 @@
  **/
 
 // Settings for passive functions - 'true' for on, 'false' for off.
-state.statusTrackerEnabled = true;
-state.valorUpdaterEnabled = true;
-state.maxValueSyncEnabled = true;
-state.ongoingEffectProcessor = true;
-state.tokenSyncEnabled = false;
+state.statusTrackerEnabled = true; // Erase statuses on the turn order when they reach 0.
+state.valorUpdaterEnabled = true; // Add Valor for all Elites and Masters when a new round starts.
+state.maxValueSyncEnabled = true; // Move HP and ST to match when max HP and max ST change.
+state.ongoingEffectProcessor = true; // Parse regen and ongoing damage as they happen.
 state.ignoreLimitsOnMinions = true; // Disables limit blocking for Flunkies and Soldiers.
+state.hideNpcTechEffects = false; // For non-player characters, don't show players the tech effect when using !t.
+state.showAlerts = true; // Send alerts for when ammo changes and when techs come off of cooldown.
 
 // Status Tracker
 // While this is active, any numbered status markers will automatically
@@ -385,11 +379,15 @@ function getTechByName(techId, charId) {
             switch(tech.core) {
                 case 'damage':
                     var piercing = tech.mods.find(function(m) {
-                        return m.toLowerCase().indexOf('piercing') > -1;
+                        return m.toLowerCase().indexOf('piercing') > -1 ||
+                               m.toLowerCase().indexOf('sapping') > -1 ||
+                               m.toLowerCase().indexOf('persistent') > -1 ||
+                               m.toLowerCase().indexOf('drain') > -1 ||
+                               m.toLowerCase().indexOf('debilitating') > -1;
                     });
                     var damage = (tech.coreLevel + 3) * 5;
                     var atk = getAttrByName(charId, tech.stat + 'Atk');
-                    if(piercing) {
+                    if(special) {
                         damage = (tech.coreLevel + 3) * 4;
                         atk = Math.ceil(atk / 2);
                     }
@@ -531,6 +529,10 @@ function updateValor(obj) {
 }
 
 function alertCooldowns() {
+    if(!state.showAlerts) {
+        return;
+    }
+    
 	var turnOrder;
     if(Campaign().get('turnorder') == '') {
         turnOrder = [];
@@ -538,11 +540,13 @@ function alertCooldowns() {
         turnOrder = JSON.parse(Campaign().get('turnorder'));
     }
     
-    var roundItem = turnOrder.find(function(t) {
-		return t && t.custom && 
-		t.custom.toLowerCase() == 'round';
-	});
-	var round = roundItem ? roundItem.pr : 0;
+    var topChar = turnOrder[0];
+    if(!topChar || topChar.custom.toLowerCase() != 'round') {
+        // Only continue if the 'Round' counter is at the top of the init order
+        return;
+    }
+
+	var round = topChar.pr;
 	if(!round) {
 	    return;
 	}
@@ -557,7 +561,7 @@ function alertCooldowns() {
 	        var tech = getTechByName(techData.techName, techData.userId);
 	        
 	        // Look for cooldown limit
-	        if(tech.limits) {
+	        if(tech && tech.limits) {
     			var cooldownLimit = tech.limits.find(function(l) {
     				return l.toLowerCase().indexOf('cooldown') == 0;
     			});
@@ -606,6 +610,15 @@ on('chat:message', function(msg) {
                 }
             }
        });
+    }
+});
+
+// !reset command
+// Enter !reset in the chat to purge the tech data history.
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!reset') == 0) {
+        state.techData = {};
+        state.techHistory = [];
     }
 });
 
@@ -729,12 +742,36 @@ on('chat:message', function(msg) {
 		    var blocked = false;
 		    var errorMessage = '';
 		    
-            // Check stamina
-		    var st = parseInt(token.get('bar1_value'));
-		    
-		    if(st == st && st < tech.cost) {
-		        errorMessage += "You don't have enough Stamina to use this Technique.<br>";
-		        blocked = true;
+		    if(token) {
+                // Check stamina
+    		    var st = parseInt(token.get('bar1_value'));
+    		    
+    		    if(st == st && st < tech.cost) {
+    		        errorMessage += "You don't have enough Stamina to use this Technique.<br>";
+    		        blocked = true;
+    		    }
+    		    
+    			// Check Initiative Limit
+    			var initiativeLimit = tech.limits.find(function(l) {
+    				return l.toLowerCase().indexOf('init') == 0;
+    			});
+    			
+    			if(initiativeLimit) {
+    				var initiativeLimitSplit = initiativeLimit.split(' ');
+    				var initiativeLimitLevel = parseInt(initiativeLimitSplit[initiativeLimitSplit.length - 1]);
+    				if(initiativeLimitLevel != initiativeLimitLevel) {
+    					initiativeLimitLevel = 1;
+    				}
+    				
+                    turnOrder.forEach(function(turn) {
+                        if(turn && turn.id === token.get('_id')) {
+                            if(turn.pr <= initiativeLimitLevel) {
+                                errorMessage += 'Your Initiative is too low to use this Technique.<br>';
+                                blocked = true;
+                            }
+                        }
+                    });
+    			}
 		    }
 		    
 		    // Check valor limit
@@ -779,28 +816,6 @@ on('chat:message', function(msg) {
 				    errorMessage += 'Your Health must be ' + hpTarget + ' or lower to use this Technique.<br>';
 				    blocked = true;
 				}
-			}
-			
-			// Check Initiative Limit
-			var initiativeLimit = tech.limits.find(function(l) {
-				return l.toLowerCase().indexOf('init') == 0;
-			});
-			
-			if(initiativeLimit) {
-				var initiativeLimitSplit = initiativeLimit.split(' ');
-				var initiativeLimitLevel = parseInt(initiativeLimitSplit[initiativeLimitSplit.length - 1]);
-				if(initiativeLimitLevel != initiativeLimitLevel) {
-					initiativeLimitLevel = 1;
-				}
-				
-                turnOrder.forEach(function(turn) {
-                    if(turn && turn.id === token.get('_id')) {
-                        if(turn.pr <= initiativeLimitLevel) {
-                            errorMessage += 'Your Initiative is too low to use this Technique.<br>';
-                            blocked = true;
-                        }
-                    }
-                });
 			}
 			
 			// Check Set-Up Limit
@@ -1051,26 +1066,31 @@ on('chat:message', function(msg) {
         if(rollText) {
             message += '<tr><td>' + rollText + '</td></tr>';
         }
-        if(tech.summary) {
+		
+		var showSummary = tech.summary && (!state.hideNpcTechEffects || actor.get('controlledby'));
+		
+        if(showSummary) {
             message += '<tr><td>' + tech.summary + '</td></tr>';
         }
         message += '</table>';
         
         sendChat('character|' + actor.get('_id'), message);
         
-        // Add used tech to the technique usage history
-        if(!state.techHistory) {
-            state.techHistory = [];
+        if(token) {
+            // Add used tech to the technique usage history
+            if(!state.techHistory) {
+                state.techHistory = [];
+            }
+            
+            state.techHistory.push({
+                id: token.get('_id'),
+                techName: tech.name,
+                hpCost: hpCost,
+                stCost: stCost,
+                valorCost: valorCost
+            });
+            state.techData[techDataId].timesUsed.push(round);
         }
-        
-        state.techHistory.push({
-            id: token.get('_id'),
-            techName: tech.name,
-            hpCost: hpCost,
-            stCost: stCost,
-            valorCost: valorCost
-        });
-        state.techData[techDataId].timesUsed.push(round);
         
         // Inform if Ammo has run out
         if(tech.limits) {
@@ -1084,10 +1104,13 @@ on('chat:message', function(msg) {
     			if(ammoLimitLevel != ammoLimitLevel) {
     				ammoLimitLevel = 1;
     			}
-                if(state.techData[techDataId].timesUsed.length == 4 - ammoLimitLevel) {
-    			    sendChat('Valor', '/w "' + actor.get('name') + '" This Technique is now out of ammunition.');
-                }
+    			var ammo = 4 - ammoLimitLevel - state.techData[techDataId].timesUsed.length;
+    			sendChat('Valor', '/w "' + actor.get('name') + '" Ammunition remaining: ' + ammo);
     		}
+        }
+        
+        if(!showSummary) {
+			sendChat('Valor', '/w gm ' + tech.summary);
         }
 		
         log('Technique ' + tech.name + ' performed by ' + actor.get('name') + '.');
@@ -1197,7 +1220,7 @@ on('chat:message', function(msg) {
 		for(i = 0; i < turnOrder.length; i++) {
 			if(turnOrder[i].id != '-1') {
 				var token = getObj('graphic', turnOrder[i].id);
-				if(token.get('represents') == actor.get('_id')) {
+				if(token && actor && token.get('represents') == actor.get('_id')) {
 					var effect = {
 						id: '-1',
 						custom: effectName,
@@ -1422,58 +1445,6 @@ on('chat:message', function(msg) {
                 
                 state.charData[id].valorRate = setRate;
                 log('Set Valor generation rate to ' + setRate + ' per turn ' + token.get('name') +'.');
-            }
-        });
-    }
-});
-
-// PC token sync function
-// Makes all stats for player-controlled tokens with the same name to stay in sync
-// with each other across maps.
-on('change:graphic', function(obj, prev) {
-    if(!state.tokenSyncEnabled) {
-        return;
-    }
-    
-    if(obj.get('represents') == '') {
-        // Do nothing if the updated token has no backing character
-        return;
-    }
-    
-    if(!prev) {
-        return;
-    }
-    
-    if(obj.get('bar1_value') == prev.bar1_value &&
-       obj.get('bar2_value') == prev.bar2_value &&
-       obj.get('bar3_value') == prev.bar3_value &&
-       obj.get('bar1_max') == prev.bar1_max &&
-       obj.get('bar2_max') == prev.bar2_max &&
-       obj.get('bar3_max') == prev.bar3_max) {
-        // Do nothing if none of the bars changed
-        return;
-    }
-    
-    var character = getObj('character', obj.get('represents'));
-    var player = character.get('controlledby');
-    
-    if(player != '') {
-        var bar1Value = obj.get('bar1_value');
-        var bar2Value = obj.get('bar2_value');
-        var bar3Value = obj.get('bar3_value');
-        var bar1Max = obj.get('bar1_max');
-        var bar2Max = obj.get('bar2_max');
-        var bar3Max = obj.get('bar3_max');
-        
-        var sameTokens = findObjs({_type: "graphic", represents: character.get('_id')});
-        sameTokens.forEach(function(token) {
-            if(token.get('_id') != obj.get('_id')) {
-                token.set('bar1_value', bar1Value);
-                token.set('bar2_value', bar2Value);
-                token.set('bar3_value', bar3Value);
-                token.set('bar1_max', bar1Max);
-                token.set('bar2_max', bar2Max);
-                token.set('bar3_max', bar3Max);
             }
         });
     }
@@ -1719,5 +1690,12 @@ on('change:campaign:turnorder', function(obj) {
  * - Bugfix: Don't use resources when failing to mimic a technique.
  * - !t now honors Accurate Strike.
  * - Whispered alerts on Cooldown/Ammo Limits.
+ * 
+ * v1.6.3:
+ * - Various mimic-related bugfixes.
+ * - Bugfix: Cooldowns no longer alert multiple times when coming off cooldown.
+ * - Ammo Limit now always shows the remaining ammunition.
+ * - Added option to hide tech effects for NPCs.
+ * - Axed the Token Syncer.
  * 
  **/
