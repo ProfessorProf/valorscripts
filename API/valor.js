@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.6.3.1
+ * v1.6.3.2
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -658,6 +658,9 @@ on('chat:message', function(msg) {
 
 		// Check for --override parameter
 		var overrideLimits = split.indexOf('--override') > -1;
+		if(overrideLimits) {
+		    split.splice(split.indexOf('--override'), 1);
+		}
 		
 		// --as failed or wasn't used, find through other means
 		if(!actor) {
