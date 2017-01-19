@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.6.3
+ * v1.6.3.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -345,7 +345,7 @@ function getTechByName(techId, charId) {
     } else {
 		// Drop the Starts With requirement and try again
 		matchingTech = techs.find(function(t) {
-			return t.name.toLowerCase().indexOf(techId.toLowerCase()) > -1;
+			return t && t.name && t.name.toLowerCase().indexOf(techId.toLowerCase()) > -1;
 		});
 		if(matchingTech) {
 			tech = matchingTech;
@@ -378,7 +378,7 @@ function getTechByName(techId, charId) {
             // Recalculate healing/damage
             switch(tech.core) {
                 case 'damage':
-                    var piercing = tech.mods.find(function(m) {
+                    var special = tech.mods.find(function(m) {
                         return m.toLowerCase().indexOf('piercing') > -1 ||
                                m.toLowerCase().indexOf('sapping') > -1 ||
                                m.toLowerCase().indexOf('persistent') > -1 ||
@@ -869,7 +869,7 @@ on('chat:message', function(msg) {
 				}
 				
 				if(techData.timesUsed.length > 0) {
-    				var lastTurnUsed = techData.timesUsed[techData.timesUsed.length - 1];
+    				var lastTurnUsed = parseInt(techData.timesUsed[techData.timesUsed.length - 1]);
     				if(round <= lastTurnUsed + cooldownLimitLevel) {
     				    errorMessage += 'This Technique is still on cooldown.<br>'
     				    blocked = true;
