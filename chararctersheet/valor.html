@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.2.5
+ * v1.3.0
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -89,9 +89,13 @@
  * - Split Move was weird in the skill dropdown.
  * - Abundant Creation was missing in the skill dropdown.
  * - Hopefully made mimic tech targetting more responsive.
+ * 
+ * v1.3.0:
+ * - Added support for Dig Deep and Overload Limits usage in combat.
  **/
 
 function calculateStats() {
+    log('Recalculating Stats...');
     // Base calculations
     getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type', 'flawLibrary', 'skillLibrary', 'coreLibrary'], function(values) {
         var level = parseInt(values.level);
@@ -165,6 +169,9 @@ function calculateStats() {
         if(level > 15) {
             unspentTP += level - 15;
         }
+        
+        var hasDigDeep = false;
+        var hasOverloadLimits = false;
         
         switch(values.type) {
             case 'flunky':
@@ -337,6 +344,12 @@ function calculateStats() {
                                 case 'quickToAct':
                                     initMod += 2;
                                     break;
+                                case 'digDeep':
+                                    hasDigDeep = true;
+                                    break;
+                                case 'overloadLimits':
+                                    hasOverloadLimits = true;
+                                    break;
                             }
                             
                             var skill = values.skillLibrary.find(function(s) {
@@ -414,7 +427,7 @@ function calculateStats() {
                                         unspentTP -= spentTP;
                                     }
                                 }
-                                    
+                                
                                 //Set values
                                 setAttrs({
                                     str: str,
@@ -442,6 +455,8 @@ function calculateStats() {
                                     hpCrit: Math.ceil(hp / 5) * 2,
                                     di: di,
                                     init: dex + initMod,
+                                    hasDigDeep: hasDigDeep,
+                                    hasOverloadLimits: hasOverloadLimits,
                                     unspentAP: unspentAP,
                                     unspentSP: unspentSP,
                                     unspentTP: unspentTP
@@ -455,21 +470,13 @@ function calculateStats() {
     });
 }
 
-on('change:level change:str change:agi change:spr change:mnd change:gut ' +
-   'change:type change:repeating_flaws change:repeating_skills ' +
-   'change:tech_core_level change:tech_mod_level change:tech_core', function() {
-    calculateStats();
-});
-
-/* Update displayed Technique info - Tech Level, Summary, Warnings, Mod/Limit Levels */
-on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_limit_st ' +
-   'change:tech_core change:tech_stat change: tech_mods change:tech_limits change:tech_description ' +
-   'change:tech_mimic_target ' +
-   'change:level sheet:opened', function() {
+function calculateTechs() {
+    log('Recalculating Techs...');
     var techFieldNames = ['coreLibrary', 'str', 'agi', 'spr', 'mnd', 'gut', 
                           'mus', 'dex', 'aur', 'int', 'res', 
                           'strAtk', 'agiAtk', 'sprAtk', 'mndAtk',
-                          'level', 'hp_max', 'di', 'type'];
+                          'level', 'hp_max', 'di', 'type',
+                          'hasDigDeep', 'hasOverloadLimits'];
     getSectionIDs('repeating_techs', function(tidarray) {
         for(var i=0; i < tidarray.length; i++) {
             techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_name');
@@ -1283,11 +1290,31 @@ on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_li
                     ? 'on' : 'off';
                 attrs['repeating_techs_' + tidarray[i] + '_tech_has_skills'] = hasSkills
                     ? 'on' : 'off';
+                attrs['repeating_techs_' + tidarray[i] + '_tech_can_dig_deep'] = (techValues.hasDigDeep && cost > 0)
+                    ? 'on' : 'off';
+                attrs['repeating_techs_' + tidarray[i] + '_tech_can_overload_limits'] = techValues.hasOverloadLimits
+                    ? 'on' : 'off';
                 setAttrs(attrs, { silent: true });
             }
         });
     });
+}
+
+/* Update displayed Technique info - Tech Level, Summary, Warnings, Mod/Limit Levels */
+on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_limit_st ' +
+   'change:tech_core change:tech_stat change:tech_mods change:tech_limits change:tech_description ' +
+   'change:tech_mimic_target change:tech_digDeep change:tech_overloadLimits', function() {
+    calculateTechs();
 });
+
+
+on('change:level change:str change:agi change:spr change:mnd change:gut ' +
+   'change:type change:repeating_flaws change:repeating_skills change:unspentsp ' +
+   'change:tech_core_level change:tech_mod_level change:tech_core', function() {
+    calculateStats();
+    calculateTechs();
+});
+
 
 on('sheet:opened', function() {
     log('Initializing libraries...');
@@ -1677,6 +1704,9 @@ on('sheet:opened', function() {
         <td nowrap="nowrap">
             <input type="number" class="short-number" name="attr_rollbonus" value="0">
         </td>
+        <td class="derived-value">
+            <span name="attr_hasOverloadLimits" />
+        </td>
     </tr>
 </table>
 
@@ -1960,6 +1990,20 @@ on('sheet:opened', function() {
             <button type='roll' value='!t --as "@{character_id}" "@{tech_name}" @{tech_targets} +@{tech_bonus}' name='roll_useTech'> Use Technique</button>
             Targets: <input type='number' value='1' name='attr_tech_targets'>
             Bonus: <input type='number' value='0' name='attr_tech_bonus'>
+            <div>
+                <input type="checkbox" class="conditional-check" name="attr_tech_can_dig_deep">
+                <div class="conditional-block">
+                    <input type="checkbox" name="attr_tech_digDeep">
+                    <span class="label">Use Dig Deep</span>
+                </div>
+            </div>
+            <div>
+                <input type="checkbox" class="conditional-check" name="attr_tech_can_overload_limits">
+                <div class="conditional-block">
+                    <input type="checkbox" name="attr_tech_overloadLimits">
+                    <span class="label">Use Overload Limits</span>
+                </div>
+            </div>
         </div>
     </div>
     <div class="sheet-2colrow">

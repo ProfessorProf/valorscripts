@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.6.3.2
+ * v1.7.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -261,6 +261,17 @@ function getTechs(charId) {
             } else {
                 techs.push({ id: techId, cost: cost});
             }
+        } else if(techName.indexOf('tech_limit_st') > -1) {
+            var limitSt = parseInt(rawTech.get('current'));
+            if(limitSt != limitSt) {
+                limitSt = 0;
+            }
+            
+            if(oldTech) {
+                oldTech.limitSt = limitSt;
+            } else {
+                techs.push({ id: techId, limitSt: limitSt});
+            }
         } else if(techName.indexOf('tech_limits') > -1) {
             var limits = rawTech.get('current').split('\n');
             
@@ -320,6 +331,20 @@ function getTechs(charId) {
                 oldTech.techStat = rawTech.get('current');
             } else {
                 techs.push({ id: techId, techLevel: rawTech.get('current')});
+            }
+        } else if(techName.indexOf('tech_digDeep') > -1) {
+            var digDeep = rawTech.get('current') == 'on';
+            if(oldTech) {
+                oldTech.digDeep = digDeep;
+            } else {
+                techs.push({ id: techId, digDeep: digDeep});
+            }
+        } else if(techName.indexOf('tech_overloadLimits') > -1) {
+            var overloadLimits = rawTech.get('current') == 'on';
+            if(oldTech) {
+                oldTech.overloadLimits = overloadLimits;
+            } else {
+                techs.push({ id: techId, overloadLimits: overloadLimits});
             }
         }
     });
@@ -723,6 +748,11 @@ on('chat:message', function(msg) {
             return;
         }
         
+        // Check for Overload Limits
+        if(tech.overloadLimits) {
+            overrideLimits = true;
+        }
+        
         // Pull tech usage data from the state
         var techDataId = actor.get('_id') + '.' + tech.name;
         if(!state.techData) {
@@ -747,9 +777,9 @@ on('chat:message', function(msg) {
 		    
 		    if(token) {
                 // Check stamina
-    		    var st = parseInt(token.get('bar1_value'));
+    		    var st = parseInt(token.get('bar2_value'));
     		    
-    		    if(st == st && st < tech.cost) {
+    		    if(st == st && st < tech.cost && !tech.digDeep) {
     		        errorMessage += "You don't have enough Stamina to use this Technique.<br>";
     		        blocked = true;
     		    }
@@ -982,12 +1012,21 @@ on('chat:message', function(msg) {
             var stCost = tech.cost;
             var valorCost = 0;
             
+			var hp = parseInt(token.get('bar1_value'));
             var st = parseInt(token.get('bar2_value'));
             if(st != st) {
                 st = 0;
             }
             
-            st -= tech.cost;
+            if(tech.overloadLimits && tech.limitSt) {
+                stCost += tech.limitSt;
+            }
+            if(tech.digDeep) {
+                hpCost += stCost * 5;
+                stCost = 0;
+            }
+            
+            st -= stCost;
             
             token.set('bar2_value', st);
             
@@ -1002,15 +1041,11 @@ on('chat:message', function(msg) {
 						healthLimitLevel = 1;
 					}
 					
-					var hp = parseInt(token.get('bar1_value'));
 					if(hp != hp) {
 						hp = 0;
 					}
 					
-					hpCost = healthLimitLevel * 5;
-					hp -= hpCost;
-					
-					token.set('bar1_value', hp);
+					hpCost += healthLimitLevel * 5;
 				}
 				
 				var valorLimit = tech.limits.find(function(l) {
@@ -1057,6 +1092,10 @@ on('chat:message', function(msg) {
                     Campaign().set('turnorder', JSON.stringify(turnOrder));
 				}
 			}
+			
+			hp -= hpCost;
+			
+			token.set('bar1_value', hp);
             
             if(state.techHistory.length > 20) {
                 // Don't let the tech history get too long
@@ -1079,7 +1118,7 @@ on('chat:message', function(msg) {
         
         sendChat('character|' + actor.get('_id'), message);
         
-        if(token) {
+        if(token && !overrideLimits) {
             // Add used tech to the technique usage history
             if(!state.techHistory) {
                 state.techHistory = [];
@@ -1114,6 +1153,37 @@ on('chat:message', function(msg) {
         
         if(!showSummary) {
 			sendChat('Valor', '/w gm ' + tech.summary);
+        }
+        
+        // Disable digDeep and overrideLimits on this tech
+        if(tech.digDeep) {
+            var techAttrs = filterObjs(function(obj) {
+                if(obj.get('_type') == 'attribute' &&
+                   obj.get('name').indexOf(tech.id) > -1 &&
+                   obj.get('name').indexOf('digDeep') > -1) {
+                       return true;
+                }
+                return false;
+            });
+            if(techAttrs && techAttrs.length > 0) {
+                var digDeep = techAttrs[0];
+                digDeep.set('current', '0');
+            }
+        }
+        
+        if(tech.overloadLimits) {
+            var techAttrs = filterObjs(function(obj) {
+                if(obj.get('_type') == 'attribute' &&
+                   obj.get('name').indexOf(tech.id) > -1 &&
+                   obj.get('name').indexOf('overloadLimits') > -1) {
+                       return true;
+                }
+                return false;
+            });
+            if(techAttrs && techAttrs.length > 0) {
+                var digDeep = techAttrs[0];
+                digDeep.set('current', '0');
+            }
         }
 		
         log('Technique ' + tech.name + ' performed by ' + actor.get('name') + '.');
@@ -1701,4 +1771,7 @@ on('change:campaign:turnorder', function(obj) {
  * - Added option to hide tech effects for NPCs.
  * - Axed the Token Syncer.
  * 
+ * v1.7.0:
+ * - Various bugfixes.
+ * - Added checkboxes for using Dig Deep and Overload Limits.
  **/
