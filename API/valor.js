@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.7.0
+ * v1.8.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -80,7 +80,8 @@ state.maxValueSyncEnabled = true; // Move HP and ST to match when max HP and max
 state.ongoingEffectProcessor = true; // Parse regen and ongoing damage as they happen.
 state.ignoreLimitsOnMinions = true; // Disables limit blocking for Flunkies and Soldiers.
 state.hideNpcTechEffects = false; // For non-player characters, don't show players the tech effect when using !t.
-state.showAlerts = true; // Send alerts for when ammo changes and when techs come off of cooldown.
+state.showTechAlerts = true; // Send alerts for when ammo changes and when techs come off of cooldown.
+state.showHealthAlerts = true; // Send alerts when characters enter or leave critical health.
 
 // Status Tracker
 // While this is active, any numbered status markers will automatically
@@ -554,7 +555,7 @@ function updateValor(obj) {
 }
 
 function alertCooldowns() {
-    if(!state.showAlerts) {
+    if(!state.showTechAlerts) {
         return;
     }
     
@@ -843,6 +844,13 @@ on('chat:message', function(msg) {
 				
 				var hp = parseInt(token.get('bar1_value'));
 				var hpMax = parseInt(token.get('bar1_max'));
+				if(hp != hp) {
+				    hp = 0;
+				}
+				if(hpMax != hpMax) {
+				    hpMax = 0;
+				}
+				
 				var hpTarget = Math.ceil(hpMax / 5 * (5 - injuryLimitLevel));
 				
 				if(hp > hpTarget) {
@@ -956,6 +964,14 @@ on('chat:message', function(msg) {
                 rollBonus++;
             }
             
+            var accurate = tech.mods && tech.mods.find(function(m) {
+                return m.toLowerCase().indexOf('accurate') > -1;
+            });
+            
+            if(accurate) {
+                rollBonus += 2;
+            }
+            
             var roll = 0;
             
             switch(tech.stat) {
@@ -981,14 +997,6 @@ on('chat:message', function(msg) {
                     break;
             }
 			
-            var accurate = tech.mods.find(function(m) {
-                return m.toLowerCase().indexOf('accurate') > -1;
-            });
-            
-            if(accurate) {
-                rollBonus += 2;
-            }
-            
             if(rollBonus > 0) {
                 rollText += '+' + rollBonus;
             } else if(rollBonus < 0) {
@@ -1014,6 +1022,10 @@ on('chat:message', function(msg) {
             
 			var hp = parseInt(token.get('bar1_value'));
             var st = parseInt(token.get('bar2_value'));
+            if(hp != hp) {
+                hp = 0;
+            }
+            
             if(st != st) {
                 st = 0;
             }
@@ -1097,6 +1109,9 @@ on('chat:message', function(msg) {
 			
 			token.set('bar1_value', hp);
             
+			if(!state.techHistory) {
+				state.techHistory = [];
+			}
             if(state.techHistory.length > 20) {
                 // Don't let the tech history get too long
                 state.techHistory = state.techHistory.slice(1);
@@ -1331,10 +1346,10 @@ on('chat:message', function(msg) {
             var st = parseInt(token.get('bar2_value'));
             var maxSt = parseInt(token.get('bar2_max'));
             
-            if(!hp) {
+            if(hp != hp) {
                 hp = 0;
             }
-            if(!st) {
+            if(st != st) {
                 st = 0;
             }
             
@@ -1458,6 +1473,142 @@ on('chat:message', function(msg) {
     }
 });
 
+// !duplicate command
+// Used by character sheet - create a temporary level-up sheet for a given character.
+// Also sets everyone's Valor to starting values.
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!duplicate') == 0) {
+        var split = msg.content.match(/(".*?")|(\S+)/g);
+        if(split.length < 2) {
+            log('Not enough arguments.');
+            return;
+        }
+		
+		if(!state.linkedSheets) {
+		    state.linkedSheets = {};
+		}
+		
+        // Figure out who to duplicate
+		var actor = getObj('character', split[1]);
+		var actorId = actor.get('_id');
+		
+		// Check to see if they already have a level up sheet
+		if(state.linkedSheets[actorId]) {
+		    var oldActor = getObj('character', state.linkedSheets[actorId]);
+		    if(oldActor) {
+    		    sendChat('Valor', '/w "' + actor.get('name') + "\" You already have an open level-up sheet.");
+    		    return;
+		    } else {
+		        // The character was deleted, erase them from the link library
+		        state.linkedSheets[actorId] = undefined;
+		    }
+		}
+		
+		// Create new character, copy over basic traits
+		var newActor = createObj('character', {
+		    name: actor.get('name') + ' (Level up)',
+		    inplayerjournals: actor.get('inplayerjournals'),
+		    controlledby: actor.get('controlledby'),
+		    avatar: actor.get('avatar')
+		});
+		var newActorId = newActor.get('_id');
+		
+		// Copy over attributes
+		var attributes = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                   obj.get('_characterid') == actorId;
+		});
+		
+		attributes.forEach(function(attr) {
+		    createObj('attribute', {
+		        name: attr.get('name'),
+		        current: attr.get('current'),
+		        max: attr.get('max'),
+		        characterid: newActorId
+		    });
+		});
+		
+		// Mark the new one as a duplicate
+	    createObj('attribute', {
+	        name: 'is_duplicate',
+	        current: 'on',
+	        characterid: newActorId
+	    });
+		
+		// Save link between sheets
+		state.linkedSheets[actorId] = newActorId;
+		state.linkedSheets[newActorId] = actorId;
+    }
+});
+
+// !d-finalize command
+// Used by character sheet - create a temporary level-up sheet for a given character.
+// Also sets everyone's Valor to starting values.
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!d-finalize') == 0) {
+        var split = msg.content.match(/(".*?")|(\S+)/g);
+        if(split.length < 2) {
+            log('Not enough arguments.');
+            return;
+        }
+		
+		if(!state.linkedSheets) {
+		    state.linkedSheets = {};
+		}
+		
+        // Fetch the level-up sheet
+		var actor = getObj('character', split[1]);
+		var actorId = actor.get('_id');
+		var oldActorId = state.linkedSheets[actorId];
+		var oldactor = getObj('character', oldActorId);
+		
+		// Check to see if they already have a level up sheet
+		if(!oldActorId) {
+	        sendChat('Valor', '/w "' + actor.get('name') + "\" The original character sheet no longer exists.");
+	        return;
+		}
+		
+		// Paste over attributes
+		var attributes = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                   obj.get('_characterid') == actorId;
+		});
+		attributes.forEach(function(attr) {
+            var attrName = attr.get('name');
+		    if(attrName != 'is_duplicate') {
+		        var oldAttribute = filterObjs(function(obj) {
+                    return obj.get('_type') == 'attribute' &&
+                           obj.get('_characterid') == oldActorId &&
+                           obj.get('name') == attrName;
+        		})[0];
+		        
+		        if(oldAttribute) {
+		            oldAttribute.set('max', attr.get('max'));
+		            
+		            // Keep current HP/ST/Valor values
+		            if(attrName != 'hp' && attrName != 'st' && attrName != 'valor') {
+		                oldAttribute.set('current', attr.get('current'));
+		            }
+		        } else {
+        		    createObj('attribute', {
+        		        name: attrName,
+        		        current: attr.get('current'),
+        		        max: attr.get('max'),
+        		        characterid: oldActorId
+        		    });
+		        }
+		    }
+		});
+		
+		// Delete the level-up sheet
+		actor.remove();
+		state.linkedSheets[actorId] = undefined;
+		state.linkedSheets[oldActorId] = undefined;
+		
+		sendChat('Valor', 'Character sheet for ' + oldactor.get('name') + ' has been updated.');
+    }
+});
+
 // !set-bravado command
 // Enter !set-bravado X in the chat to assign the selected character a Bravado
 // skill of level X.
@@ -1547,6 +1698,13 @@ on('change:graphic', function(obj, prev) {
         var bar1Value = parseInt(obj.get('bar1_value'));
         var bar1Change = parseInt(obj.get('bar1_max')) - prev.bar1_max;
         
+        if(bar1Value != bar1Value) {
+            bar1Value = 0;
+        }
+        if(bar1Change != bar1Change) {
+            bar1Change = 0;
+        }
+        
         if(bar1Value) {
             obj.set('bar1_value', bar1Value + bar1Change);
         }
@@ -1556,8 +1714,64 @@ on('change:graphic', function(obj, prev) {
         var bar2Value = parseInt(obj.get('bar2_value'));
         var bar2Change = parseInt(obj.get('bar2_max')) - prev.bar2_max;
         
+        if(bar2Value != bar2Value) {
+            bar2Value = 0;
+        }
+        if(bar2Change != bar2Change) {
+            bar2Change = 0;
+        }
+        
         if(bar2Value) {
             obj.set('bar2_value', bar2Value + bar2Change);
+        }
+    }
+});
+
+// Critical HP warning
+// Whisper to a character's owner when they fall under 40% Health
+on('change:graphic', function(obj, prev) {
+    if(!state.showHealthAlerts) {
+        return;
+    }
+    if(obj.get('represents') == '') {
+        // Do nothing if the updated token has no backing character
+        return;
+    }
+    
+    if(!obj || !prev) {
+        return;
+    }
+    if(obj.get('bar1_value') && prev.bar1_value &&
+       obj.get('bar1_value') == prev.bar1_value) {
+        // Do nothing if none of the max values changed
+        return;
+    }
+    
+    var oldHp = parseInt(prev.bar1_value);
+    var newHp = parseInt(obj.get('bar1_value'));
+    var maxHp = parseInt(obj.get('bar1_max'));
+    
+    if(oldHp == oldHp && newHp == newHp && maxHp == maxHp) {
+        var critical = Math.ceil(maxHp * 0.4);
+        var message;
+        if(oldHp > critical && newHp <= critical) {
+            message = ' is now at critical health.';
+        } else if (oldHp <= critical && newHp >= critical) {
+            message = ' is no longer at critical health.';
+        }
+        if(message) {
+            // Message character
+            var charId = obj.get('represents');
+		    var actor = getObj('character',charId);
+		    var controlledBy = actor.get('controlledby');
+		    
+		    var whisperTo = 'gm';
+		    
+		    if(controlledBy && controlledBy != '') {
+		        whisperTo = actor.get('name');
+		    }
+		    
+		    sendChat('Valor', '/w "' + whisperTo + '" ' + actor.get('name') + message);
         }
     }
 });
@@ -1774,4 +1988,9 @@ on('change:campaign:turnorder', function(obj) {
  * v1.7.0:
  * - Various bugfixes.
  * - Added checkboxes for using Dig Deep and Overload Limits.
+ * 
+ * v1.8.0:
+ * - Added support for level-up sheets.
+ * - Added critical HP warning.
+ * - Lots of bugfixes.
  **/

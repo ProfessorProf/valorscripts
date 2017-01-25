@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.3.0
+ * v1.3.1
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -92,6 +92,9 @@
  * 
  * v1.3.0:
  * - Added support for Dig Deep and Overload Limits usage in combat.
+ * 
+ * v1.3.1:
+ * - Added the Level-up sheet buttons.
  **/
 
 function calculateStats() {
@@ -566,7 +569,8 @@ function calculateTechs() {
                 if(techMods.indexOf('muscular') > -1) {
                     rollStat = 'str';
                 }
-                if(techMods.indexOf('dexterous') > -1) {
+                if(techMods.indexOf('dexterous') > -1 ||
+                   techMods.indexOf('dextrous') > -1) {
                     rollStat = 'agi';
                 }
                 if(techMods.indexOf('aura') > -1) {
@@ -770,7 +774,7 @@ function calculateTechs() {
                         modLevel = 1;
                     }
                     
-                    if(mod.indexOf('ranged') == 0) {
+                    if(mod.indexOf('range') == 0) {
                         var range = 3 * modLevel;
                         switch(techStat) {
                             case 'str':
@@ -977,7 +981,8 @@ function calculateTechs() {
                         var destroy = 2 * modLevel;
                         summary += '+' + destroy + ' Durability damage to objects. ';
                         totalModLevel++;
-                    } else if(mod.indexOf('dextrous') == 0) {
+                    } else if(mod.indexOf('dexterous') == 0 ||
+                              mod.indexOf('dextrous') == 0) {
                         totalModLevel++;
                     } else if(mod.indexOf('drop') == 0) {
                         summary += 'If target is flying, they fall and take ' + di + ' damage. ';
@@ -2077,4 +2082,16 @@ on('sheet:opened', function() {
 
 <div class="label">
     Unspent Tech Points: <span name="attr_unspentTP"></span>
+</div>
+
+<br />
+
+<div>
+    <input type="checkbox" class="conditional-check" name="attr_is_duplicate">
+    <div class="tech-block conditional-block">
+        <button type='roll' value='!d-finalize @{character_id}' name='roll_resolve'>Finalize Level-up</button>
+    </div>
+    <div class="tech-block conditional-block-inverse">
+        <button type='roll' value='!duplicate @{character_id}' name='roll_duplicate'>Create Level-up Sheet</button>
+    </div>
 </div>

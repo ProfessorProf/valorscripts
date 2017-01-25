@@ -57,6 +57,13 @@ td {
     display: none;
 }
 
+.sheet-conditional-block-inverse {
+    display: inline;
+}
+
 .sheet-conditional-check:checked ~ .sheet-conditional-block {
     display: inline;
+}
+.sheet-conditional-check:checked ~ .sheet-conditional-block-inverse {
+    display: none;
 }
