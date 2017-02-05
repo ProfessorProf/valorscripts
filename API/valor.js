@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.8.0
+ * v1.9.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -392,7 +392,7 @@ function getTechByName(techId, charId) {
         // Re-get the mimicked technique
         var mimicTech = tech;
         tech = getTechByName(tech.mimicTarget);
-        tech.name = mimicTech.name + ' [' + tech.name + ']';
+        tech.name = mimicTech && mimicTech.name + ' [' + tech.name + ']';
 
         // Revise core level
         tech.coreLevel = mimicTech.coreLevel - (tech.techLevel - tech.coreLevel);
@@ -409,7 +409,8 @@ function getTechByName(techId, charId) {
                                m.toLowerCase().indexOf('sapping') > -1 ||
                                m.toLowerCase().indexOf('persistent') > -1 ||
                                m.toLowerCase().indexOf('drain') > -1 ||
-                               m.toLowerCase().indexOf('debilitating') > -1;
+                               m.toLowerCase().indexOf('debilitating') > -1 ||
+                               m.toLowerCase().indexOf('boosting') > -1;
                     });
                     var damage = (tech.coreLevel + 3) * 5;
                     var atk = getAttrByName(charId, tech.stat + 'Atk');
@@ -754,6 +755,9 @@ on('chat:message', function(msg) {
             overrideLimits = true;
         }
         
+        // Pull Skill list
+        var skills = getSkills(actor.get('_id'));
+        
         // Pull tech usage data from the state
         var techDataId = actor.get('_id') + '.' + tech.name;
         if(!state.techData) {
@@ -970,6 +974,25 @@ on('chat:message', function(msg) {
             
             if(accurate) {
                 rollBonus += 2;
+            }
+            
+			if(skills.find(function(s) {
+				return s && s.name && s.name.indexOf('increasedSize') == 0;
+			})) {
+			    rollBonus++;
+			}
+            
+            
+			if(skills.find(function(s) {
+				return s && s.name && s.name.indexOf('diminuitive') == 0;
+			})) {
+			    rollBonus--;
+			}
+			
+
+            var sheetBonus = parseInt(getAttrByName(actor.get('_id'), 'rollbonus'));
+            if(sheetBonus == sheetBonus) {
+                rollBonus += sheetBonus;
             }
             
             var roll = 0;
@@ -1329,7 +1352,6 @@ on('chat:message', function(msg) {
 // !rest command
 // Enter !rest in the chat to recover an Increment of HP/ST for each character.
 // Also sets everyone's Valor to starting value.
-// Does not consider Fast Healer skill.
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!rest') == 0
         && playerIsGM(msg.playerid)) {
@@ -1568,6 +1590,32 @@ on('chat:message', function(msg) {
 	        return;
 		}
 		
+		var oldHp = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                   obj.get('_characterid') == oldActorId &&
+                   obj.get('name') == 'hp';
+		})[0];
+		var newHp = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                   obj.get('_characterid') == actorId &&
+                   obj.get('name') == 'hp';
+		})[0];
+		var oldHpMax = parseInt(oldHp.get('max'));
+		var newHpMax = parseInt(newHp.get('max'));
+		
+		var oldSt = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                   obj.get('_characterid') == oldActorId &&
+                   obj.get('name') == 'st';
+		})[0];
+		var newSt = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                   obj.get('_characterid') == actorId &&
+                   obj.get('name') == 'st';
+		})[0];
+		var oldStMax = parseInt(oldSt.get('max'));
+		var newStMax = parseInt(newSt.get('max'));
+		
 		// Paste over attributes
 		var attributes = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
@@ -1599,6 +1647,25 @@ on('chat:message', function(msg) {
 		        }
 		    }
 		});
+		
+		// Update current HP and ST
+		if(oldHpMax == oldHpMax && newHpMax == newHpMax) {
+		    var hpChange = newHpMax - oldHpMax;
+		    
+		    var oldHpValue = parseInt(oldHp.get('current'));
+		    if(oldHpValue == oldHpValue) {
+    		    oldHp.set('current', oldHpValue + hpChange);
+		    }
+		}
+		
+		if(oldStMax == oldStMax && newStMax == newStMax) {
+		    var stChange = newStMax - oldStMax;
+		    
+		    var oldStValue = parseInt(oldSt.get('current'));
+		    if(oldStValue == oldStValue) {
+    		    oldSt.set('current', oldStValue + stChange);
+		    }
+		}
 		
 		// Delete the level-up sheet
 		actor.remove();
@@ -1993,4 +2060,11 @@ on('change:campaign:turnorder', function(obj) {
  * - Added support for level-up sheets.
  * - Added critical HP warning.
  * - Lots of bugfixes.
+ * 
+ * v1.9.0:
+ * - Various bugfixes.
+ * - Current HP and ST now go up when you level up via level-up sheet.
+ * - Attack roll now factors in Increased Size.
+ * - Attack roll now factors in Roll Bonus.
+ * - Added support for mechanics from Villains, Creatures and Foes.
  **/

@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.3.1
+ * v1.4.0
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -95,6 +95,10 @@
  * 
  * v1.3.1:
  * - Added the Level-up sheet buttons.
+ * 
+ * v1.4.0:
+ * - Added skills, flaws, mods and cores from Villains, Creatures and Foes.
+ * - Removed a wayward debug label.
  **/
 
 function calculateStats() {
@@ -175,6 +179,8 @@ function calculateStats() {
         
         var hasDigDeep = false;
         var hasOverloadLimits = false;
+        var hasUlt = false;
+        var healerLevel = 0;
         
         switch(values.type) {
             case 'flunky':
@@ -261,6 +267,9 @@ function calculateStats() {
                         case 'slowToAct':
                             initMod -= 2;
                             break;
+                        case 'immobile':
+                            speed = 0;
+                            break;
                     }
                     
                     // Gain SP
@@ -280,7 +289,6 @@ function calculateStats() {
                         skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
                         skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
                     }
-                    
                     getAttrs(skillFieldNames, function(skillValues) {
                         for(var i=0; i < sidarray.length; i++) {
                             var skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
@@ -353,6 +361,16 @@ function calculateStats() {
                                 case 'overloadLimits':
                                     hasOverloadLimits = true;
                                     break;
+                                case 'healer':
+                                    healerLevel = skillLevel;
+                                    break;
+                                case 'construct':
+                                    defense += Math.ceil(level / 5) * 2;
+                                    resistance -= Math.ceil(level / 5) * 2;
+                                    hp += 2 * str;
+                                    break;
+                                case 'ultimateAttack':
+                                    hasUlt = true;
                             }
                             
                             var skill = values.skillLibrary.find(function(s) {
@@ -400,6 +418,9 @@ function calculateStats() {
                                 }
                                 if(level >= 20) {
                                     ults.push(23);
+                                }
+                                if(hasUlt) {
+                                    ults.push(level);
                                 }
                                 
                                 for(var i=0; i < tidarray.length; i++) {
@@ -460,6 +481,7 @@ function calculateStats() {
                                     init: dex + initMod,
                                     hasDigDeep: hasDigDeep,
                                     hasOverloadLimits: hasOverloadLimits,
+                                    healerLevel: healerLevel,
                                     unspentAP: unspentAP,
                                     unspentSP: unspentSP,
                                     unspentTP: unspentTP
@@ -479,7 +501,7 @@ function calculateTechs() {
                           'mus', 'dex', 'aur', 'int', 'res', 
                           'strAtk', 'agiAtk', 'sprAtk', 'mndAtk',
                           'level', 'hp_max', 'di', 'type',
-                          'hasDigDeep', 'hasOverloadLimits'];
+                          'hasDigDeep', 'hasOverloadLimits', 'healerLevel'];
     getSectionIDs('repeating_techs', function(tidarray) {
         for(var i=0; i < tidarray.length; i++) {
             techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_name');
@@ -622,7 +644,8 @@ function calculateTechs() {
                             techMods.indexOf('piercing') > -1 ||
                             techMods.indexOf('drain') > -1 ||
                             techMods.indexOf('persistent') > -1 ||
-                            techMods.indexOf('debilitating') > -1;
+                            techMods.indexOf('debilitating') > -1 ||
+                            techMods.indexOf('boosting') > -1;
                         var damage = 0;
                         switch(techStat) {
                             case 'str':
@@ -702,6 +725,9 @@ function calculateTechs() {
                             case 'gut':
                                 healing = 12 + 4 * techCoreLevel + gut;
                                 break;
+                        }
+                        if(techValues.healerLevel > 0) {
+                            healing += 2 + 2 * techValues.healerLevel;
                         }
                         summary += 'Restore ' + healing + ' Health to the target. '
                         microSummary += 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP';
@@ -915,6 +941,8 @@ function calculateTechs() {
                         }
                     } else if(mod.indexOf('debilitating') == 0) {
                         hasFlaws = true;
+                    } else if(mod.indexOf('boosting') == 0) {
+                        hasSkills = true;
                     } else if(mod.indexOf('drain') == 0) {
                         summary += 'On a hit, recover Health equal to half of damage dealt. ';
                     } else if(mod.indexOf('persistent') == 0) {
@@ -1055,6 +1083,58 @@ function calculateTechs() {
                         if(techStat == 'str' || techStat == 'agi') {
                             totalModLevel++;
                         }
+                    } else if(mod.indexOf('defeat lock') == 0) {
+                        summary += "If target is incapacitated, they can't be revived for 24 hours unless this character is defeated. ";
+                        totalModLevel += 3;
+                    } else if(mod.indexOf('draw out the dark') == 0) {
+                        summary += "On a hit, targets with Malevolent Entity must make a roll to maintain control. ";
+                        totalModLevel += 1;
+                    } else if(mod.indexOf('effect lock') == 0) {
+                        summary += "If centered on a target, the area of effect follows them as they move. ";
+                        totalModLevel += 2;
+                    } else if(mod.indexOf('encroaching mal') == 0) {
+                        summary += "On a hit, the target gains 1 Malevolence. ";
+                        totalModLevel += 1;
+                    } else if(mod.indexOf('intimidat') == 0) {
+                        summary += "On a hit, the target is Shaken. ";
+                        totalModLevel += 3;
+                    } else if(mod.indexOf('overwhelming mal') == 0) {
+                        summary += "On a hit, the target gains 1 Malevolence that lasts until the next rest scene. ";
+                        totalModLevel += 3;
+                    } else if(mod.indexOf('pull under') == 0) {
+                        summary += "On a hit, the target is dragged underwater. ";
+                        totalModLevel += 2;
+                    } else if(mod.indexOf('repair') == 0) {
+                        summary += "Can heal undead and constructs. ";
+                        totalModLevel += 2;
+                    } else if(mod.indexOf('targeting mark') == 0) {
+                        summary += "On a hit, Mark the target, giving your allies +1 to hit that target for 3 turns. ";
+                        totalModLevel += 2;
+                    } else if(mod.indexOf('astral form') == 0) {
+                        summary += "Project an astral body into the center of the domain; you can attack from it and it projects a Zone of Control. ";
+                        totalModLevel += 4;
+                    } else if(mod.indexOf('astral mo') == 0) {
+                        summary += "Your astral body can move within your domain whenever you move. ";
+                        totalModLevel += 4;
+                    } else if(mod.indexOf('influential control') == 0) {
+                        if(limitLevel == 1) {
+                            summary += "Your zone of control is expanded by 1 space within your domain. ";
+                        } else {
+                            summary += "Your zone of control is expanded by " + limitLevel + " spaces within your domain. ";
+                        }
+                        totalModLevel += 6 * limitLevel;
+                    } else if(mod.indexOf('locked zone') == 0) {
+                        summary += "Characters must succeed at an opposed roll against you to exit your domain. Attacks across the edge of the domain are made at a -2 penalty. ";
+                        totalModLevel += 4;
+                    } else if(mod.indexOf('shifting tran') == 0) {
+                        summary += "Switch to another form and replace one of its Transformations with this one. ";
+                        totalModLevel += 4;
+                    } else if(mod.indexOf('shifting dom') == 0) {
+                        summary += "Switch to another form and replace one of its Domains with this one. ";
+                        totalModLevel += 4;
+                    } else if(mod.indexOf('touch of mal') == 0) {
+                        summary += "Whenever you hit a target with a Damage or Weaken tech in this form, they gain 1 Malevolence. ";
+                        totalModLevel += 6;
                     } else if(mod.indexOf('custom') == 0) {
                         totalModLevel += modLevel;
                     } else if(mod.length > 0) {
@@ -1259,9 +1339,33 @@ function calculateTechs() {
                     } else if(limit.indexOf('expendable') == 0) {
                         limitSummary += 'Consumes ammunition that must be purchased or found. ';
                         limitSt += limitLevel;
-                    } else if(limit.indexOf('sacrifice') == 0) {
+                    } else if(limit.indexOf('sync') == 0) {
                         limitSummary += 'You must have at least ' + limitLevel + 'Synchronization with your Ego Weapon to use this Technique. ';
                         limitSt += 2 * limitLevel;
+                    } else if(limit.indexOf('bloodseeker') == 0) {
+                        limitSummary += 'Can only affect targets that are at Critical Health. ';
+                        limitSt += 3;
+                    } else if(limit.indexOf('body strike') == 0) {
+                        limitSummary += "Can only be used from your body. ";
+                        limitSt += 1;
+                    } else if(limit.indexOf('elemental block') == 0) {
+                        limitSummary += "Can't be used if you took damage from a specific element since your last turn. ";
+                        limitSt += 2;
+                    } else if(limit.indexOf('exclusive') == 0) {
+                        limitSummary += "Cancels out a specific other technique's effects when used. ";
+                        limitSt += 1;
+                    } else if(limit.indexOf('head strike') == 0) {
+                        limitSummary += "Can only be used from your head. ";
+                        limitSt += 1;
+                    } else if(limit.indexOf('skill cancel') == 0) {
+                        limitSummary += "When active, you lose a specific Skill. ";
+                        limitSt += limitLevel;
+                    } else if(limit.indexOf('tail strike') == 0) {
+                        limitSummary += "Can only be used from your tail. ";
+                        limitSt += limitLevel;
+                    } else if(limit.indexOf('water') == 0) {
+                        limitSummary += "Can only be used underwater. ";
+                        limitSt += 3;
                     } else if(limit.indexOf('custom') == 0) {
                         limitSt += limitLevel;
                     } else if(limit.length > 0 &&
@@ -1349,7 +1453,16 @@ on('sheet:opened', function() {
             { cost: 1, levelUp: 0, id: 'unprincipled' },
             { cost: 2, levelUp: 1, id: 'elementalVulnerability' },
             { cost: 2, levelUp: 1, id: 'armorReliant' },
-            { cost: 2, levelUp: 1, id: 'wardReliant' }
+            { cost: 2, levelUp: 1, id: 'wardReliant' },
+            { cost: 4, levelUp: 0, id: 'broadForm' },
+            { cost: 3, levelUp: 0, id: 'fearTheDarkness' },
+            { cost: 7, levelUp: 0, id: 'immobile' },
+            { cost: 3, levelUp: 0, id: 'insubstantial' },
+            { cost: 2, levelUp: 0, id: 'situationalCompulsion' },
+            { cost: 5, levelUp: 0, id: 'sunlightWeakness' },
+            { cost: 3, levelUp: 0, id: 'thresheld' },
+            { cost: 2, levelUp: 0, id: 'weakGuard' },
+            { cost: 10, levelUp: 0, id: 'malevolentPossession' }
         ],
         skillLibrary: [
             { cost: 1, levelUp: 1, id: 'customSkill' },
@@ -1511,7 +1624,41 @@ on('sheet:opened', function() {
             { cost: 4, levelUp: 2, id: 'elementalResistance' },
             { cost: 3, levelUp: 0, id: 'elementalAttunement' },
             { cost: 5, levelUp: 0, id: 'polearmWielder' },
-            { cost: 4, levelUp: 2, id: 'rangedWeaponWielder' }
+            { cost: 4, levelUp: 2, id: 'rangedWeaponWielder' },
+            { cost: 4, levelUp: 2, id: 'aquatic' },
+            { cost: 4, levelUp: 2, id: 'construct' },
+            { cost: 4, levelUp: 2, id: 'elemental' },
+            { cost: 4, levelUp: 2, id: 'undead' },
+            { cost: 6, levelUp: 0, id: 'diminuitive' },
+            { cost: 4, levelUp: 2, id: 'healer' },
+            { cost: 1, levelUp: 1, id: 'increasedLength' },
+            { cost: 1, levelUp: 0, id: 'largeHead' },
+            { cost: 4, levelUp: 3, id: 'limitedRegeneration' },
+            { cost: 1, levelUp: 0, id: 'longTail' },
+            { cost: 6, levelUp: 0, id: 'morale' },
+            { cost: 6, levelUp: 0, id: 'hardenedResolve' },
+            { cost: 6, levelUp: 0, id: 'standTall' },
+            { cost: 6, levelUp: 0, id: 'terrainAdaptation' },
+            { cost: 12, levelUp: 0, id: 'ultimateAttack' },
+            { cost: 6, levelUp: 0, id: 'unscrupulous' },
+            { cost: 3, levelUp: 0, id: 'alteredDurability' },
+            { cost: 3, levelUp: 0, id: 'amphibious' },
+            { cost: 6, levelUp: 0, id: 'destructiveBurrow' },
+            { cost: 6, levelUp: 3, id: 'durableFlunky' },
+            { cost: 3, levelUp: 0, id: 'freeBurrow' },
+            { cost: 4, levelUp: 0, id: 'landAdaptation' },
+            { cost: 8, levelUp: 0, id: 'resurrectingFlunky' },
+            { cost: 8, levelUp: 0, id: 'trample' },
+            { cost: 6, levelUp: 0, id: 'toweringPresence' },
+            { cost: 2, levelUp: 2, id: 'burrow' },
+            { cost: 3, levelUp: 0, id: 'humanshape' },
+            { cost: 4, levelUp: 2, id: 'limitedFlight' },
+            { cost: 6, levelUp: 0, id: 'pressingSwarm' },
+            { cost: 12, levelUp: 0, id: 'shapeshifter' },
+            { cost: 1, levelUp: 1, id: 'skillCopy' },
+            { cost: 3, levelUp: 1, id: 'swiftStance' },
+            { cost: 8, levelUp: 0, id: 'victorAtAnyCost' },
+            { cost: 1, levelUp: 1, id: 'increasedCompanionSize' }
         ],
         coreLibrary: [
             { cost: 2, levelUp: 1, id: 'damage' },
@@ -1522,7 +1669,8 @@ on('sheet:opened', function() {
             { cost: 3, levelUp: 2, id: 'summoning' },
             { cost: 1, levelUp: 1, id: 'weaken' },
             { cost: 4, levelUp: 2, id: 'ultDamage' },
-            { cost: 0, levelUp: 3, id: 'ultTransform' }
+            { cost: 0, levelUp: 3, id: 'ultTransform' },
+            { cost: 0, levelUp: 3, id: 'ultMimic' }
         ]
     });
     
@@ -1700,7 +1848,7 @@ on('sheet:opened', function() {
         <td>Initiative:</td>
         <td nowrap="nowrap">
             <span class="derived-value" name="attr_init"></span>
-            <button type="roll" value="[[1d10+@{init}+@{rollbonus} &{tracker}]] Initiative" name="roll_res"></button>
+            <button type="roll" value="[[1d10+@{init}+@{rollbonus} &{tracker} &{noerror}]] Initiative" name="roll_res"></button>
         </td>
     </tr>
     <tr>
@@ -1708,9 +1856,6 @@ on('sheet:opened', function() {
         <td>Roll Bonus:</td>
         <td nowrap="nowrap">
             <input type="number" class="short-number" name="attr_rollbonus" value="0">
-        </td>
-        <td class="derived-value">
-            <span name="attr_hasOverloadLimits" />
         </td>
     </tr>
 </table>
@@ -1756,6 +1901,17 @@ on('sheet:opened', function() {
             </optgroup>
             <optgroup label="NPC Only">
                 <option value="battleDamage">Battle Damage (+3)</option>
+            </optgroup>
+            <optgroup label="Villains, Creatures and Foes (BETA)">
+                <option value="broadForm">Broad Form (+4)</option>
+                <option value="fearTheDarkness">Fear the Darkness (+3)</option>
+                <option value="immobile">Immobile (+7)</option>
+                <option value="insubstantial">Insubstantial (+3)</option>
+                <option value="situationalCompanion">Situational Companion (+2)</option>
+                <option value="sunlightWeakness">Sunlight Weakness (+5)</option>
+                <option value="thresheld">Thresheld (+3)</option>
+                <option value="weakGuard">Weak Guard (+2)</option>
+                <option value="malevolentPossession">Malevolent Possession (+10)</option>
             </optgroup>
         </select>
         Level: <input type="number" name="attr_flawlevel" value="1" />
@@ -1940,7 +2096,53 @@ on('sheet:opened', function() {
                 <option value="revive">Revive (8/3)</option>
             </optgroup>
             <optgroup label="Season 4 (NPC Only)">
-                <option value="limitlessPower">Limitless Power (12)</option>
+                <option value="limitlessPower">Valiant (12)</option>
+            </optgroup>
+            <optgroup label="Villains, Creatures and Foes (BETA)">
+            </optgroup>
+            <optgroup label="Traits">
+                <option value="aquatic">Aquatic (1)</option>
+                <option value="construct">Construct (8)</option>
+                <option value="elemental">Elemental (5)</option>
+                <option value="undead">Undead (8)</option>
+            </optgroup>
+            <optgroup label="Season 1">
+                <option value="diminuitive">Diminuitive (6)</option>
+                <option value="healer">Healer (4/2)</option>
+                <option value="increasedLength">Increased Length (1/1)</option>
+                <option value="morale">Morale (6)</option>
+                <option value="hardenedResolve">Hardened Resolve (6)</option>
+                <option value="amphibious">Amphibious (3)</option>
+                <option value="toweringPresence">Towering Presence (6)</option>
+                <option value="humanshape">Humanshape (3)</option>
+                <option value="limitedFlight">Limited Flight (4/2)</option>
+                <option value="pressingSwarm">Pressing Swarm (6)</option>
+                <option value="skillCopy">Skill Copy (?)</option>
+                <option value="swiftStance">Swift Stance (3/1)</option>
+                <option value="increasedCompanionSize">Increased Companion Size (1/1)</option>
+            </optgroup>
+            <optgroup label="Season 2">
+                <option value="largeHead">Large Head (1)</option>
+                <option value="limitedRegeneration">Limited Regeneration (4/3)</option>
+                <option value="longTail">Long Tail (1)</option>
+                <option value="trample">Trample (8)</option>
+                <option value="ultimateAttack">Ultimate Attack (12)</option>
+                <option value="victorAtAnyCost">Victor At Any Cost (8)</option>
+            </optgroup>
+            <optgroup label="Season 3">
+                <option value="alteredDurability">Altered Durability (3)</option>
+                <option value="burrow">Burrow (6)</option>
+                <option value="durableFlunky">Durable Flunky (6/3)</option>
+                <option value="resurrectingFlunky">Resurrecting Flunky (8)</option>
+                <option value="standTall">Stand Tall (6)</option>
+                <option value="terrainAdaptation">Terrain Adaptation (6)</option>
+            </optgroup>
+            <optgroup label="Season 4">
+                <option value="destructiveBurrow">Destructive Burrow (6)</option>
+                <option value="freeBurrow">Free Burrow (3)</option>
+                <option value="landAdaptation">Land Adaptation (4)</option>
+                <option value="shapeshifter">Shapeshifter (12)</option>
+                <option value="unscrupulous">Unscrupulous (6)</option>
             </optgroup>
         </select>
         Level: <input type="number" name="attr_skilllevel" value="1" />
@@ -1980,8 +2182,12 @@ on('sheet:opened', function() {
                             <option value="mimic">Mimic Core</option>
                             <option value="summoning">Summoning Core</option>
                             <option value="weaken">Weaken Core</option>
-                            <option value="ultDamage">Ultimate Attack</option>
-                            <option value="ultTransform">Transformation</option>
+                            <optgroup label="Ultimate Cores">
+                                <option value="domain">Domain</option>
+                                <option value="ultDamage">Ultimate Attack</option>
+                                <option value="ultMimic">Ultimate Mimic</option>
+                                <option value="ultTransform">Transformation</option>
+                            </optgroup>
                         </select>
                     </td>
                     <td>Core Level:</td>
