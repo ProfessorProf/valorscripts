@@ -404,7 +404,7 @@ function getTechByName(techId, charId) {
             // Recalculate healing/damage
             switch(tech.core) {
                 case 'damage':
-                    var special = tech.mods.find(function(m) {
+                    var special = tech.mods && tech.mods.find(function(m) {
                         return m.toLowerCase().indexOf('piercing') > -1 ||
                                m.toLowerCase().indexOf('sapping') > -1 ||
                                m.toLowerCase().indexOf('persistent') > -1 ||
@@ -516,6 +516,12 @@ function updateValor(obj) {
         var charId = token.get('represents');
         var maxValor = parseInt(token.get('bar3_max'));
         if(maxValor) {
+            var hp = parseInt(token.get('bar1_value'));
+            if(hp == hp && hp <= 0) {
+                // They're KO'd - don't add Valor
+                return;
+            }
+            
             // If it has a max Valor, it's tracking Valor - raise it
             var valor = parseInt(token.get('bar3_value'));
             var valorRate = 1;
@@ -654,6 +660,7 @@ on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!t ') == 0 || 
     msg.type == 'api' && msg.content.indexOf('!tech') == 0) {
         // Get params
+        log('help');
         var split = msg.content.match(/(".*?")|(\S+)/g);
         if(split.length < 2) {
             log('Not enough arguments.');
@@ -757,6 +764,7 @@ on('chat:message', function(msg) {
         
         // Pull Skill list
         var skills = getSkills(actor.get('_id'));
+        log(skills);
         
         // Pull tech usage data from the state
         var techDataId = actor.get('_id') + '.' + tech.name;
@@ -976,6 +984,10 @@ on('chat:message', function(msg) {
                 rollBonus += 2;
             }
             
+            log('a');
+            log(skills.find(function(s) {
+				return s && s.name && s.name.indexOf('increasedSize') == 0;
+			}));
 			if(skills.find(function(s) {
 				return s && s.name && s.name.indexOf('increasedSize') == 0;
 			})) {
@@ -1380,10 +1392,6 @@ on('chat:message', function(msg) {
             
             // Restore Health
             if(maxHp) {
-                if(hp < 0) {
-                    hp = 0;
-                }
-                
                 var hpRestore = Math.ceil(maxHp / 5);
                 
                 // Check for Fast Healing
@@ -1405,9 +1413,6 @@ on('chat:message', function(msg) {
             
             // Restore Stamina
             if(maxSt) {
-                if(st < 0) {
-                    st = 0;
-                }
                 st += Math.ceil(maxSt / 5);
                 if(st > maxSt) {
                     st = maxSt;
@@ -1810,7 +1815,13 @@ on('change:graphic', function(obj, prev) {
     }
     if(obj.get('bar1_value') && prev.bar1_value &&
        obj.get('bar1_value') == prev.bar1_value) {
-        // Do nothing if none of the max values changed
+        // Do nothing if none of the values changed
+        return;
+    }
+    
+    var page = Campaign().get('playerpageid');
+    if(!obj.get('_pageid') == page) {
+        // Do nothing if it was a token on another page
         return;
     }
     
@@ -1818,7 +1829,7 @@ on('change:graphic', function(obj, prev) {
     var newHp = parseInt(obj.get('bar1_value'));
     var maxHp = parseInt(obj.get('bar1_max'));
     
-    if(oldHp == oldHp && newHp == newHp && maxHp == maxHp) {
+    if(oldHp == oldHp && newHp == newHp && maxHp == maxHp && oldHp != newHp) {
         var critical = Math.ceil(maxHp * 0.4);
         var message;
         if(oldHp > critical && newHp <= critical) {
@@ -2067,4 +2078,9 @@ on('change:campaign:turnorder', function(obj) {
  * - Attack roll now factors in Increased Size.
  * - Attack roll now factors in Roll Bonus.
  * - Added support for mechanics from Villains, Creatures and Foes.
+ * 
+ * v1.9.1:
+ * - !rest no longer heals up from zero all at once.
+ * - Characters at 0 or less HP no longer gain Valor automatically.
+ * - Hopefully stopped the multiple notifs for critical HP.
  **/
