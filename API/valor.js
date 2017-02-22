@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.9.1
+ * v1.9.2
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -82,6 +82,7 @@ state.ignoreLimitsOnMinions = true; // Disables limit blocking for Flunkies and 
 state.hideNpcTechEffects = false; // For non-player characters, don't show players the tech effect when using !t.
 state.showTechAlerts = true; // Send alerts for when ammo changes and when techs come off of cooldown.
 state.showHealthAlerts = true; // Send alerts when characters enter or leave critical health.
+state.houseRulesEnabled = false; // Enables various unsupported house rules.
 
 // Status Tracker
 // While this is active, any numbered status markers will automatically
@@ -1438,6 +1439,15 @@ on('chat:message', function(msg) {
                         startingValor = -weakWilled.level;
                     }
                 }
+                
+                if(state.houseRulesEnabled) {
+                    // Bravado is fixed-level, gain starting valor by Season
+                    if(startingValor > 1) {
+                        startingValor = 1;
+                    }
+                    var level = getAttrByName(charId, 'level');
+                    startingValor += Math.ceil(level / 5) - 1;
+                }
             } else {
                 // No skillset found - use set-bravado value instead
                 if(state.charData && 
@@ -1473,10 +1483,11 @@ on('chat:message', function(msg) {
         tokens.forEach(function(token) {
             token.set('bar1_value', token.get('bar1_max'));
             token.set('bar2_value', token.get('bar2_max'));
+            var charId = token.get('represents');
             
             // Reset Valor
             var startingValor = 0;
-            var skills = getSkills(token.get('represents'));
+            var skills = getSkills(charId);
             if(skills) {
                 var bravado = skills.find(function(s) {
                     return s.name == 'bravado';
@@ -1486,11 +1497,21 @@ on('chat:message', function(msg) {
                 }
             } else {
                 // No skillset found - use set-bravado value instead
-                if(state.charData[token.get('represents')] &&
-                    state.charData[token.get('represents')].bravado) {
-                    startingValor = state.charData[token.get('represents')].bravado;
+                if(state.charData[charId] &&
+                    state.charData[charId].bravado) {
+                    startingValor = state.charData[charId].bravado;
                 }
             }
+            
+            if(state.houseRulesEnabled) {
+                // Bravado is fixed-level, gain starting valor by Season
+                if(startingValor > 1) {
+                    startingValor = 1;
+                }
+                var level = getAttrByName(charId, 'level');
+                startingValor += Math.ceil(level / 5) - 1;
+            }
+            
             token.set('bar3_value', startingValor);
         });
         
@@ -1820,7 +1841,7 @@ on('change:graphic', function(obj, prev) {
     }
     
     var page = Campaign().get('playerpageid');
-    if(!obj.get('_pageid') == page) {
+    if(obj.get('_pageid') != page) {
         // Do nothing if it was a token on another page
         return;
     }
@@ -2083,4 +2104,8 @@ on('change:campaign:turnorder', function(obj) {
  * - !rest no longer heals up from zero all at once.
  * - Characters at 0 or less HP no longer gain Valor automatically.
  * - Hopefully stopped the multiple notifs for critical HP.
+ * 
+ * v1.9.2:
+ * - Fixed the critical HP notifs again.
+ * - Added support for Fixed Bravado house rules.
  **/
