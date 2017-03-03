@@ -1,79 +1,16 @@
 /**
  * VALOR API SCRIPTS
- * v1.9.2
+ * v1.10.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
  * 2. Create a new script, and paste the contents of this file into it.
  * 3. Click Save Script.
  * 
- * PASSIVE FUNCTIONALITY
- * Status Tracker
- * - When a character gains a temporary status, add it to the init tracker as
- * a label after their turn and a Round Calculation of -1.
- * - When its timer ticks down to 0, it will automatically be removed from the
- * list, and the chat will be informed.
- * 
- * Valor Updater
- * - After filling out the turn order, add a new label called "Round".
- * - When Round reaches the top of the initiative, all characters with
- * a max Valor (red bar) will gain 1 Valor (or more if you've used !set-vrate).
- * 
- * Max Value Sync
- * - When a token's Max HP or Max ST changes, its current HP or ST will change
- * by the same amount.
- * 
- * Ongoing Effect Processor
- * - Add a label after someone's turn on the init tracker to apply an automatic
- * - effect each round.
- * - Ongoing X - lose X HP
- * - Regen X - gain X HP
- * - SRegen X - gain X ST
- * 
- * NEW COMMANDS
- * !scan
- * - Outputs URLs for the token images for all characters.
- * 
- * !t [tech] [targets] [bonus]
- * - Performs a Technique. Requires Valor Character sheet.
- * - For "tech", put either a number or the beginning of the tech name. 
- * - Identifies the actor via selected token or 'As:' field or who you control.
- * - Rolls against the indicated number of targets (Default 1).
- * - Adds a bonus value to all rolls (Default 0).
- * - Automatically subtracks Stamina, Health, Initiative and Valor from cost/limits.
- * 
- * !t-undo
- * - Reverts usage of previous technique, restoring all lost resources.
- * - Can remember up to 20 technique usages.
- * 
- * !e [Label] [duration]
- * - Adds a temporary effect created by the selected character to the turn 
- * tracker.
- * - By default, the duration is 3 turns.
- * 
- * !set-bravado [value]
- * - Select one or more characters and enter '!set-bravado X'
- * - This will internally register the character as having Bravado at level X.
- * - You can ignore this if you're using the Valor Character Sheet.
- * 
- * !set-vrate [value]
- * - Select one or more characters and enter '!set-vrate X'
- * - Selected characters will now gain X valor per round.
- * - Default is 1.
- * - You can ignore this if you're using the Valor Character Sheet.
- * 
- * !rest
- * - All tokens recover one increment of HP and ST.
- * - Valor is reset to 0, or higher if the character has the Bravado skill.
- * - Use with !set-bravado.
- * 
- * !fullrest
- * - All tokens recover all HP and ST.
- * - Valor is reset to 0, or higher if the character has the Bravado skill.
- * - Use with !set-bravado.
+ * For usage instructions, consult the readme file.
  **/
 
-// Settings for passive functions - 'true' for on, 'false' for off.
+// Settings for optional functions - 'true' for on, 'false' for off.
 state.statusTrackerEnabled = true; // Erase statuses on the turn order when they reach 0.
 state.valorUpdaterEnabled = true; // Add Valor for all Elites and Masters when a new round starts.
 state.maxValueSyncEnabled = true; // Move HP and ST to match when max HP and max ST change.
@@ -162,6 +99,26 @@ function getSkills(charId) {
     return skills;
 }
 
+function getSkill(charId, skillName) {
+	var skills = getSkills(charId);
+	
+	if(skills && skills.length > 0) {
+		return skills.find(s => s.name.toLowerCase() == skillName.toLowerCase());
+	}
+	
+	return null;
+}
+
+function getFlaw(charId, flawName) {
+	var flaws = getFlaws(charId);
+	
+	if(flaws && flaws.length > 0) {
+		return flaws.find(f => f.name.toLowerCase() == flawName.toLowerCase());
+	}
+	
+	return null;
+}
+
 // Internal function - gets a list of flaws and their levels for a character ID.
 // Uses the Valor Character Sheet structure.
 function getFlaws(charId) {
@@ -246,12 +203,6 @@ function getTechs(charId) {
             } else {
                 techs.push({ id: techId, stat: rawTech.get('current')});
             }
-        } else if(techName.indexOf('tech_micro_summary') > -1) {
-            if(oldTech) {
-                oldTech.summary = rawTech.get('current');
-            } else {
-                techs.push({ id: techId, summary: rawTech.get('current')});
-            }
         } else if(techName.indexOf('tech_cost') > -1) {
             var cost = parseInt(rawTech.get('current'));
             if(cost != cost) {
@@ -334,6 +285,18 @@ function getTechs(charId) {
             } else {
                 techs.push({ id: techId, techLevel: rawTech.get('current')});
             }
+        } else if(techName.indexOf('tech_granted_skills') > -1) {
+            if(oldTech) {
+                oldTech.grantedSkills = rawTech.get('current');
+            } else {
+                techs.push({ id: techId, grantedSkills: rawTech.get('current')});
+            }
+        } else if(techName.indexOf('tech_inflicted_flaws') > -1) {
+            if(oldTech) {
+                oldTech.inflictedFlaws = rawTech.get('current');
+            } else {
+                techs.push({ id: techId, inflictedFlaws: rawTech.get('current')});
+            }
         } else if(techName.indexOf('tech_digDeep') > -1) {
             var digDeep = rawTech.get('current') == 'on';
             if(oldTech) {
@@ -348,10 +311,162 @@ function getTechs(charId) {
             } else {
                 techs.push({ id: techId, overloadLimits: overloadLimits});
             }
+        } else if(techName.indexOf('tech_empowerAttack') > -1) {
+            var empowerAttack = rawTech.get('current') == 'on';
+            if(oldTech) {
+                oldTech.empowerAttack = empowerAttack;
+            } else {
+                techs.push({ id: techId, empowerAttack: empowerAttack});
+            }
         }
     });
     
     return techs;
+}
+
+function getTechDamage(tech, charId) {
+	var special = tech.mods && tech.mods.find(function(m) {
+		return m.toLowerCase().indexOf('piercing') > -1 ||
+			   m.toLowerCase().indexOf('sapping') > -1 ||
+			   m.toLowerCase().indexOf('persistent') > -1 ||
+			   m.toLowerCase().indexOf('drain') > -1 ||
+			   m.toLowerCase().indexOf('debilitating') > -1 ||
+			   m.toLowerCase().indexOf('boosting') > -1;
+	});
+	var damage = (tech.coreLevel + 3) * 5;
+	var atk = getAttrByName(charId, tech.stat + 'Atk');
+	if(special) {
+		damage = (tech.coreLevel + 3) * 4;
+		atk = Math.ceil(atk / 2);
+	}
+	damage += atk;
+	
+	var hp = getAttrByName(charId, 'hp');
+	var hpMax = getAttrByName(charId, 'hp', 'max');
+	if(hp / hpMax <= 0.4) {
+	    // HP is critical!
+    	var crisis = getSkill(charId, 'crisis');
+    	if(crisis && crisis.level) {
+    	    var crisisLevel = parseInt(crisis.level);
+    	    if(crisisLevel != crisisLevel) {
+    	        crisisLevel = 1;
+    	    }
+    	    damage += 3 + crisisLevel * 3;
+    	}
+    	var berserker = getFlaw(charId, 'berserker')
+    	if(berserker) {
+    	    damage += 10;
+    	}
+	}
+	
+	if(tech.empowerAttack) {
+    	var empowerAttack = getSkill(charId, 'empowerAttack');
+    	if(empowerAttack && empowerAttack.level) {
+    	    var empowerAttackLevel = parseInt(empowerAttack.level);
+    	    if(empowerAttackLevel != empowerAttackLevel) {
+    	        empowerAttackLevel = 1;
+    	    }
+    	    damage += 3 + empowerAttackLevel * 3;
+    	}
+	}
+	
+	return damage;
+}
+
+function getTechDescription(tech, charId) {
+    if(!tech) {
+        return '';
+    }
+	var summary = '';
+	switch(tech.core) {
+		case 'damage':
+		case 'ultDamage':
+			summary = 'Damage: <span style="color: darkred">**' + 
+						   getTechDamage(tech, charId) +
+						   '**</span>';
+						   
+			var piercing = tech.mods && tech.mods.find(function(m) {
+				return m.toLowerCase().indexOf('piercing') > -1
+			});
+		    if(!piercing) {
+				var physical = tech.stat == 'str' || tech.stat == 'agi';
+				if(tech.mods && tech.mods.find(function(m) {
+					return m.toLowerCase().indexOf('shift') > -1
+				})) {
+					physical = !physical;
+				}
+				summary += physical ? ' - Defense' : ' - Resistance';
+			}
+			
+			var bonuses = [];
+    		var hp = getAttrByName(charId, 'hp');
+    		var hpMax = getAttrByName(charId, 'hp', 'max');
+    		if(hp / hpMax <= 0.4) {
+            	var crisis = getSkill(charId, 'crisis');
+            	if(crisis && crisis.level) {
+    		        bonuses.push('Crisis');
+            	}
+            	var berserker = getFlaw(charId, 'berserker')
+            	if(berserker) {
+            	    bonuses.push('Berserker');
+            	}
+    		}
+        	
+        	var empowerAttack = getSkill(charId, 'empowerAttack');
+        	if(empowerAttack && empowerAttack.level) {
+        	    var empowerAttackLevel = parseInt(empowerAttack.level);
+        	    if(empowerAttackLevel != empowerAttackLevel) {
+        	        empowerAttackLevel = 1;
+        	    }
+            	    bonuses.push('Empowered');
+        	}
+        	
+        	if(bonuses.length > 0) {
+        	    summary += ' **(' + bonuses.join(', ') + ')**';
+        	}
+        	
+			break;
+		case 'healing':
+			var healing = (tech.coreLevel + 3) * 4;
+			var power = getAttrByName(charId, tech.stat);
+			healing += power;
+			summary = 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP'
+			break;
+		case 'barrier':
+			summary = 'Barrier power ' + tech.coreLevel;
+			break;
+	}
+	
+	if(tech.grantedSkills) {
+		if(summary.length > 0) {
+			summary += '<br />';
+		}
+		summary += 'Skills: ' +  tech.grantedSkills;
+	}
+	
+	if(tech.inflictedFlaws) {
+		if(summary.length > 0) {
+			summary += '<br />';
+		}
+		summary += 'Flaws: ' +  tech.inflictedFlaws;
+	}
+	
+	if(tech.core == 'ultTransform') {
+		var level = parseInt(getAttrByName(charId, 'level'));
+		if(!level || level != level) {
+			level = 0;
+		}
+		var bonusHp = level * 10;
+		if(getAttrByName(charId, 'type') == 'master') {
+			bonusHp *= 2;
+		}
+		if(summary.length > 0) {
+			summary += '<br />';
+		}
+		summary = 'HP +<span style="color:darkgreen">**' + bonusHp + '**</span>';
+	}
+	
+	return summary;
 }
 
 function getTechByName(techId, charId) {
@@ -388,62 +503,44 @@ function getTechByName(techId, charId) {
 			}
 		}
     }
-    
-    if(tech && tech.core == 'mimic' && tech.mimicTarget && charId) {
-        // Re-get the mimicked technique
-        var mimicTech = tech;
-        tech = getTechByName(tech.mimicTarget);
-        tech.name = mimicTech && mimicTech.name + ' [' + tech.name + ']';
-
-        // Revise core level
-        tech.coreLevel = mimicTech.coreLevel - (tech.techLevel - tech.coreLevel);
-        
-        if(tech.coreLevel <= 0) {
-            // Set core type back to mimic so that invocation can see it
-            tech.core = 'mimic';
-        } else {
-            // Recalculate healing/damage
-            switch(tech.core) {
-                case 'damage':
-                    var special = tech.mods && tech.mods.find(function(m) {
-                        return m.toLowerCase().indexOf('piercing') > -1 ||
-                               m.toLowerCase().indexOf('sapping') > -1 ||
-                               m.toLowerCase().indexOf('persistent') > -1 ||
-                               m.toLowerCase().indexOf('drain') > -1 ||
-                               m.toLowerCase().indexOf('debilitating') > -1 ||
-                               m.toLowerCase().indexOf('boosting') > -1;
-                    });
-                    var damage = (tech.coreLevel + 3) * 5;
-                    var atk = getAttrByName(charId, tech.stat + 'Atk');
-                    if(special) {
-                        damage = (tech.coreLevel + 3) * 4;
-                        atk = Math.ceil(atk / 2);
-                    }
-                    damage += atk;
-                    
-                    tech.summary = 'Damage: <span style="color: darkred">**' + 
-                                   damage +
-                                   ((tech.stat == 'str' || tech.stat == 'agi') ?
-                                   '**</span> - Defense' :
-                                   '**</span> - Resistance');
-                    break;
-                case 'healing':
-                    var healing = (tech.coreLevel + 3) * 5;
-                    var power = getAttrByName(charId, tech.stat);
-                    healing += power;
-                    
-                    tech.summary = 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP'
-                    break;
-            }
+	
+	if(tech) {
+        if(!tech.core) {
+            tech.core = 'damage';
         }
         
-        // Roll using the chosen stat
-        tech.stat = mimicTech.stat;
-    }
+        if(!tech.coreLevel) {
+            tech.coreLevel = 1;
+        }
+        
+	    tech.summary = getTechDescription(tech, charId);
     
-    if(tech && !tech.core) {
-        tech.core = 'damage';
-    }
+        if(tech.core == 'mimic' && tech.mimicTarget && charId) {
+            // Re-get the mimicked technique
+            var mimicTech = tech;
+            tech = getTechByName(tech.mimicTarget);
+            if(tech) {
+                tech.name = mimicTech.name + ' [' + tech.name + ']';
+        
+                // Revise core level
+                tech.coreLevel = mimicTech.coreLevel - (tech.techLevel - tech.coreLevel);
+                
+                if(tech.coreLevel <= 0) {
+                    // Set core type back to mimic so that invocation can see it
+                    tech.core = 'mimic';
+                } else {
+                    // Rewrite tech summary
+        			tech.summary = getTechDescription(tech, charId);
+                }
+                
+                // Roll using the chosen stat
+                tech.stat = mimicTech.stat;
+            } else {
+                tech = mimicTech;
+            }
+        }
+	}
+    
     return tech;
 }
 
@@ -540,16 +637,10 @@ function updateValor(obj) {
             }
             
             valor += valorRate;
-            var skills = getSkills(charId);
-            
-            if(skills && skills.length > 0) {
-                var bounceBack = skills.find(function(s) {
-                    return s.name == 'bounceBack';
-                });
-                if(bounceBack && valor < 0) {
-                    valor++;
-                }
-            }
+			
+			if(getSkill(charId, 'bounceBack') && valor < 0) {
+				valor++;
+			}
             
             token.set('bar3_value', valor);
             if(valor > maxValor) {
@@ -661,7 +752,6 @@ on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!t ') == 0 || 
     msg.type == 'api' && msg.content.indexOf('!tech') == 0) {
         // Get params
-        log('help');
         var split = msg.content.match(/(".*?")|(\S+)/g);
         if(split.length < 2) {
             log('Not enough arguments.');
@@ -765,7 +855,6 @@ on('chat:message', function(msg) {
         
         // Pull Skill list
         var skills = getSkills(actor.get('_id'));
-        log(skills);
         
         // Pull tech usage data from the state
         var techDataId = actor.get('_id') + '.' + tech.name;
@@ -985,10 +1074,6 @@ on('chat:message', function(msg) {
                 rollBonus += 2;
             }
             
-            log('a');
-            log(skills.find(function(s) {
-				return s && s.name && s.name.indexOf('increasedSize') == 0;
-			}));
 			if(skills.find(function(s) {
 				return s && s.name && s.name.indexOf('increasedSize') == 0;
 			})) {
@@ -1202,11 +1287,11 @@ on('chat:message', function(msg) {
     		}
         }
         
-        if(!showSummary) {
+        if(!showSummary && tech.summary) {
 			sendChat('Valor', '/w gm ' + tech.summary);
         }
         
-        // Disable digDeep and overrideLimits on this tech
+        // Disable temporary switches on this tech
         if(tech.digDeep) {
             var techAttrs = filterObjs(function(obj) {
                 if(obj.get('_type') == 'attribute' &&
@@ -1234,6 +1319,21 @@ on('chat:message', function(msg) {
             if(techAttrs && techAttrs.length > 0) {
                 var digDeep = techAttrs[0];
                 digDeep.set('current', '0');
+            }
+        }
+        
+        if(tech.empowerAttack) {
+            var techAttrs = filterObjs(function(obj) {
+                if(obj.get('_type') == 'attribute' &&
+                   obj.get('name').indexOf(tech.id) > -1 &&
+                   obj.get('name').indexOf('empowerAttack') > -1) {
+                       return true;
+                }
+                return false;
+            });
+            if(techAttrs && techAttrs.length > 0) {
+                var empowerAttack = techAttrs[0];
+                empowerAttack.set('current', '0');
             }
         }
 		
@@ -1487,14 +1587,9 @@ on('chat:message', function(msg) {
             
             // Reset Valor
             var startingValor = 0;
-            var skills = getSkills(charId);
-            if(skills) {
-                var bravado = skills.find(function(s) {
-                    return s.name == 'bravado';
-                });
-                if(bravado && bravado.level) {
-                    startingValor = bravado.level;
-                }
+            var bravado = getSkill(charId, 'bravado');
+			if(bravado && bravado.level) {
+				startingValor = bravado.level;
             } else {
                 // No skillset found - use set-bravado value instead
                 if(state.charData[charId] &&
@@ -2108,4 +2203,11 @@ on('change:campaign:turnorder', function(obj) {
  * v1.9.2:
  * - Fixed the critical HP notifs again.
  * - Added support for Fixed Bravado house rules.
+ * 
+ * v1.10.0:
+ * - Moved tech micro-summary logic into this file.
+ * - Added support for Crisis in presented damage for techs.
+ * - Added support for Berserker in presented damage for techs.
+ * - Added support for Empower Attack in presented damage for techs.
+ * - Bugfixes.
  **/

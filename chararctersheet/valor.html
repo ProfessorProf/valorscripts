@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.4.0
+ * v1.4.1
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -99,6 +99,11 @@
  * v1.4.0:
  * - Added skills, flaws, mods and cores from Villains, Creatures and Foes.
  * - Removed a wayward debug label.
+ * 
+ * v1.4.1:
+ * - Removed micro-summary logic.
+ * - Added checkbox for Empowered Attack.
+ * - Bugfixes.
  **/
 
 function calculateStats() {
@@ -179,6 +184,7 @@ function calculateStats() {
         
         var hasDigDeep = false;
         var hasOverloadLimits = false;
+        var hasEmpowerAttack = false;
         var hasUlt = false;
         var healerLevel = 0;
         
@@ -358,6 +364,9 @@ function calculateStats() {
                                 case 'digDeep':
                                     hasDigDeep = true;
                                     break;
+                                case 'empowerAttack':
+                                    hasEmpowerAttack = true;
+                                    break;
                                 case 'overloadLimits':
                                     hasOverloadLimits = true;
                                     break;
@@ -481,6 +490,7 @@ function calculateStats() {
                                     init: dex + initMod,
                                     hasDigDeep: hasDigDeep,
                                     hasOverloadLimits: hasOverloadLimits,
+                                    hasEmpowerAttack: hasEmpowerAttack,
                                     healerLevel: healerLevel,
                                     unspentAP: unspentAP,
                                     unspentSP: unspentSP,
@@ -501,7 +511,7 @@ function calculateTechs() {
                           'mus', 'dex', 'aur', 'int', 'res', 
                           'strAtk', 'agiAtk', 'sprAtk', 'mndAtk',
                           'level', 'hp_max', 'di', 'type',
-                          'hasDigDeep', 'hasOverloadLimits', 'healerLevel'];
+                          'hasDigDeep', 'hasOverloadLimits', 'hasEmpowerAttack', 'healerLevel'];
     getSectionIDs('repeating_techs', function(tidarray) {
         for(var i=0; i < tidarray.length; i++) {
             techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_name');
@@ -549,7 +559,6 @@ function calculateTechs() {
                 
                 // Build tech summary
                 var summary = '';
-                var microSummary = '';
                 var warnings = ' ';
 				
 				var hasSkills = false;
@@ -657,12 +666,6 @@ function calculateTechs() {
                                     damage = 24 + 8 * techCoreLevel + techValues.strAtk;
                                 }
                                 summary += 'On a hit, deal ' + damage + ' physical damage to the target. '
-                                
-                                if(techMods.indexOf('piercing') > -1) {
-                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span>';
-                                } else {
-                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span> - Defense';
-                                }
                                 break;
                             case 'agi':
                                 if(specialAttack && techCore == 'damage') {
@@ -673,12 +676,6 @@ function calculateTechs() {
                                     damage = 24 + 8 * techCoreLevel + techValues.agiAtk;
                                 }
                                 summary += 'On a hit, deal ' + damage + ' physical damage to the target. '
-                                
-                                if(techMods.indexOf('piercing') > -1) {
-                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span>';
-                                } else {
-                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span> - Defense';
-                                }
                                 break;
                             case 'spr':
                                 if(specialAttack && techCore == 'damage') {
@@ -689,12 +686,6 @@ function calculateTechs() {
                                     damage = 24 + 8 * techCoreLevel + techValues.sprAtk;
                                 }
                                 summary += 'On a hit, deal ' + damage + ' energy damage to the target. '
-                                
-                                if(techMods.indexOf('piercing') > -1) {
-                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span>';
-                                } else {
-                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span> - Resistance';
-                                }
                                 break;
                             case 'mnd':
                                 if(specialAttack && techCore == 'damage') {
@@ -705,12 +696,6 @@ function calculateTechs() {
                                     damage = 24 + 8 * techCoreLevel + techValues.mndAtk;
                                 }
                                 summary += 'On a hit, deal ' + damage + ' energy damage to the target. '
-                                
-                                if(techMods.indexOf('piercing') > -1) {
-                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span>';
-                                } else {
-                                    microSummary = 'Damage: <span style="color: darkred">**' + damage + '**</span> - Resistance';
-                                }
                                 break;
                         }
                         break;
@@ -730,7 +715,6 @@ function calculateTechs() {
                             healing += 2 + 2 * techValues.healerLevel;
                         }
                         summary += 'Restore ' + healing + ' Health to the target. '
-                        microSummary += 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP';
                         break;
                     case 'barrier':
                         summary += 'Create a Barrier of power ' + techCoreLevel + '. ';
@@ -750,19 +734,16 @@ function calculateTechs() {
                         summary += 'Transform, gaining ' + bonusHp + ' HP and +1 to all Active Attributes. ';
                         if(techGrantedSkills) {
                             summary += 'Grants Skills: ' + techGrantedSkills;
-                            microSummary += 'Skills: ' + techGrantedSkills + '<br>';
                             if(!summary.endsWith('.')) {
                                 summary += '.';
                             }
                             summary += ' ';
                         }
-                        microSummary += ' HP +**<span style="color:darkgreen">' + bonusHp + '</span>**';
 						hasSkills = true;
                         break;
                     case 'boost':
                         if(techGrantedSkills) {
                             summary += 'Grants Skills: ' + techGrantedSkills;
-                            microSummary += 'Skills: ' + techGrantedSkills;
                             if(!summary.endsWith('.')) {
                                 summary += '.';
                             }
@@ -773,12 +754,27 @@ function calculateTechs() {
                     case 'weaken':
                         if(techInflictedFlaws) {
                             summary += 'Inflicts Flaws: ' + techInflictedFlaws;
-                            microSummary += 'Flaws: ' + techInflictedFlaws;
                             if(!summary.endsWith('.')) {
                                 summary += '.';
                             }
                             summary += ' ';
                         }
+						hasFlaws = true;
+                        break;
+                    case 'domain':
+                        if(techInflictedFlaws) {
+                            summary += 'Grants Skills within domain: ' + techGrantedSkills;
+                            if(!summary.endsWith('.')) {
+                                summary += '.';
+                            }
+                            summary += ' ';
+                            summary += 'Inflicts Flaws within domain: ' + techInflictedFlaws;
+                            if(!summary.endsWith('.')) {
+                                summary += '.';
+                            }
+                            summary += ' ';
+                        }
+						hasSkills = true;
 						hasFlaws = true;
                         break;
                     default:
@@ -1018,7 +1014,7 @@ function calculateTechs() {
                     } else if(mod.indexOf('grant flaw') == 0) {
                         totalModLevel += modLevel;
 						hasFlaws = true;
-                    } else if(mod.indexOf('grant skil') == 0) {
+                    } else if(mod.indexOf('grant skill') == 0) {
                         totalModLevel += modLevel;
 						hasSkills = true;
                     } else if(mod.indexOf('high barrier') == 0) {
@@ -1205,8 +1201,12 @@ function calculateTechs() {
                     } else if(limit.indexOf('falling') == 0) {
                         limitSummary += 'Fall prone after using this Technique.';
                         limitSt += 4;
-                    } else if(limit.indexOf('grant') == 0) {
+                    } else if(limit.indexOf('grant flaw') == 0) {
                         limitSt += limitLevel;
+                        hasFlaws = true;
+                    } else if(limit.indexOf('grant skill') == 0) {
+                        limitSt += limitLevel;
+                        hasSkills = true;
                     } else if(limit.indexOf('initiative') == 0) {
                         limitSummary += 'Initiative reduced by ' + limitLevel + ' after using this Technique. ';
                         limitSt += 3 * limitLevel;
@@ -1385,6 +1385,8 @@ function calculateTechs() {
                 }
                 summary += limitSummary;
                 
+                log(techValues.hasEmpowerAttack);
+                log(techCore);
                 var attrs = {};
                 attrs['repeating_techs_' + tidarray[i] + '_tech_summary'] = summary;
                 attrs['repeating_techs_' + tidarray[i] + '_tech_warnings'] = warnings;
@@ -1392,7 +1394,6 @@ function calculateTechs() {
                 attrs['repeating_techs_' + tidarray[i] + '_tech_tech_level'] = techLevel;
                 attrs['repeating_techs_' + tidarray[i] + '_tech_limit_st'] = limitSt;
                 attrs['repeating_techs_' + tidarray[i] + '_tech_cost'] = cost;
-                attrs['repeating_techs_' + tidarray[i] + '_tech_micro_summary'] = microSummary;
                 attrs['repeating_techs_' + tidarray[i] + '_tech_is_mimic'] = techCore == 'mimic'
                     ? 'on' : 'off';
                 attrs['repeating_techs_' + tidarray[i] + '_tech_has_flaws'] = hasFlaws
@@ -1403,6 +1404,9 @@ function calculateTechs() {
                     ? 'on' : 'off';
                 attrs['repeating_techs_' + tidarray[i] + '_tech_can_overload_limits'] = techValues.hasOverloadLimits
                     ? 'on' : 'off';
+                attrs['repeating_techs_' + tidarray[i] + '_tech_can_empower'] = (techValues.hasEmpowerAttack && 
+                    (techCore == 'damage' || techCore == 'ultDamage' || techCore == 'mimic'))
+                    ? 'on' : 'off';
                 setAttrs(attrs, { silent: true });
             }
         });
@@ -1412,7 +1416,7 @@ function calculateTechs() {
 /* Update displayed Technique info - Tech Level, Summary, Warnings, Mod/Limit Levels */
 on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_limit_st ' +
    'change:tech_core change:tech_stat change:tech_mods change:tech_limits change:tech_description ' +
-   'change:tech_mimic_target change:tech_digDeep change:tech_overloadLimits', function() {
+   'change:tech_mimic_target change:tech_digDeep change:tech_overloadLimits change:tech_empowerAttack', function() {
     calculateTechs();
 });
 
@@ -2009,6 +2013,7 @@ on('sheet:opened', function() {
                 <option value="battleAnalysis">Battle Analysis (6)</option>
                 <option value="clash">Clash (3)</option>
                 <option value="clone">Clone (6/3)</option>
+                <option value="cloneTactics">Clone Tactics (5)</option>
                 <option value="companionZoneOfControl">Companion ZOC (4/4)</option>
                 <option value="damageFeedback">Damage Feedback (5)</option>
                 <option value="daredevil">Daredevil (4)</option>
@@ -2042,7 +2047,7 @@ on('sheet:opened', function() {
                 <option value="trustingCompanion">Trusting Companion (4)</option>
                 <option value="underhanded">Underhanded (5)</option>
                 <option value="wallWalk">Wall Walk (4)</option>
-                <option value="waterWalk">Water Adaptation (6)</option>
+                <option value="waterAdaptation">Water Adaptation (6)</option>
                 <option value="waterWalk">Water Walk (4)</option>
                 <option value="xRayVision">X-Ray Vision (4)</option>
             </optgroup>
@@ -2215,6 +2220,13 @@ on('sheet:opened', function() {
                     <span class="label">Use Overload Limits</span>
                 </div>
             </div>
+            <div>
+                <input type="checkbox" class="conditional-check" name="attr_tech_can_empower">
+                <div class="conditional-block">
+                    <input type="checkbox" name="attr_tech_empowerAttack">
+                    <span class="label">Use Empower Attack</span>
+                </div>
+            </div>
         </div>
     </div>
     <div class="sheet-2colrow">
@@ -2236,7 +2248,7 @@ on('sheet:opened', function() {
             <div>
                 <input type="checkbox" class="conditional-check" name="attr_tech_has_skills">
                 <div class="tech-block conditional-block">
-                    <span class="label">Granted Skils: </span>
+                    <span class="label">Granted Skills: </span>
                     <input type="text" name="attr_tech_granted_skills" />
                 </div>
             </div>
