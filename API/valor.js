@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.10.0
+ * v1.10.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -103,7 +103,7 @@ function getSkill(charId, skillName) {
 	var skills = getSkills(charId);
 	
 	if(skills && skills.length > 0) {
-		return skills.find(s => s.name.toLowerCase() == skillName.toLowerCase());
+		return skills.find(s => s.name && s.name.toLowerCase() == skillName.toLowerCase());
 	}
 	
 	return null;
@@ -113,7 +113,7 @@ function getFlaw(charId, flawName) {
 	var flaws = getFlaws(charId);
 	
 	if(flaws && flaws.length > 0) {
-		return flaws.find(f => f.name.toLowerCase() == flawName.toLowerCase());
+		return flaws.find(f => f.name && f.name.toLowerCase() == flawName.toLowerCase());
 	}
 	
 	return null;
@@ -333,12 +333,17 @@ function getTechDamage(tech, charId) {
 			   m.toLowerCase().indexOf('debilitating') > -1 ||
 			   m.toLowerCase().indexOf('boosting') > -1;
 	});
-	var damage = (tech.coreLevel + 3) * 5;
 	var atk = getAttrByName(charId, tech.stat + 'Atk');
-	if(special) {
+	var damage = 0;
+	if(tech.core == 'damage' && special) {
 		damage = (tech.coreLevel + 3) * 4;
 		atk = Math.ceil(atk / 2);
+	} else if(tech.core == 'ultDamage' && !special) {
+	    damage = (tech.coreLevel + 3) * 8;
+	} else {
+	    damage = (tech.coreLevel + 3) * 5;
 	}
+	
 	damage += atk;
 	
 	var hp = getAttrByName(charId, 'hp');
@@ -412,13 +417,8 @@ function getTechDescription(tech, charId) {
             	}
     		}
         	
-        	var empowerAttack = getSkill(charId, 'empowerAttack');
-        	if(empowerAttack && empowerAttack.level) {
-        	    var empowerAttackLevel = parseInt(empowerAttack.level);
-        	    if(empowerAttackLevel != empowerAttackLevel) {
-        	        empowerAttackLevel = 1;
-        	    }
-            	    bonuses.push('Empowered');
+        	if(tech.empowerAttack) {
+        	    bonuses.push('Empowered');
         	}
         	
         	if(bonuses.length > 0) {
@@ -463,7 +463,7 @@ function getTechDescription(tech, charId) {
 		if(summary.length > 0) {
 			summary += '<br />';
 		}
-		summary = 'HP +<span style="color:darkgreen">**' + bonusHp + '**</span>';
+		summary += 'HP +<span style="color:darkgreen">**' + bonusHp + '**</span>';
 	}
 	
 	return summary;
@@ -937,7 +937,7 @@ on('chat:message', function(msg) {
 				return l.toLowerCase().indexOf('injury') == 0;
 			});
 			
-			if(injuryLimit) {
+			if(injuryLimit && token) {
 				var injuryLimitSplit = injuryLimit.split(' ');
 				var injuryLimitLevel = parseInt(injuryLimitSplit[injuryLimitSplit.length - 1]);
 				if(injuryLimitLevel != injuryLimitLevel) {
@@ -2210,4 +2210,7 @@ on('change:campaign:turnorder', function(obj) {
  * - Added support for Berserker in presented damage for techs.
  * - Added support for Empower Attack in presented damage for techs.
  * - Bugfixes.
+ * 
+ * v1.10.1:
+ * -Lots of bugfixes.
  **/
