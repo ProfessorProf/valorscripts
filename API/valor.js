@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.10.1
+ * v1.10.2
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -51,6 +51,7 @@ function trackStatuses(turnOrder) {
             newTurnOrder[0].pr--;
         }
         Campaign().set('turnorder', JSON.stringify(newTurnOrder));
+        log("Effect '" + newTurnOrder[0].custom + "' ended");
         trackStatuses(newTurnOrder);
     }
 }
@@ -622,6 +623,9 @@ function updateValor(obj) {
             
             // If it has a max Valor, it's tracking Valor - raise it
             var valor = parseInt(token.get('bar3_value'));
+            if(valor != valor) {
+                valor = 0;
+            }
             var valorRate = 1;
             
             if(state.charData[charId] &&
@@ -635,6 +639,8 @@ function updateValor(obj) {
                     valorRate *= 2;
                 }
             }
+            
+            log('Character ' + token.get('name') + ' gains ' + valorRate + ' for new round.');
             
             valor += valorRate;
 			
@@ -650,7 +656,7 @@ function updateValor(obj) {
         }
     });
     
-    log('Valor updated for new round.')
+    log('Valor update complete.')
 }
 
 function alertCooldowns() {
@@ -702,6 +708,7 @@ function alertCooldowns() {
         				var lastTurnUsed = techData.timesUsed[techData.timesUsed.length - 1];
         				if(round == lastTurnUsed + cooldownLimitLevel + 1) {
     	    			    sendChat('Valor', '/w "' + techData.userName + '" Technique "' + techData.techName + '" is no longer on cooldown.');
+    	    			    log('Technique ' + techData.techName + ' left cooldown on turn ' + round);
         				}
     				}
     			}
@@ -710,41 +717,17 @@ function alertCooldowns() {
 	}
 }
 
-// !scan command
-// Enter !scan in the chat to output each character's token image URL to the 
-// logs.
-// Also displays the speaking player's ID.
-on('chat:message', function(msg) {
-    if(msg.type == 'api' && msg.content.indexOf('!scan') == 0) {
-        var tokens = findObjs({_type: 'graphic'});
-        var usedNames = [];
-        
-        // Get image URLs
-        tokens.forEach(function(token) {
-            var name = token.get('name');
-            if(name !== '') {
-                var imgsrc = token.get('imgsrc');
-                if(imgsrc.indexOf('med.png') > -1) {
-                    // For setting imgsrc, you always want the thumb.png
-                    var split = imgsrc.split('med.png');
-                    imgsrc = split[0] + 'thumb.png' + split[1];
-                }
-                if(usedNames.indexOf(name) == -1) {
-                    log(name + ' Graphic: ' + imgsrc);
-                    usedNames.push(name);
-                }
-            }
-       });
-    }
-});
-
 // !reset command
 // Enter !reset in the chat to purge the tech data history.
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!reset') == 0) {
+        log('Tech data: ' + state.techData);
+        log('Tech history: ' + state.techHistory);
         state.techData = {};
         state.techHistory = [];
+        log('Reset complete.');
     }
+    
 });
 
 // !tech command
@@ -778,6 +761,7 @@ on('chat:message', function(msg) {
 			if(characters.length > 0) {
 				actor = characters[0];
 				split.splice(asParam, 2);
+				log('Performing tech as character ' + actor.get('name'));
 			}
 		}
 
@@ -785,6 +769,7 @@ on('chat:message', function(msg) {
 		var overrideLimits = split.indexOf('--override') > -1;
 		if(overrideLimits) {
 		    split.splice(split.indexOf('--override'), 1);
+		    log('Performing tech without Limits.');
 		}
 		
 		// --as failed or wasn't used, find through other means
@@ -810,7 +795,7 @@ on('chat:message', function(msg) {
 			t.custom.toLowerCase() == 'round';
 		});
 		var round = roundItem ? roundItem.pr : 0;
-		
+
         // Use selected token or first token on active page that represents character
         var token;
         if(msg.selected && msg.selected.length > 0) {
@@ -844,6 +829,7 @@ on('chat:message', function(msg) {
         
         // Failed mimic check
         if(tech.core == 'mimic' && tech.coreLevel <= 0) {
+            log('Mimic failed, effective tech level ' + tech.coreLevel + '.');
 		    sendChat('Valor', '/w "' + actor.get('name') + '" ' + 'Core Level is too low to mimic this technique.');
             return;
         }
@@ -851,6 +837,7 @@ on('chat:message', function(msg) {
         // Check for Overload Limits
         if(tech.overloadLimits) {
             overrideLimits = true;
+            log('Overloading limits.');
         }
         
         // Pull Skill list
@@ -870,6 +857,9 @@ on('chat:message', function(msg) {
             };
         }
         var techData = state.techData[techDataId];
+        if(techData.timesUsed && techData.timesUsed.length > 0) {
+            log('Technique used previously on turns: ' + techData.timesUsed);
+        }
         
         // Check for blocking limits
 		if(tech.limits && !overrideLimits && 
@@ -883,6 +873,7 @@ on('chat:message', function(msg) {
     		    var st = parseInt(token.get('bar2_value'));
     		    
     		    if(st == st && st < tech.cost && !tech.digDeep) {
+    		        log('Tech blocked - insufficient Stamina');
     		        errorMessage += "You don't have enough Stamina to use this Technique.<br>";
     		        blocked = true;
     		    }
@@ -902,6 +893,7 @@ on('chat:message', function(msg) {
                     turnOrder.forEach(function(turn) {
                         if(turn && turn.id === token.get('_id')) {
                             if(turn.pr <= initiativeLimitLevel) {
+                                log('Tech blocked - Initiative Limit');
                                 errorMessage += 'Your Initiative is too low to use this Technique.<br>';
                                 blocked = true;
                             }
@@ -927,6 +919,7 @@ on('chat:message', function(msg) {
 				
 				var currentValor = getAttrByName(actor.get('_id'), 'valor');
 				if(currentValor < valorLimitLevel) {
+				    log('Tech blocked - Valor Limit');
 				    errorMessage += 'You need at least ' + valorLimitLevel + ' Valor to use this Technique.<br>';
 				    blocked = true;
 				}
@@ -956,6 +949,7 @@ on('chat:message', function(msg) {
 				var hpTarget = Math.ceil(hpMax / 5 * (5 - injuryLimitLevel));
 				
 				if(hp > hpTarget) {
+				    log('Tech blocked - Injury Limit');
 				    errorMessage += 'Your Health must be ' + hpTarget + ' or lower to use this Technique.<br>';
 				    blocked = true;
 				}
@@ -975,6 +969,7 @@ on('chat:message', function(msg) {
     				}
     				
     				if(round <= setUpLimitLevel) {
+    				    log('Tech blocked - Setup Limit');
     				    errorMessage += "You can't use this Technique until round " + (setUpLimitLevel + 1) + '.<br>';
     				    blocked = true;
     				}
@@ -994,6 +989,7 @@ on('chat:message', function(msg) {
 				}
 				
 				if(techData.timesUsed.length > 3 - ammoLimitLevel) {
+				    log('Tech blocked - Ammo Limit');
 				    errorMessage += 'This Technique is out of ammunition.<br>';
 				    blocked = true;
 				}
@@ -1013,7 +1009,9 @@ on('chat:message', function(msg) {
 				
 				if(techData.timesUsed.length > 0) {
     				var lastTurnUsed = parseInt(techData.timesUsed[techData.timesUsed.length - 1]);
+    				log(techData);
     				if(round <= lastTurnUsed + cooldownLimitLevel) {
+    				    log('Tech blocked - Cooldown Limit');
     				    errorMessage += 'This Technique is still on cooldown.<br>'
     				    blocked = true;
     				}
@@ -1024,6 +1022,7 @@ on('chat:message', function(msg) {
 			    var cleanButton = msg.content.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
 			    errorMessage += '[Override](' + cleanButton + ' --override)';
 			    sendChat('Valor', '/w "' + actor.get('name') + '" ' + errorMessage);
+			    log('Tech failed on turn ' + round);
 			    return;
 			}
 		}
@@ -1042,6 +1041,7 @@ on('chat:message', function(msg) {
 						targets = inputTargets;
 					}
 					if(targets > 20) {
+					    log('Too many targets, capped at 20');
 						targets = 20;
 					}
 				} else {
@@ -1160,6 +1160,9 @@ on('chat:message', function(msg) {
             }
             
             st -= stCost;
+            if(stCost > 0) {
+                log('Consumed ' + stCost + ' ST');
+            }
             
             token.set('bar2_value', st);
             
@@ -1201,6 +1204,7 @@ on('chat:message', function(msg) {
 					
 					valorCost = valorLimitLevel;
 					valor -= valorCost;
+                    log('Consumed ' + valorCost + ' Valor');
 					
 					token.set('bar3_value', valor);
 				}
@@ -1221,12 +1225,16 @@ on('chat:message', function(msg) {
                             turn.pr -= initLimitLevel;
                         }
                     });
+                    log('Consumed ' + initLimitLevel + ' initiative');
                     
                     Campaign().set('turnorder', JSON.stringify(turnOrder));
 				}
 			}
 			
 			hp -= hpCost;
+			if(hpCost > 0) {
+                log('Consumed ' + hpCost + ' HP');
+			}
 			
 			token.set('bar1_value', hp);
             
@@ -1268,9 +1276,11 @@ on('chat:message', function(msg) {
                 valorCost: valorCost
             });
             state.techData[techDataId].timesUsed.push(round);
+            log('Updated tech data: ');
+            log(state.techData[techDataId]);
         }
         
-        // Inform if Ammo has run out
+        // Alert with remaining ammo
         if(tech.limits) {
     		var ammoLimit = tech.limits.find(function(l) {
     			return l.toLowerCase().indexOf('amm') == 0;
@@ -1293,6 +1303,7 @@ on('chat:message', function(msg) {
         
         // Disable temporary switches on this tech
         if(tech.digDeep) {
+            log('Dig Deep was enabled.');
             var techAttrs = filterObjs(function(obj) {
                 if(obj.get('_type') == 'attribute' &&
                    obj.get('name').indexOf(tech.id) > -1 &&
@@ -1307,7 +1318,8 @@ on('chat:message', function(msg) {
             }
         }
         
-        if(tech.overloadLimits) {
+        if(!tech.overloadLimits) {
+            log('Overload Limits was enabled.');
             var techAttrs = filterObjs(function(obj) {
                 if(obj.get('_type') == 'attribute' &&
                    obj.get('name').indexOf(tech.id) > -1 &&
@@ -1323,6 +1335,7 @@ on('chat:message', function(msg) {
         }
         
         if(tech.empowerAttack) {
+            log('Empower Attack was enabled.');
             var techAttrs = filterObjs(function(obj) {
                 if(obj.get('_type') == 'attribute' &&
                    obj.get('name').indexOf(tech.id) > -1 &&
@@ -1337,7 +1350,7 @@ on('chat:message', function(msg) {
             }
         }
 		
-        log('Technique ' + tech.name + ' performed by ' + actor.get('name') + '.');
+        log('Technique ' + tech.name + ' performed by ' + actor.get('name') + ' on Round ' + round + '.');
     }
 });
 
@@ -1510,6 +1523,7 @@ on('chat:message', function(msg) {
                     hp = maxHp;
                 }
                 token.set('bar1_value', hp);
+                log('Character ' + token.get('name') + ' recovered ' + hpRestore + ' HP.');
             }
             
             // Restore Stamina
@@ -1519,6 +1533,7 @@ on('chat:message', function(msg) {
                     st = maxSt;
                 }
                 token.set('bar2_value', st);
+                log('Character ' + token.get('name') + ' recovered ' + st + ' ST.');
             }
             
             // Reset Valor
@@ -1557,6 +1572,7 @@ on('chat:message', function(msg) {
                 }
             }
             token.set('bar3_value', startingValor);
+            log('Character ' + token.get('name') + ' set to ' + startingValor + ' Valor.');
         });
         
         state.techData = {};
@@ -1608,6 +1624,7 @@ on('chat:message', function(msg) {
             }
             
             token.set('bar3_value', startingValor);
+            log('Character ' + token.get('name') + ' set to ' + startingValor + ' Valor.');
         });
         
         state.techData = {};
@@ -1649,7 +1666,7 @@ on('chat:message', function(msg) {
 		
 		// Create new character, copy over basic traits
 		var newActor = createObj('character', {
-		    name: actor.get('name') + ' (Level up)',
+		    name: 'Level up - ' + actor.get('name'),
 		    inplayerjournals: actor.get('inplayerjournals'),
 		    controlledby: actor.get('controlledby'),
 		    avatar: actor.get('avatar')
@@ -1681,6 +1698,8 @@ on('chat:message', function(msg) {
 		// Save link between sheets
 		state.linkedSheets[actorId] = newActorId;
 		state.linkedSheets[newActorId] = actorId;
+		
+		log('Character ' + oldActor.get('name') + ' created a new level up sheet.');
     }
 });
 
@@ -1708,6 +1727,7 @@ on('chat:message', function(msg) {
 		// Check to see if they already have a level up sheet
 		if(!oldActorId) {
 	        sendChat('Valor', '/w "' + actor.get('name') + "\" The original character sheet no longer exists.");
+	        log("Couldn't find linked sheet for sheet " + actor.get('name') + '.');
 	        return;
 		}
 		
@@ -1794,6 +1814,7 @@ on('chat:message', function(msg) {
 		state.linkedSheets[oldActorId] = undefined;
 		
 		sendChat('Valor', 'Character sheet for ' + oldactor.get('name') + ' has been updated.');
+		log('Character sheet for ' + oldactor.get('name') + ' has been updated.');
     }
 });
 
@@ -1966,6 +1987,7 @@ on('change:graphic', function(obj, prev) {
 		    }
 		    
 		    sendChat('Valor', '/w "' + whisperTo + '" ' + actor.get('name') + message);
+		    log('Alerted ' + whisperTo + ' about critical HP for token ID ' + obj.get('_id') + '.');
         }
     }
 });
@@ -2212,5 +2234,9 @@ on('change:campaign:turnorder', function(obj) {
  * - Bugfixes.
  * 
  * v1.10.1:
- * -Lots of bugfixes.
+ * - Lots of bugfixes.
+ * 
+ * v1.10.2:
+ * - More bugfixes.
+ * - More debug logging added everywhere.
  **/
