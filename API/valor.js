@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.10.2
+ * v1.10.3
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -335,6 +335,11 @@ function getTechDamage(tech, charId) {
 			   m.toLowerCase().indexOf('boosting') > -1;
 	});
 	var atk = getAttrByName(charId, tech.stat + 'Atk');
+	
+	if(!atk || atk != atk) {
+	    atk = 0;
+	}
+	
 	var damage = 0;
 	if(tech.core == 'damage' && special) {
 		damage = (tech.coreLevel + 3) * 4;
@@ -517,6 +522,8 @@ function getTechByName(techId, charId) {
 	    tech.summary = getTechDescription(tech, charId);
     
         if(tech.core == 'mimic' && tech.mimicTarget && charId) {
+            log('Mimic target: ' + tech.mimicTarget);
+            
             // Re-get the mimicked technique
             var mimicTech = tech;
             tech = getTechByName(tech.mimicTarget);
@@ -531,12 +538,14 @@ function getTechByName(techId, charId) {
                     tech.core = 'mimic';
                 } else {
                     // Rewrite tech summary
+                    log('Reproducing tech at core level ' + tech.coreLevel);
         			tech.summary = getTechDescription(tech, charId);
                 }
                 
                 // Roll using the chosen stat
                 tech.stat = mimicTech.stat;
             } else {
+                log("Mimic failed - couldn't find the target tech");
                 tech = mimicTech;
             }
         }
@@ -1699,7 +1708,8 @@ on('chat:message', function(msg) {
 		state.linkedSheets[actorId] = newActorId;
 		state.linkedSheets[newActorId] = actorId;
 		
-		log('Character ' + oldActor.get('name') + ' created a new level up sheet.');
+		if(oldActor)
+		log('Character ' + actor.get('name') + ' created a new level up sheet.');
     }
 });
 
@@ -2239,4 +2249,9 @@ on('change:campaign:turnorder', function(obj) {
  * v1.10.2:
  * - More bugfixes.
  * - More debug logging added everywhere.
+ * 
+ * v1.10.3:
+ * - Fixed the NaN Damage bug.
+ * - Logging was causing the Create Level-up Sheet button to crash the API.
+ * - Added more logging for the mimic core.
  **/
