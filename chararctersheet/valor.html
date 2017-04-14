@@ -964,7 +964,7 @@ function calculateTechs() {
                         totalModLevel += 2;
                     } else if(mod.indexOf('consecutive transform') == 0) {
                         summary += 'Can stack with another Transformation. ';
-                        totalModLevel += 2 * modLevel;
+                        totalModLevel += modLevel;
                     } else if(mod.indexOf('intimidating transform') == 0) {
                         var targets = 1 + modLevel;
                         summary += 'When transformring, roll Resolve (1d10+' + techValues.res + ') or Aura (1d10+' + techValues.aur +
