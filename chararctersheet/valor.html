@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.4.1
+ * v0.4.2
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -104,6 +104,11 @@
  * - Removed micro-summary logic.
  * - Added checkbox for Empowered Attack.
  * - Bugfixes.
+ * 
+ * v0.4.2:
+ * - Verion numbering update.
+ * - Cost adjustments.
+ * - Mod levels now calculated properly for Transformations.
  **/
 
 function calculateStats() {
@@ -982,7 +987,7 @@ function calculateTechs() {
                         totalModLevel++;
                     } else if(mod.indexOf('darkness zone') == 0) {
                         summary += 'Target area is filled with darkness. ';
-                        totalModLevel++;
+                        totalModLevel += 2;
                     } else if(mod.indexOf('dash') == 0) {
                         var rushMod = mods.find(function(m) {
                           return m.indexOf('rush') > -1;
@@ -1105,7 +1110,7 @@ function calculateTechs() {
                         totalModLevel += 2;
                     } else if(mod.indexOf('targeting mark') == 0) {
                         summary += "On a hit, Mark the target, giving your allies +1 to hit that target for 3 turns. ";
-                        totalModLevel += 2;
+                        totalModLevel += 4;
                     } else if(mod.indexOf('astral form') == 0) {
                         summary += "Project an astral body into the center of the domain; you can attack from it and it projects a Zone of Control. ";
                         totalModLevel += 4;
@@ -1137,7 +1142,7 @@ function calculateTechs() {
                         warnings += "WARNING: Unrecognized Modifier '" + mod + "'. ";
                     }
                 });
-                if(techCore == 'ultDamage' || techCore == 'ultTransform') {
+                if(techCore == 'ultDamage') {
                     totalModLevel -= 2;
                     if(totalModLevel < 0) totalModLevel = 0;
                     totalModLevel = Math.ceil(totalModLevel / 2);

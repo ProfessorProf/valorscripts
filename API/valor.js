@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.10.3
+ * v0.11.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -609,7 +609,7 @@ function updateValor(obj) {
     }
     
     var topChar = turnorder[0];
-    if(!topChar || topChar.custom != 'Round') {
+    if(!topChar || topChar.custom.toLowerCase() != 'round') {
         // Only continue if the 'Round' counter is at the top of the init order
         return;
     }
@@ -729,7 +729,8 @@ function alertCooldowns() {
 // !reset command
 // Enter !reset in the chat to purge the tech data history.
 on('chat:message', function(msg) {
-    if(msg.type == 'api' && msg.content.indexOf('!reset') == 0) {
+    if(msg.type == 'api' && msg.content.indexOf('!reset') == 0
+        && playerIsGM(msg.playerid)) {
         log('Tech data: ' + state.techData);
         log('Tech history: ' + state.techHistory);
         state.techData = {};
@@ -741,15 +742,11 @@ on('chat:message', function(msg) {
 
 // !tech command
 on('chat:message', function(msg) {
-    if(msg.type == 'api' && msg.content.indexOf('!t ') == 0 || 
-    msg.type == 'api' && msg.content.indexOf('!tech') == 0) {
+    if(msg.type == 'api' && (msg.content.indexOf('!t ') == 0 || 
+    msg.content.indexOf('!tech') == 0 ||
+    msg.content == '!t')) {
         // Get params
         var split = msg.content.match(/(".*?")|(\S+)/g);
-        if(split.length < 2) {
-            log('Not enough arguments.');
-            return;
-        }
-		
         // Figure out who's using a tech
 		var actor;
 		
@@ -774,13 +771,6 @@ on('chat:message', function(msg) {
 			}
 		}
 
-		// Check for --override parameter
-		var overrideLimits = split.indexOf('--override') > -1;
-		if(overrideLimits) {
-		    split.splice(split.indexOf('--override'), 1);
-		    log('Performing tech without Limits.');
-		}
-		
 		// --as failed or wasn't used, find through other means
 		if(!actor) {
 			actor = getActor(msg);
@@ -791,6 +781,30 @@ on('chat:message', function(msg) {
 		}
         var actorClass = getAttrByName(actor.get('_id'), 'type');
         
+        if(split.length < 2) {
+            // Show a list of techs for this character
+            if(actor) {
+                var techs = getTechs(actor.get('_id'));
+                var message = '<table><tr><td>Pick a Technique to use:</td></tr>';
+                techs.forEach(function(tech) {
+                    log(tech);
+                    log(tech.name);
+                    message += '<tr><td>[' + tech.name + '](!t "' + tech.name + '")</td></tr>';
+                });
+                message += '</table>';
+			    var cleanMessage = message.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
+		        sendChat('Valor', '/w "' + msg.who + '" ' + cleanMessage);
+            }
+            return;
+        }
+        
+		// Check for --override parameter
+		var overrideLimits = split.indexOf('--override') > -1;
+		if(overrideLimits) {
+		    split.splice(split.indexOf('--override'), 1);
+		    log('Performing tech without Limits.');
+		}
+		
 		// Get the initiative tracker, we may need it later
 		var turnOrder;
         if(Campaign().get('turnorder') == '') {
@@ -1585,6 +1599,7 @@ on('chat:message', function(msg) {
         });
         
         state.techData = {};
+        state.techHistory = [];
         
         log('Partial rest complete.');
     }
@@ -1637,8 +1652,96 @@ on('chat:message', function(msg) {
         });
         
         state.techData = {};
+        state.techHistory = [];
         
         log('Full rest complete.');
+    }
+});
+
+// !init command
+// Purge everything on the turn tracker, roll initiative for all characters on current page,
+// set everything up at once
+// Also sets everyone's Valor to starting values.
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!init') == 0
+        && playerIsGM(msg.playerid)) {
+        var split = msg.content.match(/(".*?")|(\S+)/g);
+        if(split.length < 2 || split[1] != '--confirm') {
+            // No --confirm, ask for verification
+			sendChat('Valor', '/w gm You will lose all information currently on the Turn Tracker.<br>' +
+			'[Continue](!init --confirm)');
+            return;
+        }
+        
+        // Get list of tokens
+        var page = Campaign().get('playerpageid');
+        var allTokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
+        var actorIds = [];
+        var tokens = [];
+        var duplicateIds = [];
+        allTokens.forEach(function(token) {
+            var actorId = token.get('represents');
+            if(actorIds.indexOf(actorId) == -1) {
+                actorIds.push(actorId);
+                tokens.push(token);
+            } else {
+                if(duplicateIds.indexOf(actorId) == -1) {
+                    duplicateIds.push(actorId);
+                    var oldToken = tokens.find(function(t) { return t.get('represents') == actorId });
+                    tokens.splice(tokens.indexOf(oldToken));
+                }
+            }
+        });
+        
+        // For duplicate character tokens, create an init-tracker token that the players can't see
+        duplicateIds.forEach(function(id) {
+            var oldToken = allTokens.find(function(t) { return t.get('represents') == id});
+    		var newToken = createObj('graphic', {
+    		    _pageid: oldToken.get('_pageid'),
+    		    left: -1000,
+    		    top: -1000,
+    		    width: 70,
+    		    height: 70,
+    		    layer: "objects",
+    		    imgsrc: oldToken.get('imgsrc').replace('med.', 'thumb.'),
+    		    name: oldToken.get('name'),
+    		    showname: true,
+    		    represents: oldToken.get('represents')
+    		});
+    		tokens.push(newToken);
+        });
+        log(tokens);
+
+        var message = '<table><tr><td>**ROLLING INITIATIVE**</td></tr>';
+        var turnOrder = [];
+        tokens.forEach(function(token) {
+            var actorId = token.get('represents');
+    		var actor = getObj('character', actorId);
+    		var initMod = getAttrByName(actorId, 'init')
+    		var init = initMod + randomInteger(10);
+    		turnOrder.push({
+    		    id: token.get('_id'),
+    		    pr: init,
+    		    custom: ''
+    		});
+    		message += '<tr><td>' + actor.get('name') + ' - **' + init + '**</td></tr>';
+        });
+        turnOrder = turnOrder.sort(function(a, b) {
+            return b.pr - a.pr;
+        });
+        message += '</table>';
+        turnOrder.push({
+            id: "-1",
+            pr: 1,
+            custom: 'Round',
+            foruma: "1"
+        });
+        Campaign().set('turnorder', JSON.stringify(turnOrder));
+        
+        state.techData = {};
+        state.techHistory = [];
+        
+        sendChat('Valor', message);
     }
 });
 
@@ -2029,16 +2132,18 @@ function processOngoingEffects(obj) {
     
     // Scan backwards for the character this condition applies to
     var i = turnorder.length - 1;
-    var lastCharId = turnorder[i].id;
-    var lastChar = getObj('graphic', lastCharId);
+    var lastCharId = turnorder[i] ? turnorder[i].id : null;
+    var lastChar = lastCharId ? getObj('graphic', lastCharId) : null;
     while(!lastChar) {
         i--;
         if(i == 0) {
             // We didn't find anyone - abort
             return;
         }
-        lastCharId = turnorder[i].id;
-        lastChar = getObj('graphic', lastCharId);
+        var lastCharId = turnorder[i] ? turnorder[i].id : null;
+        if(lastCharId) {
+            lastChar = getObj('graphic', lastCharId);
+        }
     }
     
     // Update HP or ST
@@ -2254,4 +2359,10 @@ on('change:campaign:turnorder', function(obj) {
  * - Fixed the NaN Damage bug.
  * - Logging was causing the Create Level-up Sheet button to crash the API.
  * - Added more logging for the mimic core.
+ * 
+ * v0.11.0:
+ * - Changed version numbering system.
+ * - Bugfixes.
+ * - New command: !init.
+ * - !t without any parameters now lets you pick a tech from a list.
  **/
