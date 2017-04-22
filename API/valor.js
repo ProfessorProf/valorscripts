@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.11.0
+ * v0.11.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -521,10 +521,11 @@ function getTechByName(techId, charId) {
         
 	    tech.summary = getTechDescription(tech, charId);
     
-        if(tech.core == 'mimic' && tech.mimicTarget && charId) {
+        if((tech.core == 'mimic' || tech.core == 'ultMimic') && tech.mimicTarget && charId) {
             log('Mimic target: ' + tech.mimicTarget);
             
             // Re-get the mimicked technique
+            var oldCore = tech.core;
             var mimicTech = tech;
             tech = getTechByName(tech.mimicTarget);
             if(tech) {
@@ -535,7 +536,7 @@ function getTechByName(techId, charId) {
                 
                 if(tech.coreLevel <= 0) {
                     // Set core type back to mimic so that invocation can see it
-                    tech.core = 'mimic';
+                    tech.core = oldCore;
                 } else {
                     // Rewrite tech summary
                     log('Reproducing tech at core level ' + tech.coreLevel);
@@ -544,6 +545,9 @@ function getTechByName(techId, charId) {
                 
                 // Roll using the chosen stat
                 tech.stat = mimicTech.stat;
+                
+                // Put the original core type (mimic vs ult mimic) in the object
+                tech.oldCore = oldCore;
             } else {
                 log("Mimic failed - couldn't find the target tech");
                 tech = mimicTech;
@@ -817,7 +821,7 @@ on('chat:message', function(msg) {
 			return t && t.custom && 
 			t.custom.toLowerCase() == 'round';
 		});
-		var round = roundItem ? roundItem.pr : 0;
+		var round = roundItem ? roundItem.pr : 1;
 
         // Use selected token or first token on active page that represents character
         var token;
@@ -851,11 +855,20 @@ on('chat:message', function(msg) {
         }
         
         // Failed mimic check
-        if(tech.core == 'mimic' && tech.coreLevel <= 0) {
+        if((tech.core == 'mimic' || tech.core == 'ultMimic') && tech.coreLevel <= 0) {
             log('Mimic failed, effective tech level ' + tech.coreLevel + '.');
 		    sendChat('Valor', '/w "' + actor.get('name') + '" ' + 'Core Level is too low to mimic this technique.');
             return;
         }
+        
+        // Check if they're trying to mimic an ult with a non-ult mimic tech
+        if(tech.oldCore == 'mimic' && (tech.core == 'ultDamage' || 
+            tech.core == 'transform' || tech.core == 'domain')) {
+            log('Mimic failed, target core type ' + tech.oldCore + '.');
+		    sendChat('Valor', '/w "' + actor.get('name') + '" ' + "You can't mimic an Ultimate Technique with a normal Mimic Core.");
+            return;
+        }
+        
         
         // Check for Overload Limits
         if(tech.overloadLimits) {
@@ -1118,7 +1131,31 @@ on('chat:message', function(msg) {
             
             var roll = 0;
             
-            switch(tech.stat) {
+            var rollStat = tech.stat;
+            if(tech.mods) {
+                if(tech.mods.find(function(m) {
+                    return m.toLowerCase().indexOf('musc') > -1;
+                })) {
+                    rollStat = 'str';
+                }
+                if(tech.mods.find(function(m) {
+                    return m.toLowerCase().indexOf('dext') > -1;
+                })) {
+                    rollStat = 'agi';
+                }
+                if(tech.mods.find(function(m) {
+                    return m.toLowerCase().indexOf('aura') > -1;
+                })) {
+                    rollStat = 'spr';
+                }
+                if(tech.mods.find(function(m) {
+                    return m.toLowerCase().indexOf('intuit') > -1;
+                })) {
+                    rollStat = 'int';
+                }
+            }
+            
+            switch(rollStat) {
                 case 'str':
                     rollText += 'Rolling Muscle';
                     roll = parseInt(getAttrByName(actor.get('_id'), 'mus')) + rollBonus;
@@ -1165,6 +1202,7 @@ on('chat:message', function(msg) {
             var valorCost = 0;
             
 			var hp = parseInt(token.get('bar1_value'));
+			var hpMax = parseInt(token.get('bar1_max'));
             var st = parseInt(token.get('bar2_value'));
             if(hp != hp) {
                 hp = 0;
@@ -1200,11 +1238,20 @@ on('chat:message', function(msg) {
 						healthLimitLevel = 1;
 					}
 					
-					if(hp != hp) {
-						hp = 0;
+					hpCost += healthLimitLevel * 5;
+				}
+				
+				var ultimateHealthLimit = tech.limits.find(function(l) {
+					return l.toLowerCase().indexOf('ultimate health') == 0;
+				});
+				if(ultimateHealthLimit) {
+					var ultimateHealthLimitSplit = ultimateHealthLimit.split(' ');
+					var ultimateHealthLimitLevel = parseInt(ultimateHealthLimitSplit[ultimateHealthLimitSplit.length - 1]);
+					if(ultimateHealthLimitLevel != ultimateHealthLimitLevel) {
+						ultimateHealthLimitLevel = 1;
 					}
 					
-					hpCost += healthLimitLevel * 5;
+					hpCost += Math.ceil(hpMax / 5);
 				}
 				
 				var valorLimit = tech.limits.find(function(l) {
@@ -1679,6 +1726,16 @@ on('chat:message', function(msg) {
         var actorIds = [];
         var tokens = [];
         var duplicateIds = [];
+        
+        // Destroy existing Init Tokens
+        for(i = 0; i < allTokens.length; i++) {
+            if(allTokens[i].get('left') == -1000 && allTokens[i].get('top') == -1000) {
+                allTokens[i].remove();
+                allTokens.splice(1, 1);
+                i--;
+            }
+        }
+        
         allTokens.forEach(function(token) {
             var actorId = token.get('represents');
             if(actorIds.indexOf(actorId) == -1) {
@@ -1719,12 +1776,17 @@ on('chat:message', function(msg) {
     		var actor = getObj('character', actorId);
     		var initMod = getAttrByName(actorId, 'init')
     		var init = initMod + randomInteger(10);
-    		turnOrder.push({
-    		    id: token.get('_id'),
-    		    pr: init,
-    		    custom: ''
-    		});
-    		message += '<tr><td>' + actor.get('name') + ' - **' + init + '**</td></tr>';
+    		
+    		var actorName;
+    		if(actor) {
+    		    actorName = actor.get('name');
+        		turnOrder.push({
+        		    id: token.get('_id'),
+        		    pr: init,
+        		    custom: ''
+        		});
+        		message += '<tr><td>' + actorName + ' - **' + init + '**</td></tr>';
+    		}
         });
         turnOrder = turnOrder.sort(function(a, b) {
             return b.pr - a.pr;
@@ -1734,7 +1796,7 @@ on('chat:message', function(msg) {
             id: "-1",
             pr: 1,
             custom: 'Round',
-            foruma: "1"
+            formula: "1"
         });
         Campaign().set('turnorder', JSON.stringify(turnOrder));
         
@@ -2365,4 +2427,12 @@ on('change:campaign:turnorder', function(obj) {
  * - Bugfixes.
  * - New command: !init.
  * - !t without any parameters now lets you pick a tech from a list.
+ * 
+ * v0.11.1:
+ * - !init wasn't setting up the round counter to increment properly. 
+ * - Round now defaults to 1 instead of 0.
+ * - Stat sub mods are now honored by the tech roller.
+ * - Ultimate Mimic Core now honored by system.
+ * - Ultimate Health Limit now honored by system.
+ * - Mimic Core now refuses to mimic Ultimate Techniques.
  **/
