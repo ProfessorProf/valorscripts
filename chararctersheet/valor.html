@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v0.4.2
+ * v0.4.3
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -106,9 +106,13 @@
  * - Bugfixes.
  * 
  * v0.4.2:
- * - Verion numbering update.
+ * - Version numbering update.
  * - Cost adjustments.
  * - Mod levels now calculated properly for Transformations.
+ * 
+ * v0.4.3:
+ * - Ultimate Mimic Core properly recognized.
+ * - Health Transference shows correct cost.
  **/
 
 function calculateStats() {
@@ -727,6 +731,9 @@ function calculateTechs() {
                         break;
                     case 'mimic':
                         summary += 'Mimics a witnessed enemy Technique at Tech Level ' + techCoreLevel + '. ';
+                        break;
+                    case 'ultMimic':
+                        summary += 'Mimics a witnessed enemy Ultimate Technique at Tech Level ' + techCoreLevel + '. ';
                         break;
                     case 'summoning':
                         summary += 'Summons a Level ' + techCoreLevel + ' ally. Command it with a Support Action. ';
@@ -1380,7 +1387,7 @@ function calculateTechs() {
                     }
                 });
                 
-                if(core && techCore != 'mimic') {
+                if(core && techCore != 'mimic' && techCore != 'ultMimic') {
                     var cost = core.cost + core.levelUp * (techCoreLevel + totalModLevel) - limitSt;
                     if(cost < 0) {
                         cost = 0;
@@ -1399,7 +1406,7 @@ function calculateTechs() {
                 attrs['repeating_techs_' + tidarray[i] + '_tech_tech_level'] = techLevel;
                 attrs['repeating_techs_' + tidarray[i] + '_tech_limit_st'] = limitSt;
                 attrs['repeating_techs_' + tidarray[i] + '_tech_cost'] = cost;
-                attrs['repeating_techs_' + tidarray[i] + '_tech_is_mimic'] = techCore == 'mimic'
+                attrs['repeating_techs_' + tidarray[i] + '_tech_is_mimic'] = techCore == 'mimic' || techCore == 'ultMimic'
                     ? 'on' : 'off';
                 attrs['repeating_techs_' + tidarray[i] + '_tech_has_flaws'] = hasFlaws
                     ? 'on' : 'off';
@@ -1410,7 +1417,7 @@ function calculateTechs() {
                 attrs['repeating_techs_' + tidarray[i] + '_tech_can_overload_limits'] = techValues.hasOverloadLimits
                     ? 'on' : 'off';
                 attrs['repeating_techs_' + tidarray[i] + '_tech_can_empower'] = (techValues.hasEmpowerAttack && 
-                    (techCore == 'damage' || techCore == 'ultDamage' || techCore == 'mimic'))
+                    (techCore == 'damage' || techCore == 'ultDamage' || techCore == 'mimic' || techCore == 'ultMimic'))
                     ? 'on' : 'off';
                 setAttrs(attrs, { silent: true });
             }
@@ -2028,7 +2035,7 @@ on('sheet:opened', function() {
                 <option value="favorableSuccess">Favorable Success (4)</option>
                 <option value="finalAttack">Final Attack (6)</option>
                 <option value="flankAttack">Flank Attack (4)</option>
-                <option value="healthTransference">Health Transference (6)</option>
+                <option value="healthTransference">Health Transference (4)</option>
                 <option value="lineDeflect">Line Deflect (5)</option>v
                 <option value="mobileCover">Mobile Cover (5)</option>
                 <option value="mobileDodge">Mobile Dodge (4)</option>
