@@ -118,3 +118,4 @@ Available options:
 * `ShowTechAlerts` - Enables private alerts when techniques exit cooldown or run out of ammunition. On by default.
 * `ShowHealthAlerts` - Enables private alerts when entering or leaving critical health. On by default.
 * `HouseRulesEnabled` - Enables various unsupported house rules. Off by default.
+* `RollBehindScreen` - When NPCs use techniques, displays any dice rolls only for the GM. Off by default.
