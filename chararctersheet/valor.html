@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v0.4.3
+ * v0.4.4
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -113,6 +113,10 @@
  * v0.4.3:
  * - Ultimate Mimic Core properly recognized.
  * - Health Transference shows correct cost.
+ * 
+ * v0.4.4:
+ * - Damage Increment value updated.
+ * - Set-Up Limit was sometimes unrecognized.
  **/
 
 function calculateStats() {
@@ -340,7 +344,7 @@ function calculateStats() {
                                     mndAtk += 3 + 3 * skillLevel;
                                     break;
                                 case 'improvedDamageIncrement':
-                                    di += 2 + 3 * skillLevel; // ERRATA: More powerful IDI
+                                    di += 2 + 2 * skillLevel; // ERRATA: More powerful IDI
                                     break;
                                 case 'ironDefense':
                                     defense += 2 + 2 * skillLevel;
@@ -1264,7 +1268,8 @@ function calculateTechs() {
                         limitSummary += 'Can only target yourself. ';
                         limitSt++;
                     } else if(limit.indexOf('setup') == 0 ||
-                              limit.indexOf('set-up') == 0) {
+                              limit.indexOf('set-up') == 0 ||
+                              limit.indexOf('set up') == 0) {
                         var turn = 1 + limitLevel;
                         limitSummary += "Can't be used until turn " + turn + ' or later. ';
                         limitSt += limitLevel;

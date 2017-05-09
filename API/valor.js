@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.11.1
+ * v0.11.2
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -20,6 +20,7 @@ state.hideNpcTechEffects = false; // For non-player characters, don't show playe
 state.showTechAlerts = true; // Send alerts for when ammo changes and when techs come off of cooldown.
 state.showHealthAlerts = true; // Send alerts when characters enter or leave critical health.
 state.houseRulesEnabled = false; // Enables various unsupported house rules.
+state.rollBehindScreen = false; // Hide NPC rolls from the players.
 
 // Status Tracker
 // While this is active, any numbered status markers will automatically
@@ -101,23 +102,23 @@ function getSkills(charId) {
 }
 
 function getSkill(charId, skillName) {
-	var skills = getSkills(charId);
-	
-	if(skills && skills.length > 0) {
-		return skills.find(s => s.name && s.name.toLowerCase() == skillName.toLowerCase());
-	}
-	
-	return null;
+    var skills = getSkills(charId);
+    
+    if(skills && skills.length > 0) {
+        return skills.find(s => s.name && s.name.toLowerCase() == skillName.toLowerCase());
+    }
+    
+    return null;
 }
 
 function getFlaw(charId, flawName) {
-	var flaws = getFlaws(charId);
-	
-	if(flaws && flaws.length > 0) {
-		return flaws.find(f => f.name && f.name.toLowerCase() == flawName.toLowerCase());
-	}
-	
-	return null;
+    var flaws = getFlaws(charId);
+    
+    if(flaws && flaws.length > 0) {
+        return flaws.find(f => f.name && f.name.toLowerCase() == flawName.toLowerCase());
+    }
+    
+    return null;
 }
 
 // Internal function - gets a list of flaws and their levels for a character ID.
@@ -326,153 +327,153 @@ function getTechs(charId) {
 }
 
 function getTechDamage(tech, charId) {
-	var special = tech.mods && tech.mods.find(function(m) {
-		return m.toLowerCase().indexOf('piercing') > -1 ||
-			   m.toLowerCase().indexOf('sapping') > -1 ||
-			   m.toLowerCase().indexOf('persistent') > -1 ||
-			   m.toLowerCase().indexOf('drain') > -1 ||
-			   m.toLowerCase().indexOf('debilitating') > -1 ||
-			   m.toLowerCase().indexOf('boosting') > -1;
-	});
-	var atk = getAttrByName(charId, tech.stat + 'Atk');
-	
-	if(!atk || atk != atk) {
-	    atk = 0;
-	}
-	
-	var damage = 0;
-	if(tech.core == 'damage' && special) {
-		damage = (tech.coreLevel + 3) * 4;
-		atk = Math.ceil(atk / 2);
-	} else if(tech.core == 'ultDamage' && !special) {
-	    damage = (tech.coreLevel + 3) * 8;
-	} else {
-	    damage = (tech.coreLevel + 3) * 5;
-	}
-	
-	damage += atk;
-	
-	var hp = getAttrByName(charId, 'hp');
-	var hpMax = getAttrByName(charId, 'hp', 'max');
-	if(hp / hpMax <= 0.4) {
-	    // HP is critical!
-    	var crisis = getSkill(charId, 'crisis');
-    	if(crisis && crisis.level) {
-    	    var crisisLevel = parseInt(crisis.level);
-    	    if(crisisLevel != crisisLevel) {
-    	        crisisLevel = 1;
-    	    }
-    	    damage += 3 + crisisLevel * 3;
-    	}
-    	var berserker = getFlaw(charId, 'berserker')
-    	if(berserker) {
-    	    damage += 10;
-    	}
-	}
-	
-	if(tech.empowerAttack) {
-    	var empowerAttack = getSkill(charId, 'empowerAttack');
-    	if(empowerAttack && empowerAttack.level) {
-    	    var empowerAttackLevel = parseInt(empowerAttack.level);
-    	    if(empowerAttackLevel != empowerAttackLevel) {
-    	        empowerAttackLevel = 1;
-    	    }
-    	    damage += 3 + empowerAttackLevel * 3;
-    	}
-	}
-	
-	return damage;
+    var special = tech.mods && tech.mods.find(function(m) {
+        return m.toLowerCase().indexOf('piercing') > -1 ||
+               m.toLowerCase().indexOf('sapping') > -1 ||
+               m.toLowerCase().indexOf('persistent') > -1 ||
+               m.toLowerCase().indexOf('drain') > -1 ||
+               m.toLowerCase().indexOf('debilitating') > -1 ||
+               m.toLowerCase().indexOf('boosting') > -1;
+    });
+    var atk = getAttrByName(charId, tech.stat + 'Atk');
+    
+    if(!atk || atk != atk) {
+        atk = 0;
+    }
+    
+    var damage = 0;
+    if(tech.core == 'damage' && special) {
+        damage = (tech.coreLevel + 3) * 4;
+        atk = Math.ceil(atk / 2);
+    } else if(tech.core == 'ultDamage' && !special) {
+        damage = (tech.coreLevel + 3) * 8;
+    } else {
+        damage = (tech.coreLevel + 3) * 5;
+    }
+    
+    damage += atk;
+    
+    var hp = getAttrByName(charId, 'hp');
+    var hpMax = getAttrByName(charId, 'hp', 'max');
+    if(hp / hpMax <= 0.4) {
+        // HP is critical!
+        var crisis = getSkill(charId, 'crisis');
+        if(crisis && crisis.level) {
+            var crisisLevel = parseInt(crisis.level);
+            if(crisisLevel != crisisLevel) {
+                crisisLevel = 1;
+            }
+            damage += 3 + crisisLevel * 3;
+        }
+        var berserker = getFlaw(charId, 'berserker')
+        if(berserker) {
+            damage += 10;
+        }
+    }
+    
+    if(tech.empowerAttack) {
+        var empowerAttack = getSkill(charId, 'empowerAttack');
+        if(empowerAttack && empowerAttack.level) {
+            var empowerAttackLevel = parseInt(empowerAttack.level);
+            if(empowerAttackLevel != empowerAttackLevel) {
+                empowerAttackLevel = 1;
+            }
+            damage += 3 + empowerAttackLevel * 3;
+        }
+    }
+    
+    return damage;
 }
 
 function getTechDescription(tech, charId) {
     if(!tech) {
         return '';
     }
-	var summary = '';
-	switch(tech.core) {
-		case 'damage':
-		case 'ultDamage':
-			summary = 'Damage: <span style="color: darkred">**' + 
-						   getTechDamage(tech, charId) +
-						   '**</span>';
-						   
-			var piercing = tech.mods && tech.mods.find(function(m) {
-				return m.toLowerCase().indexOf('piercing') > -1
-			});
-		    if(!piercing) {
-				var physical = tech.stat == 'str' || tech.stat == 'agi';
-				if(tech.mods && tech.mods.find(function(m) {
-					return m.toLowerCase().indexOf('shift') > -1
-				})) {
-					physical = !physical;
-				}
-				summary += physical ? ' - Defense' : ' - Resistance';
-			}
-			
-			var bonuses = [];
-    		var hp = getAttrByName(charId, 'hp');
-    		var hpMax = getAttrByName(charId, 'hp', 'max');
-    		if(hp / hpMax <= 0.4) {
-            	var crisis = getSkill(charId, 'crisis');
-            	if(crisis && crisis.level) {
-    		        bonuses.push('Crisis');
-            	}
-            	var berserker = getFlaw(charId, 'berserker')
-            	if(berserker) {
-            	    bonuses.push('Berserker');
-            	}
-    		}
-        	
-        	if(tech.empowerAttack) {
-        	    bonuses.push('Empowered');
-        	}
-        	
-        	if(bonuses.length > 0) {
-        	    summary += ' **(' + bonuses.join(', ') + ')**';
-        	}
-        	
-			break;
-		case 'healing':
-			var healing = (tech.coreLevel + 3) * 4;
-			var power = getAttrByName(charId, tech.stat);
-			healing += power;
-			summary = 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP'
-			break;
-		case 'barrier':
-			summary = 'Barrier power ' + tech.coreLevel;
-			break;
-	}
-	
-	if(tech.grantedSkills) {
-		if(summary.length > 0) {
-			summary += '<br />';
-		}
-		summary += 'Skills: ' +  tech.grantedSkills;
-	}
-	
-	if(tech.inflictedFlaws) {
-		if(summary.length > 0) {
-			summary += '<br />';
-		}
-		summary += 'Flaws: ' +  tech.inflictedFlaws;
-	}
-	
-	if(tech.core == 'ultTransform') {
-		var level = parseInt(getAttrByName(charId, 'level'));
-		if(!level || level != level) {
-			level = 0;
-		}
-		var bonusHp = level * 10;
-		if(getAttrByName(charId, 'type') == 'master') {
-			bonusHp *= 2;
-		}
-		if(summary.length > 0) {
-			summary += '<br />';
-		}
-		summary += 'HP +<span style="color:darkgreen">**' + bonusHp + '**</span>';
-	}
-	
-	return summary;
+    var summary = '';
+    switch(tech.core) {
+        case 'damage':
+        case 'ultDamage':
+            summary = 'Damage: <span style="color: darkred">**' + 
+                           getTechDamage(tech, charId) +
+                           '**</span>';
+                           
+            var piercing = tech.mods && tech.mods.find(function(m) {
+                return m.toLowerCase().indexOf('piercing') > -1
+            });
+            if(!piercing) {
+                var physical = tech.stat == 'str' || tech.stat == 'agi';
+                if(tech.mods && tech.mods.find(function(m) {
+                    return m.toLowerCase().indexOf('shift') > -1
+                })) {
+                    physical = !physical;
+                }
+                summary += physical ? ' - Defense' : ' - Resistance';
+            }
+            
+            var bonuses = [];
+            var hp = getAttrByName(charId, 'hp');
+            var hpMax = getAttrByName(charId, 'hp', 'max');
+            if(hp / hpMax <= 0.4) {
+                var crisis = getSkill(charId, 'crisis');
+                if(crisis && crisis.level) {
+                    bonuses.push('Crisis');
+                }
+                var berserker = getFlaw(charId, 'berserker')
+                if(berserker) {
+                    bonuses.push('Berserker');
+                }
+            }
+            
+            if(tech.empowerAttack) {
+                bonuses.push('Empowered');
+            }
+            
+            if(bonuses.length > 0) {
+                summary += ' **(' + bonuses.join(', ') + ')**';
+            }
+            
+            break;
+        case 'healing':
+            var healing = (tech.coreLevel + 3) * 4;
+            var power = getAttrByName(charId, tech.stat);
+            healing += power;
+            summary = 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP'
+            break;
+        case 'barrier':
+            summary = 'Barrier power ' + tech.coreLevel;
+            break;
+    }
+    
+    if(tech.grantedSkills) {
+        if(summary.length > 0) {
+            summary += '<br />';
+        }
+        summary += 'Skills: ' +  tech.grantedSkills;
+    }
+    
+    if(tech.inflictedFlaws) {
+        if(summary.length > 0) {
+            summary += '<br />';
+        }
+        summary += 'Flaws: ' +  tech.inflictedFlaws;
+    }
+    
+    if(tech.core == 'ultTransform') {
+        var level = parseInt(getAttrByName(charId, 'level'));
+        if(!level || level != level) {
+            level = 0;
+        }
+        var bonusHp = level * 10;
+        if(getAttrByName(charId, 'type') == 'master') {
+            bonusHp *= 2;
+        }
+        if(summary.length > 0) {
+            summary += '<br />';
+        }
+        summary += 'HP +<span style="color:darkgreen">**' + bonusHp + '**</span>';
+    }
+    
+    return summary;
 }
 
 function getTechByName(techId, charId) {
@@ -491,26 +492,26 @@ function getTechByName(techId, charId) {
     if(matchingTech) {
         tech = matchingTech;
     } else {
-		// Drop the Starts With requirement and try again
-		matchingTech = techs.find(function(t) {
-			return t && t.name && t.name.toLowerCase().indexOf(techId.toLowerCase()) > -1;
-		});
-		if(matchingTech) {
-			tech = matchingTech;
-		} else {
-			// Drop all non-alphanumeric characters and try again
-			var alphaTechId = techId.replace(/\W/g, '');
-			matchingTech = techs.find(function(t) {
-				return t && t.name &&
-				t.name.toLowerCase().replace(/\W/g, '').indexOf(alphaTechId.toLowerCase()) > -1;
-			});
-			if(matchingTech) {
-				tech = matchingTech;
-			}
-		}
+        // Drop the Starts With requirement and try again
+        matchingTech = techs.find(function(t) {
+            return t && t.name && t.name.toLowerCase().indexOf(techId.toLowerCase()) > -1;
+        });
+        if(matchingTech) {
+            tech = matchingTech;
+        } else {
+            // Drop all non-alphanumeric characters and try again
+            var alphaTechId = techId.replace(/\W/g, '');
+            matchingTech = techs.find(function(t) {
+                return t && t.name &&
+                t.name.toLowerCase().replace(/\W/g, '').indexOf(alphaTechId.toLowerCase()) > -1;
+            });
+            if(matchingTech) {
+                tech = matchingTech;
+            }
+        }
     }
-	
-	if(tech) {
+    
+    if(tech) {
         if(!tech.core) {
             tech.core = 'damage';
         }
@@ -519,7 +520,7 @@ function getTechByName(techId, charId) {
             tech.coreLevel = 1;
         }
         
-	    tech.summary = getTechDescription(tech, charId);
+        tech.summary = getTechDescription(tech, charId);
     
         if((tech.core == 'mimic' || tech.core == 'ultMimic') && tech.mimicTarget && charId) {
             log('Mimic target: ' + tech.mimicTarget);
@@ -540,7 +541,7 @@ function getTechByName(techId, charId) {
                 } else {
                     // Rewrite tech summary
                     log('Reproducing tech at core level ' + tech.coreLevel);
-        			tech.summary = getTechDescription(tech, charId);
+                    tech.summary = getTechDescription(tech, charId);
                 }
                 
                 // Roll using the chosen stat
@@ -553,7 +554,7 @@ function getTechByName(techId, charId) {
                 tech = mimicTech;
             }
         }
-	}
+    }
     
     return tech;
 }
@@ -564,35 +565,35 @@ function getTechByName(techId, charId) {
 // Priority 2: 'As:' field.
 // Priority 3: Any character controlled by the player.
 function getActor(msg) {
-	var actor;
-	if(msg.selected && msg.selected.length > 0) {
-		// The first selected character is the actor
-		var token = getObj('graphic', msg.selected[0]._id);
-		actor = getObj('character', token.get('represents'));
-	} else {
-		// Try to find a character who matches the "Who" block for the speaker
-		var characters = filterObjs(function(obj) {
-			return obj.get('_type') === 'character' &&
-				   obj.get('name') === msg.who;
-		});
-		
-		if(characters.length > 0) {
-			// The first character with a matching name is the actor
-			actor = characters[0];
-		} else {
-			// Try to find a character controlled by the speaker
-			characters = filterObjs(function(obj) {
-				return obj.get('_type') === 'character' &&
-					   obj.get('controlledBy') &&
-					   obj.get('controlledBy').indexOf(msg.playerid) > -1;
-			});
-			
-			if(characters.length > 0) {
-				actor = characters[0];
-			}
-		}
-	}
-	return actor;
+    var actor;
+    if(msg.selected && msg.selected.length > 0) {
+        // The first selected character is the actor
+        var token = getObj('graphic', msg.selected[0]._id);
+        actor = getObj('character', token.get('represents'));
+    } else {
+        // Try to find a character who matches the "Who" block for the speaker
+        var characters = filterObjs(function(obj) {
+            return obj.get('_type') === 'character' &&
+                   obj.get('name') === msg.who;
+        });
+        
+        if(characters.length > 0) {
+            // The first character with a matching name is the actor
+            actor = characters[0];
+        } else {
+            // Try to find a character controlled by the speaker
+            characters = filterObjs(function(obj) {
+                return obj.get('_type') === 'character' &&
+                       obj.get('controlledBy') &&
+                       obj.get('controlledBy').indexOf(msg.playerid) > -1;
+            });
+            
+            if(characters.length > 0) {
+                actor = characters[0];
+            }
+        }
+    }
+    return actor;
 }
 
 // Valor updater
@@ -656,10 +657,10 @@ function updateValor(obj) {
             log('Character ' + token.get('name') + ' gains ' + valorRate + ' for new round.');
             
             valor += valorRate;
-			
-			if(getSkill(charId, 'bounceBack') && valor < 0) {
-				valor++;
-			}
+            
+            if(getSkill(charId, 'bounceBack') && valor < 0) {
+                valor++;
+            }
             
             token.set('bar3_value', valor);
             if(valor > maxValor) {
@@ -677,7 +678,7 @@ function alertCooldowns() {
         return;
     }
     
-	var turnOrder;
+    var turnOrder;
     if(Campaign().get('turnorder') == '') {
         turnOrder = [];
     } else {
@@ -690,44 +691,44 @@ function alertCooldowns() {
         return;
     }
 
-	var round = topChar.pr;
-	if(!round) {
-	    return;
-	}
-	
-	if(!state.techData) {
-	    state.techData = {};
-	}
-	
-	for(var key in state.techData) {
-	    if(state.techData.hasOwnProperty(key)) {
-	        var techData = state.techData[key];
-	        var tech = getTechByName(techData.techName, techData.userId);
-	        
-	        // Look for cooldown limit
-	        if(tech && tech.limits) {
-    			var cooldownLimit = tech.limits.find(function(l) {
-    				return l.toLowerCase().indexOf('cooldown') == 0;
-    			});
-    			
-    			if(cooldownLimit) {
-    				var cooldownLimitSplit = cooldownLimit.split(' ');
-    				var cooldownLimitLevel = parseInt(cooldownLimitSplit[cooldownLimitSplit.length - 1]);
-    				if(cooldownLimitLevel != cooldownLimitLevel) {
-    					cooldownLimitLevel = 1;
-    				}
-    				
-    				if(techData.timesUsed.length > 0) {
-        				var lastTurnUsed = techData.timesUsed[techData.timesUsed.length - 1];
-        				if(round == lastTurnUsed + cooldownLimitLevel + 1) {
-    	    			    sendChat('Valor', '/w "' + techData.userName + '" Technique "' + techData.techName + '" is no longer on cooldown.');
-    	    			    log('Technique ' + techData.techName + ' left cooldown on turn ' + round);
-        				}
-    				}
-    			}
-	        }
-	    }
-	}
+    var round = topChar.pr;
+    if(!round) {
+        return;
+    }
+    
+    if(!state.techData) {
+        state.techData = {};
+    }
+    
+    for(var key in state.techData) {
+        if(state.techData.hasOwnProperty(key)) {
+            var techData = state.techData[key];
+            var tech = getTechByName(techData.techName, techData.userId);
+            
+            // Look for cooldown limit
+            if(tech && tech.limits) {
+                var cooldownLimit = tech.limits.find(function(l) {
+                    return l.toLowerCase().indexOf('cooldown') == 0;
+                });
+                
+                if(cooldownLimit) {
+                    var cooldownLimitSplit = cooldownLimit.split(' ');
+                    var cooldownLimitLevel = parseInt(cooldownLimitSplit[cooldownLimitSplit.length - 1]);
+                    if(cooldownLimitLevel != cooldownLimitLevel) {
+                        cooldownLimitLevel = 1;
+                    }
+                    
+                    if(techData.timesUsed.length > 0) {
+                        var lastTurnUsed = techData.timesUsed[techData.timesUsed.length - 1];
+                        if(round == lastTurnUsed + cooldownLimitLevel + 1) {
+                            sendChat('Valor', '/w "' + techData.userName + '" Technique "' + techData.techName + '" is no longer on cooldown.');
+                            log('Technique ' + techData.techName + ' left cooldown on turn ' + round);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 // !reset command
@@ -752,37 +753,37 @@ on('chat:message', function(msg) {
         // Get params
         var split = msg.content.match(/(".*?")|(\S+)/g);
         // Figure out who's using a tech
-		var actor;
-		
-		// Check for --as parameter
-		var asParam = split.indexOf('--as');
-		if(asParam > -1 && split.length > asParam + 1) {
-			var asInput = split[asParam + 1];
-			if(asInput[0] == '"') {
-				asInput = asInput.substring(1, asInput.length - 1);
-			}
-			
-			// Find a character with this name			
-			var characters = filterObjs(function(obj) {
-				return obj.get('_type') === 'character' &&
-					   obj.get('_id') === asInput;
-			});
-			
-			if(characters.length > 0) {
-				actor = characters[0];
-				split.splice(asParam, 2);
-				log('Performing tech as character ' + actor.get('name'));
-			}
-		}
+        var actor;
+        
+        // Check for --as parameter
+        var asParam = split.indexOf('--as');
+        if(asParam > -1 && split.length > asParam + 1) {
+            var asInput = split[asParam + 1];
+            if(asInput[0] == '"') {
+                asInput = asInput.substring(1, asInput.length - 1);
+            }
+            
+            // Find a character with this name          
+            var characters = filterObjs(function(obj) {
+                return obj.get('_type') === 'character' &&
+                       obj.get('_id') === asInput;
+            });
+            
+            if(characters.length > 0) {
+                actor = characters[0];
+                split.splice(asParam, 2);
+                log('Performing tech as character ' + actor.get('name'));
+            }
+        }
 
-		// --as failed or wasn't used, find through other means
-		if(!actor) {
-			actor = getActor(msg);
-		}
-		if(!actor) {
-			log('No usable character found for ' + msg.playerid);
-			return;
-		}
+        // --as failed or wasn't used, find through other means
+        if(!actor) {
+            actor = getActor(msg);
+        }
+        if(!actor) {
+            log('No usable character found for ' + msg.playerid);
+            return;
+        }
         var actorClass = getAttrByName(actor.get('_id'), 'type');
         
         if(split.length < 2) {
@@ -796,32 +797,32 @@ on('chat:message', function(msg) {
                     message += '<tr><td>[' + tech.name + '](!t "' + tech.name + '")</td></tr>';
                 });
                 message += '</table>';
-			    var cleanMessage = message.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
-		        sendChat('Valor', '/w "' + msg.who + '" ' + cleanMessage);
+                var cleanMessage = message.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
+                sendChat('Valor', '/w "' + msg.who + '" ' + cleanMessage);
             }
             return;
         }
         
-		// Check for --override parameter
-		var overrideLimits = split.indexOf('--override') > -1;
-		if(overrideLimits) {
-		    split.splice(split.indexOf('--override'), 1);
-		    log('Performing tech without Limits.');
-		}
-		
-		// Get the initiative tracker, we may need it later
-		var turnOrder;
+        // Check for --override parameter
+        var overrideLimits = split.indexOf('--override') > -1;
+        if(overrideLimits) {
+            split.splice(split.indexOf('--override'), 1);
+            log('Performing tech without Limits.');
+        }
+        
+        // Get the initiative tracker, we may need it later
+        var turnOrder;
         if(Campaign().get('turnorder') == '') {
             turnOrder = [];
         } else {
             turnOrder = JSON.parse(Campaign().get('turnorder'));
         }
         
-	    var roundItem = turnOrder.find(function(t) {
-			return t && t.custom && 
-			t.custom.toLowerCase() == 'round';
-		});
-		var round = roundItem ? roundItem.pr : 1;
+        var roundItem = turnOrder.find(function(t) {
+            return t && t.custom && 
+            t.custom.toLowerCase() == 'round';
+        });
+        var round = roundItem ? roundItem.pr : 1;
 
         // Use selected token or first token on active page that represents character
         var token;
@@ -831,7 +832,7 @@ on('chat:message', function(msg) {
             var tokens = findObjs({
                 _pageid: Campaign().get("playerpageid"),                              
                 _type: "graphic",
-				represents: actor.get('_id')
+                represents: actor.get('_id')
             });
             if(tokens.length > 0) {
                 token = tokens[0];
@@ -840,24 +841,24 @@ on('chat:message', function(msg) {
         
         // Identify the technique
         var techId = split[1];
-		var nextParam = 2;
-		while(nextParam < split.length && parseInt(split[nextParam]) != parseInt(split[nextParam])) {
-			techId += ' ' + split[nextParam];
-			nextParam++;
-		}
-		
+        var nextParam = 2;
+        while(nextParam < split.length && parseInt(split[nextParam]) != parseInt(split[nextParam])) {
+            techId += ' ' + split[nextParam];
+            nextParam++;
+        }
+        
         var tech = getTechByName(techId, actor.get('_id'));
-		
+        
         if(!tech) {
-		    log('Tech does not exist.');
-		    sendChat('Valor', '/w "' + msg.who + "\" I can't find that technique.");
-		    return;
+            log('Tech does not exist.');
+            sendChat('Valor', '/w "' + msg.who + "\" I can't find that technique.");
+            return;
         }
         
         // Failed mimic check
         if((tech.core == 'mimic' || tech.core == 'ultMimic') && tech.coreLevel <= 0) {
             log('Mimic failed, effective tech level ' + tech.coreLevel + '.');
-		    sendChat('Valor', '/w "' + actor.get('name') + '" ' + 'Core Level is too low to mimic this technique.');
+            sendChat('Valor', '/w "' + actor.get('name') + '" ' + 'Core Level is too low to mimic this technique.');
             return;
         }
         
@@ -865,7 +866,7 @@ on('chat:message', function(msg) {
         if(tech.oldCore == 'mimic' && (tech.core == 'ultDamage' || 
             tech.core == 'transform' || tech.core == 'domain')) {
             log('Mimic failed, target core type ' + tech.oldCore + '.');
-		    sendChat('Valor', '/w "' + actor.get('name') + '" ' + "You can't mimic an Ultimate Technique with a normal Mimic Core.");
+            sendChat('Valor', '/w "' + actor.get('name') + '" ' + "You can't mimic an Ultimate Technique with a normal Mimic Core.");
             return;
         }
         
@@ -898,34 +899,34 @@ on('chat:message', function(msg) {
         }
         
         // Check for blocking limits
-		if(tech.limits && !overrideLimits && 
-		        (!state.ignoreStaminaOnMinions || 
+        if(tech.limits && !overrideLimits && 
+                (!state.ignoreStaminaOnMinions || 
                 (actorClass != 'flunky' && actorClass != 'soldier'))) {
-		    var blocked = false;
-		    var errorMessage = '';
-		    
-		    if(token) {
+            var blocked = false;
+            var errorMessage = '';
+            
+            if(token) {
                 // Check stamina
-    		    var st = parseInt(token.get('bar2_value'));
-    		    
-    		    if(st == st && st < tech.cost && !tech.digDeep) {
-    		        log('Tech blocked - insufficient Stamina');
-    		        errorMessage += "You don't have enough Stamina to use this Technique.<br>";
-    		        blocked = true;
-    		    }
-    		    
-    			// Check Initiative Limit
-    			var initiativeLimit = tech.limits.find(function(l) {
-    				return l.toLowerCase().indexOf('init') == 0;
-    			});
-    			
-    			if(initiativeLimit) {
-    				var initiativeLimitSplit = initiativeLimit.split(' ');
-    				var initiativeLimitLevel = parseInt(initiativeLimitSplit[initiativeLimitSplit.length - 1]);
-    				if(initiativeLimitLevel != initiativeLimitLevel) {
-    					initiativeLimitLevel = 1;
-    				}
-    				
+                var st = parseInt(token.get('bar2_value'));
+                
+                if(st == st && st < tech.cost && !tech.digDeep) {
+                    log('Tech blocked - insufficient Stamina');
+                    errorMessage += "You don't have enough Stamina to use this Technique.<br>";
+                    blocked = true;
+                }
+                
+                // Check Initiative Limit
+                var initiativeLimit = tech.limits.find(function(l) {
+                    return l.toLowerCase().indexOf('init') == 0;
+                });
+                
+                if(initiativeLimit) {
+                    var initiativeLimitSplit = initiativeLimit.split(' ');
+                    var initiativeLimitLevel = parseInt(initiativeLimitSplit[initiativeLimitSplit.length - 1]);
+                    if(initiativeLimitLevel != initiativeLimitLevel) {
+                        initiativeLimitLevel = 1;
+                    }
+                    
                     turnOrder.forEach(function(turn) {
                         if(turn && turn.id === token.get('_id')) {
                             if(turn.pr <= initiativeLimitLevel) {
@@ -935,135 +936,136 @@ on('chat:message', function(msg) {
                             }
                         }
                     });
-    			}
-		    }
-		    
-		    // Check valor limit
-			var valorLimit = tech.limits.find(function(l) {
-			    var name = l.toLowerCase();
-				return ((name.indexOf('valor') == 0 &&
-				         name.indexOf('valor c') != 0) ||
-				         name.indexOf('ultimate v') == 0);
-			});
-			
-			if(valorLimit) {
-				var valorLimitSplit = valorLimit.split(' ');
-				var valorLimitLevel = parseInt(valorLimitSplit[valorLimitSplit.length - 1]);
-				if(valorLimitLevel != valorLimitLevel) {
-					valorLimitLevel = 1;
-				}
-				
-				var currentValor = getAttrByName(actor.get('_id'), 'valor');
-				if(currentValor < valorLimitLevel) {
-				    log('Tech blocked - Valor Limit');
-				    errorMessage += 'You need at least ' + valorLimitLevel + ' Valor to use this Technique.<br>';
-				    blocked = true;
-				}
-			}
-			
-			// Check Injury Limit
-			var injuryLimit = tech.limits.find(function(l) {
-				return l.toLowerCase().indexOf('injury') == 0;
-			});
-			
-			if(injuryLimit && token) {
-				var injuryLimitSplit = injuryLimit.split(' ');
-				var injuryLimitLevel = parseInt(injuryLimitSplit[injuryLimitSplit.length - 1]);
-				if(injuryLimitLevel != injuryLimitLevel) {
-					injuryLimitLevel = 1;
-				}
-				
-				var hp = parseInt(token.get('bar1_value'));
-				var hpMax = parseInt(token.get('bar1_max'));
-				if(hp != hp) {
-				    hp = 0;
-				}
-				if(hpMax != hpMax) {
-				    hpMax = 0;
-				}
-				
-				var hpTarget = Math.ceil(hpMax / 5 * (5 - injuryLimitLevel));
-				
-				if(hp > hpTarget) {
-				    log('Tech blocked - Injury Limit');
-				    errorMessage += 'Your Health must be ' + hpTarget + ' or lower to use this Technique.<br>';
-				    blocked = true;
-				}
-			}
-			
-			// Check Set-Up Limit
-			var setUpLimit = tech.limits.find(function(l) {
-				return l.toLowerCase().indexOf('set') == 0;
-			});
-			
-			if(setUpLimit) {
-				if(round) {
-    				var setUpLimitSplit = setUpLimit.split(' ');
-    				var setUpLimitLevel = parseInt(setUpLimitSplit[setUpLimitSplit.length - 1]);
-    				if(setUpLimitLevel != setUpLimitLevel) {
-    					setUpLimitLevel = 1;
-    				}
-    				
-    				if(round <= setUpLimitLevel) {
-    				    log('Tech blocked - Setup Limit');
-    				    errorMessage += "You can't use this Technique until round " + (setUpLimitLevel + 1) + '.<br>';
-    				    blocked = true;
-    				}
-				}
-			}
-			
-			// Check Ammunition Limit
-			var ammoLimit = tech.limits.find(function(l) {
-				return l.toLowerCase().indexOf('amm') == 0;
-			});
-			
-			if(ammoLimit) {
-				var ammoLimitSplit = ammoLimit.split(' ');
-				var ammoLimitLevel = parseInt(ammoLimitSplit[ammoLimitSplit.length - 1]);
-				if(ammoLimitLevel != ammoLimitLevel) {
-					ammoLimitLevel = 1;
-				}
-				
-				if(techData.timesUsed.length > 3 - ammoLimitLevel) {
-				    log('Tech blocked - Ammo Limit');
-				    errorMessage += 'This Technique is out of ammunition.<br>';
-				    blocked = true;
-				}
-			}
-			
-			// Check Cooldown Limit
-			var cooldownLimit = tech.limits.find(function(l) {
-				return l.toLowerCase().indexOf('cooldown') == 0;
-			});
-			
-			if(cooldownLimit && round) {
-				var cooldownLimitSplit = cooldownLimit.split(' ');
-				var cooldownLimitLevel = parseInt(cooldownLimitSplit[cooldownLimitSplit.length - 1]);
-				if(cooldownLimitLevel != cooldownLimitLevel) {
-					cooldownLimitLevel = 1;
-				}
-				
-				if(techData.timesUsed.length > 0) {
-    				var lastTurnUsed = parseInt(techData.timesUsed[techData.timesUsed.length - 1]);
-    				log(techData);
-    				if(round <= lastTurnUsed + cooldownLimitLevel) {
-    				    log('Tech blocked - Cooldown Limit');
-    				    errorMessage += 'This Technique is still on cooldown.<br>'
-    				    blocked = true;
-    				}
-				}
-			}
-			
-			if(blocked) {
-			    var cleanButton = msg.content.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
-			    errorMessage += '[Override](' + cleanButton + ' --override)';
-			    sendChat('Valor', '/w "' + actor.get('name') + '" ' + errorMessage);
-			    log('Tech failed on turn ' + round);
-			    return;
-			}
-		}
+                }
+            }
+            
+            // Check valor limit
+            var valorLimit = tech.limits.find(function(l) {
+                var name = l.toLowerCase();
+                return ((name.indexOf('valor') == 0 &&
+                         name.indexOf('valor c') != 0) ||
+                         name.indexOf('ultimate v') == 0);
+            });
+            
+            if(valorLimit) {
+                var valorLimitSplit = valorLimit.split(' ');
+                var valorLimitLevel = parseInt(valorLimitSplit[valorLimitSplit.length - 1]);
+                if(valorLimitLevel != valorLimitLevel) {
+                    valorLimitLevel = 1;
+                }
+                
+                var currentValor = getAttrByName(actor.get('_id'), 'valor');
+                if(currentValor < valorLimitLevel) {
+                    log('Tech blocked - Valor Limit');
+                    errorMessage += 'You need at least ' + valorLimitLevel + ' Valor to use this Technique.<br>';
+                    blocked = true;
+                }
+            }
+            
+            // Check Injury Limit
+            var injuryLimit = tech.limits.find(function(l) {
+                return l.toLowerCase().indexOf('injury') == 0;
+            });
+            
+            if(injuryLimit && token) {
+                var injuryLimitSplit = injuryLimit.split(' ');
+                var injuryLimitLevel = parseInt(injuryLimitSplit[injuryLimitSplit.length - 1]);
+                if(injuryLimitLevel != injuryLimitLevel) {
+                    injuryLimitLevel = 1;
+                }
+                
+                var hp = parseInt(token.get('bar1_value'));
+                var hpMax = parseInt(token.get('bar1_max'));
+                if(hp != hp) {
+                    hp = 0;
+                }
+                if(hpMax != hpMax) {
+                    hpMax = 0;
+                }
+                
+                var hpTarget = Math.ceil(hpMax / 5 * (5 - injuryLimitLevel));
+                
+                if(hp > hpTarget) {
+                    log('Tech blocked - Injury Limit');
+                    errorMessage += 'Your Health must be ' + hpTarget + ' or lower to use this Technique.<br>';
+                    blocked = true;
+                }
+            }
+            
+            // Check Set-Up Limit
+            var setUpLimit = tech.limits.find(function(l) {
+                return l.toLowerCase().indexOf('set') == 0;
+            });
+            
+            if(setUpLimit) {
+                if(round) {
+                    var setUpLimitSplit = setUpLimit.split(' ');
+                    var setUpLimitLevel = parseInt(setUpLimitSplit[setUpLimitSplit.length - 1]);
+                    if(setUpLimitLevel != setUpLimitLevel) {
+                        setUpLimitLevel = 1;
+                    }
+                    
+                    if(round <= setUpLimitLevel) {
+                        log('Tech blocked - Setup Limit');
+                        errorMessage += "You can't use this Technique until round " + (setUpLimitLevel + 1) + '.<br>';
+                        blocked = true;
+                    }
+                }
+            }
+            
+            // Check Ammunition Limit
+            var ammoLimit = tech.limits.find(function(l) {
+                return l.toLowerCase().indexOf('amm') == 0;
+            });
+            
+            if(ammoLimit) {
+                var ammoLimitSplit = ammoLimit.split(' ');
+                var ammoLimitLevel = parseInt(ammoLimitSplit[ammoLimitSplit.length - 1]);
+                if(ammoLimitLevel != ammoLimitLevel) {
+                    ammoLimitLevel = 1;
+                }
+                
+                if(techData.timesUsed.length > 3 - ammoLimitLevel) {
+                    log('Tech blocked - Ammo Limit');
+                    errorMessage += 'This Technique is out of ammunition.<br>';
+                    blocked = true;
+                }
+            }
+            
+            // Check Cooldown Limit
+            var cooldownLimit = tech.limits.find(function(l) {
+                return l.toLowerCase().indexOf('cooldown') == 0;
+            });
+            
+            if(cooldownLimit && round) {
+                var cooldownLimitSplit = cooldownLimit.split(' ');
+                var cooldownLimitLevel = parseInt(cooldownLimitSplit[cooldownLimitSplit.length - 1]);
+                if(cooldownLimitLevel != cooldownLimitLevel) {
+                    cooldownLimitLevel = 1;
+                }
+                
+                if(techData.timesUsed.length > 0) {
+                    var lastTurnUsed = parseInt(techData.timesUsed[techData.timesUsed.length - 1]);
+                    log(techData);
+                    if(round <= lastTurnUsed + cooldownLimitLevel) {
+                        log('Tech blocked - Cooldown Limit');
+                        errorMessage += 'This Technique is still on cooldown.<br>'
+                        blocked = true;
+                    }
+                }
+            }
+            
+            if(blocked) {
+                var cleanButton = msg.content.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
+                errorMessage += '[Override](' + cleanButton + ' --override)';
+                sendChat('Valor', '/w "' + actor.get('name') + '" ' + errorMessage);
+                log('Tech failed on turn ' + round);
+                return;
+            }
+        }
         
         var rollText = '';
+        var hiddenRollText = '';
         
         if(tech.core == 'damage' ||
            tech.core == 'ultDamage' ||
@@ -1072,29 +1074,29 @@ on('chat:message', function(msg) {
             var rollBonus = 0;
             while(split.length > nextParam) {
                 if(split[nextParam].indexOf('+') == -1 && split[nextParam].indexOf('-') == -1) {
-					var inputTargets = parseInt(split[nextParam]);
-					if(inputTargets == inputTargets) {
-						targets = inputTargets;
-					}
-					if(targets > 20) {
-					    log('Too many targets, capped at 20');
-						targets = 20;
-					}
-				} else {
-					var inputRollBonus = split[nextParam];
-					if(inputRollBonus.indexOf('+') == 0) {
-						inputRollBonus = inputRollBonus.substring(1);
-						// Roll button can potentially add a second +, so check again
-    					if(inputRollBonus.indexOf('+') == 0) {
-    						inputRollBonus = inputRollBonus.substring(1);
-    					}
-					}
-					var parsedBonus = parseInt(inputRollBonus);
-					if(parsedBonus == parsedBonus) {
-						rollBonus = parsedBonus;
-					}
-				}
-				nextParam++;
+                    var inputTargets = parseInt(split[nextParam]);
+                    if(inputTargets == inputTargets) {
+                        targets = inputTargets;
+                    }
+                    if(targets > 20) {
+                        log('Too many targets, capped at 20');
+                        targets = 20;
+                    }
+                } else {
+                    var inputRollBonus = split[nextParam];
+                    if(inputRollBonus.indexOf('+') == 0) {
+                        inputRollBonus = inputRollBonus.substring(1);
+                        // Roll button can potentially add a second +, so check again
+                        if(inputRollBonus.indexOf('+') == 0) {
+                            inputRollBonus = inputRollBonus.substring(1);
+                        }
+                    }
+                    var parsedBonus = parseInt(inputRollBonus);
+                    if(parsedBonus == parsedBonus) {
+                        rollBonus = parsedBonus;
+                    }
+                }
+                nextParam++;
             }
             
             if(actorClass == 'master') {
@@ -1110,19 +1112,19 @@ on('chat:message', function(msg) {
                 rollBonus += 2;
             }
             
-			if(skills.find(function(s) {
-				return s && s.name && s.name.indexOf('increasedSize') == 0;
-			})) {
-			    rollBonus++;
-			}
+            if(skills.find(function(s) {
+                return s && s.name && s.name.indexOf('increasedSize') == 0;
+            })) {
+                rollBonus++;
+            }
             
             
-			if(skills.find(function(s) {
-				return s && s.name && s.name.indexOf('diminuitive') == 0;
-			})) {
-			    rollBonus--;
-			}
-			
+            if(skills.find(function(s) {
+                return s && s.name && s.name.indexOf('diminuitive') == 0;
+            })) {
+                rollBonus--;
+            }
+            
 
             var sheetBonus = parseInt(getAttrByName(actor.get('_id'), 'rollbonus'));
             if(sheetBonus == sheetBonus) {
@@ -1177,21 +1179,35 @@ on('chat:message', function(msg) {
                     roll = parseInt(getAttrByName(actor.get('_id'), 'res')) + rollBonus;
                     break;
             }
-			
+            
             if(rollBonus > 0) {
                 rollText += '+' + rollBonus;
             } else if(rollBonus < 0) {
                 rollText += '-' + (-rollBonus);
             }
             
-            if(targets > 1) {
-                rollText += ', left to right';
-            }
-            
-            rollText += ':';
-            
-            for(i = 0; i < targets; i++) {
-                rollText += ' [[1d10+' + roll + ']]';
+            if(state.rollBehindScreen && !actor.get('controlledby')) {
+                hiddenRollText = 'Hidden roll';
+                if(targets > 1) {
+                    hiddenRollText += 's, left to right';
+                }
+                
+                hiddenRollText += ':';
+                
+                for(i = 0; i < targets; i++) {
+                    hiddenRollText += ' [[1d10+' + roll + ']]';
+                }
+                
+            } else {
+                if(targets > 1) {
+                    rollText += ', left to right';
+                }
+                
+                rollText += ':';
+                
+                for(i = 0; i < targets; i++) {
+                    rollText += ' [[1d10+' + roll + ']]';
+                }
             }
         }
         
@@ -1201,8 +1217,8 @@ on('chat:message', function(msg) {
             var stCost = tech.cost;
             var valorCost = 0;
             
-			var hp = parseInt(token.get('bar1_value'));
-			var hpMax = parseInt(token.get('bar1_max'));
+            var hp = parseInt(token.get('bar1_value'));
+            var hpMax = parseInt(token.get('bar1_max'));
             var st = parseInt(token.get('bar2_value'));
             if(hp != hp) {
                 hp = 0;
@@ -1227,69 +1243,69 @@ on('chat:message', function(msg) {
             
             token.set('bar2_value', st);
             
-			if(tech.limits) {
-				var healthLimit = tech.limits.find(function(l) {
-					return l.toLowerCase().indexOf('health') == 0;
-				});
-				if(healthLimit) {
-					var healthLimitSplit = healthLimit.split(' ');
-					var healthLimitLevel = parseInt(healthLimitSplit[healthLimitSplit.length - 1]);
-					if(healthLimitLevel != healthLimitLevel) {
-						healthLimitLevel = 1;
-					}
-					
-					hpCost += healthLimitLevel * 5;
-				}
-				
-				var ultimateHealthLimit = tech.limits.find(function(l) {
-					return l.toLowerCase().indexOf('ultimate health') == 0;
-				});
-				if(ultimateHealthLimit) {
-					var ultimateHealthLimitSplit = ultimateHealthLimit.split(' ');
-					var ultimateHealthLimitLevel = parseInt(ultimateHealthLimitSplit[ultimateHealthLimitSplit.length - 1]);
-					if(ultimateHealthLimitLevel != ultimateHealthLimitLevel) {
-						ultimateHealthLimitLevel = 1;
-					}
-					
-					hpCost += Math.ceil(hpMax / 5);
-				}
-				
-				var valorLimit = tech.limits.find(function(l) {
-					return l.toLowerCase().indexOf('valor c') == 0 ||
-					l.toLowerCase().indexOf('ult valor') == 0 ||
-					l.toLowerCase().indexOf('ultimate valor') == 0;
-				});
-				
-				if(valorLimit) {
-					var valorLimitSplit = valorLimit.split(' ');
-					var valorLimitLevel = parseInt(valorLimitSplit[valorLimitSplit.length - 1]);
-					if(valorLimitLevel != valorLimitLevel) {
-						valorLimitLevel = 1;
-					}
-					
-					var valor = parseInt(token.get('bar3_value'));
-					if(valor != valor) {
-						valor = 0;
-					}
-					
-					valorCost = valorLimitLevel;
-					valor -= valorCost;
+            if(tech.limits) {
+                var healthLimit = tech.limits.find(function(l) {
+                    return l.toLowerCase().indexOf('health') == 0;
+                });
+                if(healthLimit) {
+                    var healthLimitSplit = healthLimit.split(' ');
+                    var healthLimitLevel = parseInt(healthLimitSplit[healthLimitSplit.length - 1]);
+                    if(healthLimitLevel != healthLimitLevel) {
+                        healthLimitLevel = 1;
+                    }
+                    
+                    hpCost += healthLimitLevel * 5;
+                }
+                
+                var ultimateHealthLimit = tech.limits.find(function(l) {
+                    return l.toLowerCase().indexOf('ultimate health') == 0;
+                });
+                if(ultimateHealthLimit) {
+                    var ultimateHealthLimitSplit = ultimateHealthLimit.split(' ');
+                    var ultimateHealthLimitLevel = parseInt(ultimateHealthLimitSplit[ultimateHealthLimitSplit.length - 1]);
+                    if(ultimateHealthLimitLevel != ultimateHealthLimitLevel) {
+                        ultimateHealthLimitLevel = 1;
+                    }
+                    
+                    hpCost += Math.ceil(hpMax / 5);
+                }
+                
+                var valorLimit = tech.limits.find(function(l) {
+                    return l.toLowerCase().indexOf('valor c') == 0 ||
+                    l.toLowerCase().indexOf('ult valor') == 0 ||
+                    l.toLowerCase().indexOf('ultimate valor') == 0;
+                });
+                
+                if(valorLimit) {
+                    var valorLimitSplit = valorLimit.split(' ');
+                    var valorLimitLevel = parseInt(valorLimitSplit[valorLimitSplit.length - 1]);
+                    if(valorLimitLevel != valorLimitLevel) {
+                        valorLimitLevel = 1;
+                    }
+                    
+                    var valor = parseInt(token.get('bar3_value'));
+                    if(valor != valor) {
+                        valor = 0;
+                    }
+                    
+                    valorCost = valorLimitLevel;
+                    valor -= valorCost;
                     log('Consumed ' + valorCost + ' Valor');
-					
-					token.set('bar3_value', valor);
-				}
-				
-				var initLimit = tech.limits.find(function(l) {
-					return l.toLowerCase().indexOf('init') == 0;
-				});
-				
-				if(initLimit) {
-					var initLimitSplit = initLimit.split(' ');
-					var initLimitLevel = parseInt(initLimitSplit[initLimitSplit.length - 1]);
-					if(initLimitLevel != initLimitLevel) {
-						initLimitLevel = 1;
-					}
-					
+                    
+                    token.set('bar3_value', valor);
+                }
+                
+                var initLimit = tech.limits.find(function(l) {
+                    return l.toLowerCase().indexOf('init') == 0;
+                });
+                
+                if(initLimit) {
+                    var initLimitSplit = initLimit.split(' ');
+                    var initLimitLevel = parseInt(initLimitSplit[initLimitSplit.length - 1]);
+                    if(initLimitLevel != initLimitLevel) {
+                        initLimitLevel = 1;
+                    }
+                    
                     turnOrder.forEach(function(turn) {
                         if(turn && turn.id === token.get('_id')) {
                             turn.pr -= initLimitLevel;
@@ -1298,19 +1314,19 @@ on('chat:message', function(msg) {
                     log('Consumed ' + initLimitLevel + ' initiative');
                     
                     Campaign().set('turnorder', JSON.stringify(turnOrder));
-				}
-			}
-			
-			hp -= hpCost;
-			if(hpCost > 0) {
-                log('Consumed ' + hpCost + ' HP');
-			}
-			
-			token.set('bar1_value', hp);
+                }
+            }
             
-			if(!state.techHistory) {
-				state.techHistory = [];
-			}
+            hp -= hpCost;
+            if(hpCost > 0) {
+                log('Consumed ' + hpCost + ' HP');
+            }
+            
+            token.set('bar1_value', hp);
+            
+            if(!state.techHistory) {
+                state.techHistory = [];
+            }
             if(state.techHistory.length > 20) {
                 // Don't let the tech history get too long
                 state.techHistory = state.techHistory.slice(1);
@@ -1322,9 +1338,9 @@ on('chat:message', function(msg) {
         if(rollText) {
             message += '<tr><td>' + rollText + '</td></tr>';
         }
-		
-		var showSummary = tech.summary && (!state.hideNpcTechEffects || actor.get('controlledby'));
-		
+        
+        var showSummary = tech.summary && (!state.hideNpcTechEffects || actor.get('controlledby'));
+        
         if(showSummary) {
             message += '<tr><td>' + tech.summary + '</td></tr>';
         }
@@ -1352,23 +1368,26 @@ on('chat:message', function(msg) {
         
         // Alert with remaining ammo
         if(tech.limits) {
-    		var ammoLimit = tech.limits.find(function(l) {
-    			return l.toLowerCase().indexOf('amm') == 0;
-    		});
-    		
-    		if(ammoLimit) {
-    			var ammoLimitSplit = ammoLimit.split(' ');
-    			var ammoLimitLevel = parseInt(ammoLimitSplit[ammoLimitSplit.length - 1]);
-    			if(ammoLimitLevel != ammoLimitLevel) {
-    				ammoLimitLevel = 1;
-    			}
-    			var ammo = 4 - ammoLimitLevel - state.techData[techDataId].timesUsed.length;
-    			sendChat('Valor', '/w "' + actor.get('name') + '" Ammunition remaining: ' + ammo);
-    		}
+            var ammoLimit = tech.limits.find(function(l) {
+                return l.toLowerCase().indexOf('amm') == 0;
+            });
+            
+            if(ammoLimit) {
+                var ammoLimitSplit = ammoLimit.split(' ');
+                var ammoLimitLevel = parseInt(ammoLimitSplit[ammoLimitSplit.length - 1]);
+                if(ammoLimitLevel != ammoLimitLevel) {
+                    ammoLimitLevel = 1;
+                }
+                var ammo = 4 - ammoLimitLevel - state.techData[techDataId].timesUsed.length;
+                sendChat('Valor', '/w "' + actor.get('name') + '" Ammunition remaining: ' + ammo);
+            }
         }
         
         if(!showSummary && tech.summary) {
-			sendChat('Valor', '/w gm ' + tech.summary);
+            sendChat('Valor', '/w gm ' + tech.summary);
+        }
+        if(state.rollBehindScreen && hiddenRollText && hiddenRollText.length > 0) {
+            sendChat('Valor', '/w gm ' + hiddenRollText);
         }
         
         // Disable temporary switches on this tech
@@ -1419,7 +1438,7 @@ on('chat:message', function(msg) {
                 empowerAttack.set('current', '0');
             }
         }
-		
+        
         log('Technique ' + tech.name + ' performed by ' + actor.get('name') + ' on Round ' + round + '.');
     }
 });
@@ -1492,56 +1511,56 @@ on('chat:message', function(msg) {
             return;
         }
 
-		var turnOrder = JSON.parse(Campaign().get('turnorder'));
-		if(!turnOrder || turnOrder.length == 0) {
-			// Nothing to do
-			log('Turn Tracker is not enabled.');
-		}
-		
+        var turnOrder = JSON.parse(Campaign().get('turnorder'));
+        if(!turnOrder || turnOrder.length == 0) {
+            // Nothing to do
+            log('Turn Tracker is not enabled.');
+        }
+        
         // Figure out who the actor is
         var actor = getActor(msg);
-		if(!actor) {
-			log('No usable character found for ' + msg.playerid);
-			return;
-		}
+        if(!actor) {
+            log('No usable character found for ' + msg.playerid);
+            return;
+        }
         
         var effectName = split[1];
-		var nextParam = 2;
-		while(nextParam < split.length && parseInt(split[nextParam]) != parseInt(split[nextParam])) {
-			effectName += ' ' + split[nextParam];
-			nextParam++;
-		}
-		
-		if(effectName[0] == '"') {
-			effectName = effectName.substring(1, effectName.length - 1);
-		}
-		var duration = 3;
-		if(split.length > nextParam) {
-			var inputDuration = parseInt(split[nextParam]);
-			if(inputDuration == inputDuration) {
-				duration = inputDuration;
-			}
+        var nextParam = 2;
+        while(nextParam < split.length && parseInt(split[nextParam]) != parseInt(split[nextParam])) {
+            effectName += ' ' + split[nextParam];
+            nextParam++;
         }
-		
-		// Add a new item to the turn log
-		for(i = 0; i < turnOrder.length; i++) {
-			if(turnOrder[i].id != '-1') {
-				var token = getObj('graphic', turnOrder[i].id);
-				if(token && actor && token.get('represents') == actor.get('_id')) {
-					var effect = {
-						id: '-1',
-						custom: effectName,
-						pr: duration,
-						formula: '-1'
-					};
-					var newTurnOrder = turnOrder.slice(0, i + 1).concat([effect]).concat(turnOrder.slice(i + 1));
-					Campaign().set('turnorder', JSON.stringify(newTurnOrder));
-					log('Effect ' + effectName + ' added to Turn Tracker.');
-					return;
-				}
-			}
-		}
-		log('Actor not found on Turn Tracker.');
+        
+        if(effectName[0] == '"') {
+            effectName = effectName.substring(1, effectName.length - 1);
+        }
+        var duration = 3;
+        if(split.length > nextParam) {
+            var inputDuration = parseInt(split[nextParam]);
+            if(inputDuration == inputDuration) {
+                duration = inputDuration;
+            }
+        }
+        
+        // Add a new item to the turn log
+        for(i = 0; i < turnOrder.length; i++) {
+            if(turnOrder[i].id != '-1') {
+                var token = getObj('graphic', turnOrder[i].id);
+                if(token && actor && token.get('represents') == actor.get('_id')) {
+                    var effect = {
+                        id: '-1',
+                        custom: effectName,
+                        pr: duration,
+                        formula: '-1'
+                    };
+                    var newTurnOrder = turnOrder.slice(0, i + 1).concat([effect]).concat(turnOrder.slice(i + 1));
+                    Campaign().set('turnorder', JSON.stringify(newTurnOrder));
+                    log('Effect ' + effectName + ' added to Turn Tracker.');
+                    return;
+                }
+            }
+        }
+        log('Actor not found on Turn Tracker.');
     }
 });
 
@@ -1636,8 +1655,8 @@ on('chat:message', function(msg) {
             } else {
                 // No skillset found - use set-bravado value instead
                 if(state.charData && 
-				   state.charData[token.get('represents')] &&
-			       state.charData[token.get('represents')].bravado) {
+                   state.charData[token.get('represents')] &&
+                   state.charData[token.get('represents')].bravado) {
                    startingValor = state.charData[token.get('represents')].bravado;
                 }
             }
@@ -1675,8 +1694,8 @@ on('chat:message', function(msg) {
             // Reset Valor
             var startingValor = 0;
             var bravado = getSkill(charId, 'bravado');
-			if(bravado && bravado.level) {
-				startingValor = bravado.level;
+            if(bravado && bravado.level) {
+                startingValor = bravado.level;
             } else {
                 // No skillset found - use set-bravado value instead
                 if(state.charData[charId] &&
@@ -1715,10 +1734,12 @@ on('chat:message', function(msg) {
         var split = msg.content.match(/(".*?")|(\S+)/g);
         if(split.length < 2 || split[1] != '--confirm') {
             // No --confirm, ask for verification
-			sendChat('Valor', '/w gm You will lose all information currently on the Turn Tracker.<br>' +
-			'[Continue](!init --confirm)');
+            sendChat('Valor', '/w gm You will lose all information currently on the Turn Tracker.<br>' +
+            '[Continue](!init --confirm)');
             return;
         }
+        
+        log('Initiative roll commencing');
         
         // Get list of tokens
         var page = Campaign().get('playerpageid');
@@ -1730,6 +1751,7 @@ on('chat:message', function(msg) {
         // Destroy existing Init Tokens
         for(i = 0; i < allTokens.length; i++) {
             if(allTokens[i].get('left') == -1000 && allTokens[i].get('top') == -1000) {
+                log('Deleting old Init Token for ' + allTokens[i].get('name'));
                 allTokens[i].remove();
                 allTokens.splice(1, 1);
                 i--;
@@ -1739,10 +1761,12 @@ on('chat:message', function(msg) {
         allTokens.forEach(function(token) {
             var actorId = token.get('represents');
             if(actorIds.indexOf(actorId) == -1) {
+                log('Adding ' + token.get('name') + ' to init token list');
                 actorIds.push(actorId);
                 tokens.push(token);
             } else {
                 if(duplicateIds.indexOf(actorId) == -1) {
+                    log('Adding ' + token.get('name') + ' to duplicate token list');
                     duplicateIds.push(actorId);
                     var oldToken = tokens.find(function(t) { return t.get('represents') == actorId });
                     tokens.splice(tokens.indexOf(oldToken));
@@ -1753,40 +1777,41 @@ on('chat:message', function(msg) {
         // For duplicate character tokens, create an init-tracker token that the players can't see
         duplicateIds.forEach(function(id) {
             var oldToken = allTokens.find(function(t) { return t.get('represents') == id});
-    		var newToken = createObj('graphic', {
-    		    _pageid: oldToken.get('_pageid'),
-    		    left: -1000,
-    		    top: -1000,
-    		    width: 70,
-    		    height: 70,
-    		    layer: "objects",
-    		    imgsrc: oldToken.get('imgsrc').replace('med.', 'thumb.'),
-    		    name: oldToken.get('name'),
-    		    showname: true,
-    		    represents: oldToken.get('represents')
-    		});
-    		tokens.push(newToken);
+            var newToken = createObj('graphic', {
+                _pageid: oldToken.get('_pageid'),
+                left: -1000,
+                top: -1000,
+                width: 70,
+                height: 70,
+                layer: "objects",
+                imgsrc: oldToken.get('imgsrc').replace('med.', 'thumb.'),
+                name: oldToken.get('name'),
+                showname: true,
+                represents: oldToken.get('represents')
+            });
+            tokens.push(newToken);
         });
+        
+        log('Final list of tokens:');
         log(tokens);
 
         var message = '<table><tr><td>**ROLLING INITIATIVE**</td></tr>';
         var turnOrder = [];
         tokens.forEach(function(token) {
             var actorId = token.get('represents');
-    		var actor = getObj('character', actorId);
-    		var initMod = getAttrByName(actorId, 'init')
-    		var init = initMod + randomInteger(10);
-    		
-    		var actorName;
-    		if(actor) {
-    		    actorName = actor.get('name');
-        		turnOrder.push({
-        		    id: token.get('_id'),
-        		    pr: init,
-        		    custom: ''
-        		});
-        		message += '<tr><td>' + actorName + ' - **' + init + '**</td></tr>';
-    		}
+            var actor = getObj('character', actorId);
+            
+            if(actor) {
+                var initMod = getAttrByName(actorId, 'init')
+                var init = initMod + randomInteger(10);
+                var actorName = actor.get('name');
+                turnOrder.push({
+                    id: token.get('_id'),
+                    pr: init,
+                    custom: ''
+                });
+                message += '<tr><td>' + actorName + ' - **' + init + '**</td></tr>';
+            }
         });
         turnOrder = turnOrder.sort(function(a, b) {
             return b.pr - a.pr;
@@ -1817,64 +1842,64 @@ on('chat:message', function(msg) {
             log('Not enough arguments.');
             return;
         }
-		
-		if(!state.linkedSheets) {
-		    state.linkedSheets = {};
-		}
-		
+        
+        if(!state.linkedSheets) {
+            state.linkedSheets = {};
+        }
+        
         // Figure out who to duplicate
-		var actor = getObj('character', split[1]);
-		var actorId = actor.get('_id');
-		
-		// Check to see if they already have a level up sheet
-		if(state.linkedSheets[actorId]) {
-		    var oldActor = getObj('character', state.linkedSheets[actorId]);
-		    if(oldActor) {
-    		    sendChat('Valor', '/w "' + actor.get('name') + "\" You already have an open level-up sheet.");
-    		    return;
-		    } else {
-		        // The character was deleted, erase them from the link library
-		        state.linkedSheets[actorId] = undefined;
-		    }
-		}
-		
-		// Create new character, copy over basic traits
-		var newActor = createObj('character', {
-		    name: 'Level up - ' + actor.get('name'),
-		    inplayerjournals: actor.get('inplayerjournals'),
-		    controlledby: actor.get('controlledby'),
-		    avatar: actor.get('avatar')
-		});
-		var newActorId = newActor.get('_id');
-		
-		// Copy over attributes
-		var attributes = filterObjs(function(obj) {
+        var actor = getObj('character', split[1]);
+        var actorId = actor.get('_id');
+        
+        // Check to see if they already have a level up sheet
+        if(state.linkedSheets[actorId]) {
+            var oldActor = getObj('character', state.linkedSheets[actorId]);
+            if(oldActor) {
+                sendChat('Valor', '/w "' + actor.get('name') + "\" You already have an open level-up sheet.");
+                return;
+            } else {
+                // The character was deleted, erase them from the link library
+                state.linkedSheets[actorId] = undefined;
+            }
+        }
+        
+        // Create new character, copy over basic traits
+        var newActor = createObj('character', {
+            name: 'Level up - ' + actor.get('name'),
+            inplayerjournals: actor.get('inplayerjournals'),
+            controlledby: actor.get('controlledby'),
+            avatar: actor.get('avatar')
+        });
+        var newActorId = newActor.get('_id');
+        
+        // Copy over attributes
+        var attributes = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                    obj.get('_characterid') == actorId;
-		});
-		
-		attributes.forEach(function(attr) {
-		    createObj('attribute', {
-		        name: attr.get('name'),
-		        current: attr.get('current'),
-		        max: attr.get('max'),
-		        characterid: newActorId
-		    });
-		});
-		
-		// Mark the new one as a duplicate
-	    createObj('attribute', {
-	        name: 'is_duplicate',
-	        current: 'on',
-	        characterid: newActorId
-	    });
-		
-		// Save link between sheets
-		state.linkedSheets[actorId] = newActorId;
-		state.linkedSheets[newActorId] = actorId;
-		
-		if(oldActor)
-		log('Character ' + actor.get('name') + ' created a new level up sheet.');
+        });
+        
+        attributes.forEach(function(attr) {
+            createObj('attribute', {
+                name: attr.get('name'),
+                current: attr.get('current'),
+                max: attr.get('max'),
+                characterid: newActorId
+            });
+        });
+        
+        // Mark the new one as a duplicate
+        createObj('attribute', {
+            name: 'is_duplicate',
+            current: 'on',
+            characterid: newActorId
+        });
+        
+        // Save link between sheets
+        state.linkedSheets[actorId] = newActorId;
+        state.linkedSheets[newActorId] = actorId;
+        
+        if(oldActor)
+        log('Character ' + actor.get('name') + ' created a new level up sheet.');
     }
 });
 
@@ -1888,108 +1913,108 @@ on('chat:message', function(msg) {
             log('Not enough arguments.');
             return;
         }
-		
-		if(!state.linkedSheets) {
-		    state.linkedSheets = {};
-		}
-		
+        
+        if(!state.linkedSheets) {
+            state.linkedSheets = {};
+        }
+        
         // Fetch the level-up sheet
-		var actor = getObj('character', split[1]);
-		var actorId = actor.get('_id');
-		var oldActorId = state.linkedSheets[actorId];
-		var oldactor = getObj('character', oldActorId);
-		
-		// Check to see if they already have a level up sheet
-		if(!oldActorId) {
-	        sendChat('Valor', '/w "' + actor.get('name') + "\" The original character sheet no longer exists.");
-	        log("Couldn't find linked sheet for sheet " + actor.get('name') + '.');
-	        return;
-		}
-		
-		var oldHp = filterObjs(function(obj) {
+        var actor = getObj('character', split[1]);
+        var actorId = actor.get('_id');
+        var oldActorId = state.linkedSheets[actorId];
+        var oldactor = getObj('character', oldActorId);
+        
+        // Check to see if they already have a level up sheet
+        if(!oldActorId) {
+            sendChat('Valor', '/w "' + actor.get('name') + "\" The original character sheet no longer exists.");
+            log("Couldn't find linked sheet for sheet " + actor.get('name') + '.');
+            return;
+        }
+        
+        var oldHp = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                    obj.get('_characterid') == oldActorId &&
                    obj.get('name') == 'hp';
-		})[0];
-		var newHp = filterObjs(function(obj) {
+        })[0];
+        var newHp = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                    obj.get('_characterid') == actorId &&
                    obj.get('name') == 'hp';
-		})[0];
-		var oldHpMax = parseInt(oldHp.get('max'));
-		var newHpMax = parseInt(newHp.get('max'));
-		
-		var oldSt = filterObjs(function(obj) {
+        })[0];
+        var oldHpMax = parseInt(oldHp.get('max'));
+        var newHpMax = parseInt(newHp.get('max'));
+        
+        var oldSt = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                    obj.get('_characterid') == oldActorId &&
                    obj.get('name') == 'st';
-		})[0];
-		var newSt = filterObjs(function(obj) {
+        })[0];
+        var newSt = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                    obj.get('_characterid') == actorId &&
                    obj.get('name') == 'st';
-		})[0];
-		var oldStMax = parseInt(oldSt.get('max'));
-		var newStMax = parseInt(newSt.get('max'));
-		
-		// Paste over attributes
-		var attributes = filterObjs(function(obj) {
+        })[0];
+        var oldStMax = parseInt(oldSt.get('max'));
+        var newStMax = parseInt(newSt.get('max'));
+        
+        // Paste over attributes
+        var attributes = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                    obj.get('_characterid') == actorId;
-		});
-		attributes.forEach(function(attr) {
+        });
+        attributes.forEach(function(attr) {
             var attrName = attr.get('name');
-		    if(attrName != 'is_duplicate') {
-		        var oldAttribute = filterObjs(function(obj) {
+            if(attrName != 'is_duplicate') {
+                var oldAttribute = filterObjs(function(obj) {
                     return obj.get('_type') == 'attribute' &&
                            obj.get('_characterid') == oldActorId &&
                            obj.get('name') == attrName;
-        		})[0];
-		        
-		        if(oldAttribute) {
-		            oldAttribute.set('max', attr.get('max'));
-		            
-		            // Keep current HP/ST/Valor values
-		            if(attrName != 'hp' && attrName != 'st' && attrName != 'valor') {
-		                oldAttribute.set('current', attr.get('current'));
-		            }
-		        } else {
-        		    createObj('attribute', {
-        		        name: attrName,
-        		        current: attr.get('current'),
-        		        max: attr.get('max'),
-        		        characterid: oldActorId
-        		    });
-		        }
-		    }
-		});
-		
-		// Update current HP and ST
-		if(oldHpMax == oldHpMax && newHpMax == newHpMax) {
-		    var hpChange = newHpMax - oldHpMax;
-		    
-		    var oldHpValue = parseInt(oldHp.get('current'));
-		    if(oldHpValue == oldHpValue) {
-    		    oldHp.set('current', oldHpValue + hpChange);
-		    }
-		}
-		
-		if(oldStMax == oldStMax && newStMax == newStMax) {
-		    var stChange = newStMax - oldStMax;
-		    
-		    var oldStValue = parseInt(oldSt.get('current'));
-		    if(oldStValue == oldStValue) {
-    		    oldSt.set('current', oldStValue + stChange);
-		    }
-		}
-		
-		// Delete the level-up sheet
-		actor.remove();
-		state.linkedSheets[actorId] = undefined;
-		state.linkedSheets[oldActorId] = undefined;
-		
-		sendChat('Valor', 'Character sheet for ' + oldactor.get('name') + ' has been updated.');
-		log('Character sheet for ' + oldactor.get('name') + ' has been updated.');
+                })[0];
+                
+                if(oldAttribute) {
+                    oldAttribute.set('max', attr.get('max'));
+                    
+                    // Keep current HP/ST/Valor values
+                    if(attrName != 'hp' && attrName != 'st' && attrName != 'valor') {
+                        oldAttribute.set('current', attr.get('current'));
+                    }
+                } else {
+                    createObj('attribute', {
+                        name: attrName,
+                        current: attr.get('current'),
+                        max: attr.get('max'),
+                        characterid: oldActorId
+                    });
+                }
+            }
+        });
+        
+        // Update current HP and ST
+        if(oldHpMax == oldHpMax && newHpMax == newHpMax) {
+            var hpChange = newHpMax - oldHpMax;
+            
+            var oldHpValue = parseInt(oldHp.get('current'));
+            if(oldHpValue == oldHpValue) {
+                oldHp.set('current', oldHpValue + hpChange);
+            }
+        }
+        
+        if(oldStMax == oldStMax && newStMax == newStMax) {
+            var stChange = newStMax - oldStMax;
+            
+            var oldStValue = parseInt(oldSt.get('current'));
+            if(oldStValue == oldStValue) {
+                oldSt.set('current', oldStValue + stChange);
+            }
+        }
+        
+        // Delete the level-up sheet
+        actor.remove();
+        state.linkedSheets[actorId] = undefined;
+        state.linkedSheets[oldActorId] = undefined;
+        
+        sendChat('Valor', 'Character sheet for ' + oldactor.get('name') + ' has been updated.');
+        log('Character sheet for ' + oldactor.get('name') + ' has been updated.');
     }
 });
 
@@ -2152,17 +2177,17 @@ on('change:graphic', function(obj, prev) {
         if(message) {
             // Message character
             var charId = obj.get('represents');
-		    var actor = getObj('character',charId);
-		    var controlledBy = actor.get('controlledby');
-		    
-		    var whisperTo = 'gm';
-		    
-		    if(controlledBy && controlledBy != '') {
-		        whisperTo = actor.get('name');
-		    }
-		    
-		    sendChat('Valor', '/w "' + whisperTo + '" ' + actor.get('name') + message);
-		    log('Alerted ' + whisperTo + ' about critical HP for token ID ' + obj.get('_id') + '.');
+            var actor = getObj('character',charId);
+            var controlledBy = actor.get('controlledby');
+            
+            var whisperTo = 'gm';
+            
+            if(controlledBy && controlledBy != '') {
+                whisperTo = actor.get('name');
+            }
+            
+            sendChat('Valor', '/w "' + whisperTo + '" ' + actor.get('name') + message);
+            log('Alerted ' + whisperTo + ' about critical HP for token ID ' + obj.get('_id') + '.');
         }
     }
 });
@@ -2435,4 +2460,8 @@ on('change:campaign:turnorder', function(obj) {
  * - Ultimate Mimic Core now honored by system.
  * - Ultimate Health Limit now honored by system.
  * - Mimic Core now refuses to mimic Ultimate Techniques.
+ * 
+ * v0.11.2:
+ * - GM can now set enemy rolls to be hidden from the players.
+ * - More logging to look into the bug where !init skips one character.
  **/
