@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.11.2
+ * v0.11.3
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -23,9 +23,7 @@ state.houseRulesEnabled = false; // Enables various unsupported house rules.
 state.rollBehindScreen = false; // Hide NPC rolls from the players.
 
 // Status Tracker
-// While this is active, any numbered status markers will automatically
-// decrement after their turn, vanishing when the number hits 0.
-// Warning: Doesn't quite match Valor effect duration rules.
+// While this is active, the system will send an alert when an effect ends.
 function trackStatuses(turnOrder) {
     if(!state.statusTrackerEnabled) {
         // Settings check
@@ -38,21 +36,22 @@ function trackStatuses(turnOrder) {
         return;
     }
     
-    if(newTurnOrder[0].id != '-1') {
+    var lastChar = newTurnOrder[newTurnOrder.length - 1];
+    if(lastChar.id != '-1') {
         // Do nothing if the last actor was a character
         return;
     }
     
-    if(newTurnOrder[0].pr == 0 && newTurnOrder[0].formula == '-1') {
+    if(lastChar.pr == 0 && lastChar.formula == '-1') {
         // A countdown effect ended
-        sendChat('Valor', "Effect '" + newTurnOrder[0].custom + "' has ended.");
-        newTurnOrder = newTurnOrder.slice(1);
+        sendChat('Valor', "Effect '" + lastChar.custom + "' has ended.");
+        newTurnOrder = newTurnOrder.slice(0, newTurnOrder.length - 1);
         // Auto-reduce the next item if it's an effect too
-        if(newTurnOrder[0].formula == '-1') {
-            newTurnOrder[0].pr--;
+        if(lastChar.formula == '-1') {
+            lastChar.pr--;
         }
         Campaign().set('turnorder', JSON.stringify(newTurnOrder));
-        log("Effect '" + newTurnOrder[0].custom + "' ended");
+        log("Effect '" + lastChar.custom + "' ended");
         trackStatuses(newTurnOrder);
     }
 }
@@ -607,15 +606,15 @@ function updateValor(obj) {
         return;
     }
     
-    var turnorder = JSON.parse(obj.get('turnorder'));
-    if(!turnorder || turnorder.length === 0) {
+    var turnOrder = JSON.parse(obj.get('turnorder'));
+    if(!turnOrder || turnOrder.length === 0) {
         // Do nothing if initiative tracker is empty
         return;
     }
     
-    var topChar = turnorder[0];
-    if(!topChar || topChar.custom.toLowerCase() != 'round') {
-        // Only continue if the 'Round' counter is at the top of the init order
+    var lastChar = turnOrder[turnOrder.length - 1];
+    if(!lastChar || lastChar.custom.toLowerCase() != 'round') {
+        // Only continue if the 'Round' counter is at the bottom of the init order
         return;
     }
 
@@ -685,13 +684,14 @@ function alertCooldowns() {
         turnOrder = JSON.parse(Campaign().get('turnorder'));
     }
     
-    var topChar = turnOrder[0];
-    if(!topChar || topChar.custom.toLowerCase() != 'round') {
-        // Only continue if the 'Round' counter is at the top of the init order
+    var lastChar = turnOrder[turnOrder.length - 1];
+    log(lastChar);
+    if(!lastChar || lastChar.custom.toLowerCase() != 'round') {
+        // Only continue if the 'Round' counter is at the bottom of the init order
         return;
     }
 
-    var round = topChar.pr;
+    var round = lastChar.pr;
     if(!round) {
         return;
     }
@@ -1520,8 +1520,13 @@ on('chat:message', function(msg) {
         // Figure out who the actor is
         var actor = getActor(msg);
         if(!actor) {
-            log('No usable character found for ' + msg.playerid);
-            return;
+            for(i = 0; i < turnOrder.length; i++) {
+                if(turnOrder[i].id != '-1') {
+                    var token = getObj('graphic', turnOrder[i].id);
+                    actor = getObj('character', token.get('represents'));
+                    break;
+                }
+            }
         }
         
         var effectName = split[1];
@@ -1732,7 +1737,10 @@ on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!init') == 0
         && playerIsGM(msg.playerid)) {
         var split = msg.content.match(/(".*?")|(\S+)/g);
-        if(split.length < 2 || split[1] != '--confirm') {
+        var turnOrder = JSON.parse(Campaign().get('turnorder'));
+        log(turnOrder);
+        
+        if((split.length < 2 || split[1] != '--confirm') && turnOrder && turnOrder.length > 0) {
             // No --confirm, ask for verification
             sendChat('Valor', '/w gm You will lose all information currently on the Turn Tracker.<br>' +
             '[Continue](!init --confirm)');
@@ -2203,23 +2211,23 @@ function processOngoingEffects(obj) {
         return;
     }
     
-    var turnorder = JSON.parse(obj.get('turnorder'));
-    if(!turnorder || turnorder.length === 0) {
+    var turnOrder = JSON.parse(obj.get('turnorder'));
+    if(!turnOrder || turnOrder.length === 0) {
         // Do nothing if the init tracker is empty
         return;
     }
     
-    var topChar = turnorder[0];
-    if(!topChar || (topChar.custom.indexOf('Ongoing') == -1 && 
-        topChar.custom.indexOf('Regen') == -1 &&
-        topChar.custom.indexOf('SRegen') == -1)) {
+    var effectChar = turnOrder[turnOrder.length - 1];
+    if(!effectChar || (effectChar.custom.indexOf('Ongoing') == -1 && 
+        effectChar.custom.indexOf('Regen') == -1 &&
+        effectChar.custom.indexOf('SRegen') == -1)) {
         // Do nothing if the top label isn't Ongoing, Regen or SRegen
         return;
     }
     
     // Scan backwards for the character this condition applies to
-    var i = turnorder.length - 1;
-    var lastCharId = turnorder[i] ? turnorder[i].id : null;
+    var i = turnOrder.length - 2;
+    var lastCharId = turnOrder[i] ? turnOrder[i].id : null;
     var lastChar = lastCharId ? getObj('graphic', lastCharId) : null;
     while(!lastChar) {
         i--;
@@ -2227,14 +2235,14 @@ function processOngoingEffects(obj) {
             // We didn't find anyone - abort
             return;
         }
-        var lastCharId = turnorder[i] ? turnorder[i].id : null;
+        var lastCharId = turnOrder[i] ? turnOrder[i].id : null;
         if(lastCharId) {
             lastChar = getObj('graphic', lastCharId);
         }
     }
     
     // Update HP or ST
-    var parts = topChar.custom.split(' ');
+    var parts = effectChar.custom.split(' ');
     var value = parseInt(parts[1]);
     if(parts[0] === 'Ongoing') {
         lastChar.set('bar1_value', lastChar.get('bar1_value') - value);
@@ -2280,8 +2288,8 @@ on('change:campaign:turnorder', function(obj) {
         if(state.lastActor !== nextActor) {
             state.lastActor = nextActor;
             updateValor(obj);
-            trackStatuses(turnOrder);
             processOngoingEffects(obj);
+            trackStatuses(turnOrder);
             alertCooldowns();
         }
     } else {
@@ -2464,4 +2472,8 @@ on('change:campaign:turnorder', function(obj) {
  * v0.11.2:
  * - GM can now set enemy rolls to be hidden from the players.
  * - More logging to look into the bug where !init skips one character.
+ * 
+ * v0.11.3:
+ * - All turn order effects now process after you move past the effect.
+ * - !e now defaults to the top character on the turn order.
  **/
