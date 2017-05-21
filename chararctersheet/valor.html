@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v0.4.4
+ * v0.4.5
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -117,6 +117,9 @@
  * v0.4.4:
  * - Damage Increment value updated.
  * - Set-Up Limit was sometimes unrecognized.
+ * 
+ * v0.4.5:
+ * - Rising Attack added to skill list.
  **/
 
 function calculateStats() {
@@ -463,7 +466,8 @@ function calculateStats() {
                                     techAttrs['repeating_techs_' + tidarray[i] + '_tech_level'] = spentTP;
                                     setAttrs(techAttrs);
                                     
-                                    if((techCore == 'ultDamage' || techCore == 'ultTransform') && ults.length > 0) {
+                                    if((techCore == 'ultDamage' || techCore == 'ultTransform' || techCore == 'ultMimic' || techCore == 'domain')
+                                        && ults.length > 0) {
                                         // Use the next Ult to offset the TP cost
                                         spentTP -= ults[0];
                                         ults.splice(0,1);
@@ -2053,6 +2057,7 @@ on('sheet:opened', function() {
                 <option value="rangedInterrupt">Ranged Interrupt (4)</option>
                 <option value="rangedRevival">Ranged Revival (3)</option>
                 <option value="refractionPoint">Refraction Point (4/2)</option>
+                <option value="risingAttack">Rising Attack (4)</option>
                 <option value="seal">Seal (6/3)</option>
                 <option value="shadowMeld">Shadow Meld (6)</option>
                 <option value="shrugOff">Shrug Off (6)</option>

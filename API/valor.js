@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.11.3
+ * v0.12.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -1153,7 +1153,7 @@ on('chat:message', function(msg) {
                 if(tech.mods.find(function(m) {
                     return m.toLowerCase().indexOf('intuit') > -1;
                 })) {
-                    rollStat = 'int';
+                    rollStat = 'mnd';
                 }
             }
             
@@ -1317,12 +1317,15 @@ on('chat:message', function(msg) {
                 }
             }
             
+            var oldHp = hp;
             hp -= hpCost;
             if(hpCost > 0) {
                 log('Consumed ' + hpCost + ' HP');
             }
             
             token.set('bar1_value', hp);
+            
+            criticalHealthWarning(token, oldHp);
             
             if(!state.techHistory) {
                 state.techHistory = [];
@@ -1738,7 +1741,6 @@ on('chat:message', function(msg) {
         && playerIsGM(msg.playerid)) {
         var split = msg.content.match(/(".*?")|(\S+)/g);
         var turnOrder = JSON.parse(Campaign().get('turnorder'));
-        log(turnOrder);
         
         if((split.length < 2 || split[1] != '--confirm') && turnOrder && turnOrder.length > 0) {
             // No --confirm, ask for verification
@@ -1777,7 +1779,9 @@ on('chat:message', function(msg) {
                     log('Adding ' + token.get('name') + ' to duplicate token list');
                     duplicateIds.push(actorId);
                     var oldToken = tokens.find(function(t) { return t.get('represents') == actorId });
-                    tokens.splice(tokens.indexOf(oldToken));
+                    tokens.splice(tokens.indexOf(oldToken), 1);
+                } else {
+                    log('No action taken on ' + token.get('name'));
                 }
             }
         });
@@ -1799,9 +1803,6 @@ on('chat:message', function(msg) {
             });
             tokens.push(newToken);
         });
-        
-        log('Final list of tokens:');
-        log(tokens);
 
         var message = '<table><tr><td>**ROLLING INITIATIVE**</td></tr>';
         var turnOrder = [];
@@ -2144,33 +2145,7 @@ on('change:graphic', function(obj, prev) {
     }
 });
 
-// Critical HP warning
-// Whisper to a character's owner when they fall under 40% Health
-on('change:graphic', function(obj, prev) {
-    if(!state.showHealthAlerts) {
-        return;
-    }
-    if(obj.get('represents') == '') {
-        // Do nothing if the updated token has no backing character
-        return;
-    }
-    
-    if(!obj || !prev) {
-        return;
-    }
-    if(obj.get('bar1_value') && prev.bar1_value &&
-       obj.get('bar1_value') == prev.bar1_value) {
-        // Do nothing if none of the values changed
-        return;
-    }
-    
-    var page = Campaign().get('playerpageid');
-    if(obj.get('_pageid') != page) {
-        // Do nothing if it was a token on another page
-        return;
-    }
-    
-    var oldHp = parseInt(prev.bar1_value);
+function criticalHealthWarning(obj, oldHp) {
     var newHp = parseInt(obj.get('bar1_value'));
     var maxHp = parseInt(obj.get('bar1_max'));
     
@@ -2198,6 +2173,36 @@ on('change:graphic', function(obj, prev) {
             log('Alerted ' + whisperTo + ' about critical HP for token ID ' + obj.get('_id') + '.');
         }
     }
+}
+
+// Critical HP warning
+// Whisper to a character's owner when they fall under 40% Health
+on('change:graphic', function(obj, prev) {
+    if(!state.showHealthAlerts) {
+        return;
+    }
+    if(obj.get('represents') == '') {
+        // Do nothing if the updated token has no backing character
+        return;
+    }
+    
+    if(!obj || !prev) {
+        return;
+    }
+    if(obj.get('bar1_value') && prev.bar1_value &&
+       obj.get('bar1_value') == prev.bar1_value) {
+        // Do nothing if none of the values changed
+        return;
+    }
+    
+    var page = Campaign().get('playerpageid');
+    if(obj.get('_pageid') != page) {
+        // Do nothing if it was a token on another page
+        return;
+    }
+    
+    var oldHp = parseInt(prev.bar1_value);
+    criticalHealthWarning(obj, oldHp);
 });
 
 // Ongoing Effect Processor
@@ -2244,20 +2249,35 @@ function processOngoingEffects(obj) {
     // Update HP or ST
     var parts = effectChar.custom.split(' ');
     var value = parseInt(parts[1]);
+    var actor = getObj('character', lastChar.get('represents'));
+    var name = lastChar.get('name');
+    if(actor) {
+        name = actor.get('name');
+    }
+    var oldHp = parseInt(lastChar.get('bar1_value'));
+    if(oldHp != oldHp) {
+        oldHp = 0;
+    }
+    
     if(parts[0] === 'Ongoing') {
         lastChar.set('bar1_value', lastChar.get('bar1_value') - value);
+        criticalHealthWarning(lastChar, oldHp);
+        sendChat('Valor', name + ' took ' + value + ' ongoing damage.');
         log('Dealt ' + value + ' ongoing damage to ' + lastChar.get('name') + '.');
     } else if(parts[0] === 'Regen') {
         lastChar.set('bar1_value', parseInt(lastChar.get('bar1_value')) + value);
         if(lastChar.get('bar1_value') > lastChar.get('bar1_max')) {
             lastChar.set('bar1_value', lastChar.get('bar1_max'));
         }
+        criticalHealthWarning(lastChar, oldHp);
+        sendChat('Valor', name + ' recovered ' + value + ' Health.');
         log('Regenerated ' + value + ' HP for ' + lastChar.get('name') + '.');
     } else if(parts[0] === 'SRegen') {
         lastChar.set('bar2_value', parseInt(lastChar.get('bar2_value')) + value);
         if(lastChar.get('bar2_value') > lastChar.get('bar2_max')) {
             lastChar.set('bar2_value', lastChar.get('bar2_max'));
         }
+        sendChat('Valor', name + ' recovered ' + value + ' Stamina.');
         log('Regenerated ' + value + ' ST for ' + lastChar.get('name') + '.');
     }
 }
@@ -2475,5 +2495,10 @@ on('change:campaign:turnorder', function(obj) {
  * 
  * v0.11.3:
  * - All turn order effects now process after you move past the effect.
- * - !e now defaults to the top character on the turn order.
+ * 
+ * v0.12.0:
+ * - Critical health warning now triggers on ongoing damage, regen, and health limits.
+ * - Ongoing damage and regen are now reported in the chat.
+ * - Intuitive Strike now works.
+ * - !init finally works consistently.
  **/
