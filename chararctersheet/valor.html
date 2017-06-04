@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v0.4.5
+ * v0.4.6
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -120,6 +120,9 @@
  * 
  * v0.4.5:
  * - Rising Attack added to skill list.
+ * 
+ * v0.4.6:
+ * - Adjusted formatting of tech descriptions.
  **/
 
 function calculateStats() {
@@ -584,12 +587,6 @@ function calculateTechs() {
                 
                 if(techCoreLevel < 1) {
                     warnings += 'WARNING: Core Level cannot be less than 1. ';
-                }
-                
-                // Start with user-provided text
-                if(techDescription) {
-                    summary += techDescription;
-                    summary += '\n';
                 }
                 
                 // Is this an ult?
@@ -2291,6 +2288,7 @@ on('sheet:opened', function() {
         </div>
         <div class="sheet-col">
             <div><span class="label" name="attr_tech_name"></span></div>
+            <div><span name="attr_tech_description"></span></div>
             <div><span name="attr_tech_summary"></span></div>
             <div><span name="attr_tech_warnings"></span></div>
         </div>

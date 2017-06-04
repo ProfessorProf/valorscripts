@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.12.0
+ * v0.12.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -323,6 +323,54 @@ function getTechs(charId) {
     });
     
     return techs;
+}
+
+function resetValor(token, skills, flaws) {
+    var charId = token.get('represents');
+    if(!skills) {
+        skills = getSkills(charId);
+    }
+    
+    if(!flaws) {
+        flaws = getFlaws(charId);
+    }
+    
+    var startingValor = 0;
+    if(skills && skills.length > 0) {
+        var bravado = skills.find(function(s) {
+            return s.name == 'bravado';
+        });
+        if(bravado && bravado.level) {
+            startingValor = bravado.level;
+        }
+        
+        if(flaws) {
+            var weakWilled = flaws.find(function(f) {
+                return f.name == 'weakWilled';
+            });
+            if(weakWilled && weakWilled.level) {
+                startingValor = -weakWilled.level;
+            }
+        }
+        
+        if(state.houseRulesEnabled) {
+            // Bravado is fixed-level, gain starting valor by Season
+            if(startingValor > 1) {
+                startingValor = 1;
+            }
+            var level = getAttrByName(charId, 'level');
+            startingValor += Math.ceil(level / 5) - 1;
+        }
+    } else {
+        // No skillset found - use set-bravado value instead
+        if(state.charData && 
+           state.charData[token.get('represents')] &&
+           state.charData[token.get('represents')].bravado) {
+           startingValor = state.charData[token.get('represents')].bravado;
+        }
+    }
+    token.set('bar3_value', startingValor);
+    log('Character ' + token.get('_id') + ' set to ' + startingValor + ' Valor.');
 }
 
 function getTechDamage(tech, charId) {
@@ -685,7 +733,6 @@ function alertCooldowns() {
     }
     
     var lastChar = turnOrder[turnOrder.length - 1];
-    log(lastChar);
     if(!lastChar || lastChar.custom.toLowerCase() != 'round') {
         // Only continue if the 'Round' counter is at the bottom of the init order
         return;
@@ -732,10 +779,19 @@ function alertCooldowns() {
 }
 
 // !reset command
-// Enter !reset in the chat to purge the tech data history.
+// Enter !reset in the chat to purge the tech data history and reset valor without healing anyone..
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!reset') == 0
         && playerIsGM(msg.playerid)) {
+            
+        var tokens = filterObjs(function(obj) {
+            return obj.get('_type') == 'graphic' &&
+                   obj.get('represents');
+        });
+        
+        tokens.forEach(function(token) {
+            resetValor(token);
+        });
         log('Tech data: ' + state.techData);
         log('Tech history: ' + state.techHistory);
         state.techData = {};
@@ -792,8 +848,6 @@ on('chat:message', function(msg) {
                 var techs = getTechs(actor.get('_id'));
                 var message = '<table><tr><td>Pick a Technique to use:</td></tr>';
                 techs.forEach(function(tech) {
-                    log(tech);
-                    log(tech.name);
                     message += '<tr><td>[' + tech.name + '](!t "' + tech.name + '")</td></tr>';
                 });
                 message += '</table>';
@@ -1046,7 +1100,6 @@ on('chat:message', function(msg) {
                 
                 if(techData.timesUsed.length > 0) {
                     var lastTurnUsed = parseInt(techData.timesUsed[techData.timesUsed.length - 1]);
-                    log(techData);
                     if(round <= lastTurnUsed + cooldownLimitLevel) {
                         log('Tech blocked - Cooldown Limit');
                         errorMessage += 'This Technique is still on cooldown.<br>'
@@ -1634,42 +1687,7 @@ on('chat:message', function(msg) {
             }
             
             // Reset Valor
-            var startingValor = 0;
-            if(skills && skills.length > 0) {
-                var bravado = skills.find(function(s) {
-                    return s.name == 'bravado';
-                });
-                if(bravado && bravado.level) {
-                    startingValor = bravado.level;
-                }
-                
-                if(flaws) {
-                    var weakWilled = flaws.find(function(f) {
-                        return f.name == 'weakWilled';
-                    });
-                    if(weakWilled && weakWilled.level) {
-                        startingValor = -weakWilled.level;
-                    }
-                }
-                
-                if(state.houseRulesEnabled) {
-                    // Bravado is fixed-level, gain starting valor by Season
-                    if(startingValor > 1) {
-                        startingValor = 1;
-                    }
-                    var level = getAttrByName(charId, 'level');
-                    startingValor += Math.ceil(level / 5) - 1;
-                }
-            } else {
-                // No skillset found - use set-bravado value instead
-                if(state.charData && 
-                   state.charData[token.get('represents')] &&
-                   state.charData[token.get('represents')].bravado) {
-                   startingValor = state.charData[token.get('represents')].bravado;
-                }
-            }
-            token.set('bar3_value', startingValor);
-            log('Character ' + token.get('name') + ' set to ' + startingValor + ' Valor.');
+            resetValor(token, skills, flaws);
         });
         
         state.techData = {};
@@ -1700,29 +1718,7 @@ on('chat:message', function(msg) {
             var charId = token.get('represents');
             
             // Reset Valor
-            var startingValor = 0;
-            var bravado = getSkill(charId, 'bravado');
-            if(bravado && bravado.level) {
-                startingValor = bravado.level;
-            } else {
-                // No skillset found - use set-bravado value instead
-                if(state.charData[charId] &&
-                    state.charData[charId].bravado) {
-                    startingValor = state.charData[charId].bravado;
-                }
-            }
-            
-            if(state.houseRulesEnabled) {
-                // Bravado is fixed-level, gain starting valor by Season
-                if(startingValor > 1) {
-                    startingValor = 1;
-                }
-                var level = getAttrByName(charId, 'level');
-                startingValor += Math.ceil(level / 5) - 1;
-            }
-            
-            token.set('bar3_value', startingValor);
-            log('Character ' + token.get('name') + ' set to ' + startingValor + ' Valor.');
+            resetValor(token);
         });
         
         state.techData = {};
@@ -1763,7 +1759,7 @@ on('chat:message', function(msg) {
             if(allTokens[i].get('left') == -1000 && allTokens[i].get('top') == -1000) {
                 log('Deleting old Init Token for ' + allTokens[i].get('name'));
                 allTokens[i].remove();
-                allTokens.splice(1, 1);
+                allTokens.splice(i, 1);
                 i--;
             }
         }
@@ -1836,6 +1832,12 @@ on('chat:message', function(msg) {
         
         state.techData = {};
         state.techHistory = [];
+        state.lastActor = null;
+        
+        // Init roll = new scene, so reset valor
+        allTokens.forEach(function(token) {
+            resetValor(token);
+        });
         
         sendChat('Valor', message);
     }
@@ -1907,7 +1909,6 @@ on('chat:message', function(msg) {
         state.linkedSheets[actorId] = newActorId;
         state.linkedSheets[newActorId] = actorId;
         
-        if(oldActor)
         log('Character ' + actor.get('name') + ' created a new level up sheet.');
     }
 });
@@ -2259,26 +2260,28 @@ function processOngoingEffects(obj) {
         oldHp = 0;
     }
     
-    if(parts[0] === 'Ongoing') {
-        lastChar.set('bar1_value', lastChar.get('bar1_value') - value);
-        criticalHealthWarning(lastChar, oldHp);
-        sendChat('Valor', name + ' took ' + value + ' ongoing damage.');
-        log('Dealt ' + value + ' ongoing damage to ' + lastChar.get('name') + '.');
-    } else if(parts[0] === 'Regen') {
-        lastChar.set('bar1_value', parseInt(lastChar.get('bar1_value')) + value);
-        if(lastChar.get('bar1_value') > lastChar.get('bar1_max')) {
-            lastChar.set('bar1_value', lastChar.get('bar1_max'));
+    if(value == value) {
+        if(parts[0] === 'Ongoing') {
+            lastChar.set('bar1_value', lastChar.get('bar1_value') - value);
+            criticalHealthWarning(lastChar, oldHp);
+            sendChat('Valor', name + ' took ' + value + ' ongoing damage.');
+            log('Dealt ' + value + ' ongoing damage to ' + lastChar.get('name') + '.');
+        } else if(parts[0] === 'Regen') {
+            lastChar.set('bar1_value', parseInt(lastChar.get('bar1_value')) + value);
+            if(lastChar.get('bar1_value') > lastChar.get('bar1_max')) {
+                lastChar.set('bar1_value', lastChar.get('bar1_max'));
+            }
+            criticalHealthWarning(lastChar, oldHp);
+            sendChat('Valor', name + ' recovered ' + value + ' Health.');
+            log('Regenerated ' + value + ' HP for ' + lastChar.get('name') + '.');
+        } else if(parts[0] === 'SRegen') {
+            lastChar.set('bar2_value', parseInt(lastChar.get('bar2_value')) + value);
+            if(lastChar.get('bar2_value') > lastChar.get('bar2_max')) {
+                lastChar.set('bar2_value', lastChar.get('bar2_max'));
+            }
+            sendChat('Valor', name + ' recovered ' + value + ' Stamina.');
+            log('Regenerated ' + value + ' ST for ' + lastChar.get('name') + '.');
         }
-        criticalHealthWarning(lastChar, oldHp);
-        sendChat('Valor', name + ' recovered ' + value + ' Health.');
-        log('Regenerated ' + value + ' HP for ' + lastChar.get('name') + '.');
-    } else if(parts[0] === 'SRegen') {
-        lastChar.set('bar2_value', parseInt(lastChar.get('bar2_value')) + value);
-        if(lastChar.get('bar2_value') > lastChar.get('bar2_max')) {
-            lastChar.set('bar2_value', lastChar.get('bar2_max'));
-        }
-        sendChat('Valor', name + ' recovered ' + value + ' Stamina.');
-        log('Regenerated ' + value + ' ST for ' + lastChar.get('name') + '.');
     }
 }
 
@@ -2501,4 +2504,10 @@ on('change:campaign:turnorder', function(obj) {
  * - Ongoing damage and regen are now reported in the chat.
  * - Intuitive Strike now works.
  * - !init finally works consistently.
+ * 
+ * v0.12.1:
+ * - !reset command now resets character valor.
+ * - !rest and !fullRest now use the same logic for resetting valor.
+ * - !init command no longer messes up valor scores.
+ * - API no longer crashes when there's an ongoing effect called "Ongoing X" where X isn't a number.
  **/
