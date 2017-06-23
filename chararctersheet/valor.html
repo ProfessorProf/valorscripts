@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v0.4.6
+ * v0.5.0
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -123,6 +123,10 @@
  * 
  * v0.4.6:
  * - Adjusted formatting of tech descriptions.
+ * 
+ * v0.5.0:
+ * - Support for Resolute Strike.
+ * - Revamped UI for attack/defense rolls.
  **/
 
 function calculateStats() {
@@ -187,6 +191,9 @@ function calculateStats() {
         var di = level + 5;
         var initMod = 0;
         
+        var atkBonus = 0;
+        var defBonus = 0;
+        
         var valor = 10;
         var unspentSP = 14 + 6 * level;
         var unspentAP = 22 + 3 * level - str - agi - spr - mnd - gut;
@@ -204,6 +211,7 @@ function calculateStats() {
         var hasDigDeep = false;
         var hasOverloadLimits = false;
         var hasEmpowerAttack = false;
+        var hasResoluteStrike = false;
         var hasUlt = false;
         var healerLevel = 0;
         
@@ -246,6 +254,7 @@ function calculateStats() {
                 mndAtk = 2 * level + 3 * mnd;
                 unspentSP += 4 + level;
                 unspentTP += 1 + level;
+                atkBonus = 1;
                 break;
                 
         }
@@ -386,6 +395,9 @@ function calculateStats() {
                                 case 'empowerAttack':
                                     hasEmpowerAttack = true;
                                     break;
+                                case 'resoluteStrike':
+                                    hasResoluteStrike = true;
+                                    break;
                                 case 'overloadLimits':
                                     hasOverloadLimits = true;
                                     break;
@@ -399,6 +411,15 @@ function calculateStats() {
                                     break;
                                 case 'ultimateAttack':
                                     hasUlt = true;
+                                    break;
+                                case 'increasedSize':
+                                    atkBonus++;
+                                    defBonus--;
+                                    break;
+                                case 'diminuitive':
+                                    atkBonus--;
+                                    defBonus++;
+                                    break;
                             }
                             
                             var skill = values.skillLibrary.find(function(s) {
@@ -481,6 +502,13 @@ function calculateStats() {
                                     }
                                 }
                                 
+                                var atkBonusDisp = '';
+                                if(atkBonus > 0) atkBonusDisp = '+' + atkBonus;
+                                if(atkBonus < 0) atkBonusDisp = atkBonus;
+                                var defBonusDisp = '';
+                                if(defBonus > 0) defBonusDisp = '+' + defBonus;
+                                if(defBonus < 0) defBonusDisp = defBonus;
+                                
                                 //Set values
                                 setAttrs({
                                     str: str,
@@ -508,9 +536,14 @@ function calculateStats() {
                                     hpCrit: Math.ceil(hp / 5) * 2,
                                     di: di,
                                     init: dex + initMod,
+                                    iatkbonus: atkBonus,
+                                    idefbonus: defBonus,
+                                    iatkbonusdisp: atkBonusDisp,
+                                    idefbonusdisp: defBonusDisp,
                                     hasDigDeep: hasDigDeep,
                                     hasOverloadLimits: hasOverloadLimits,
                                     hasEmpowerAttack: hasEmpowerAttack,
+                                    hasResoluteStrike: hasResoluteStrike,
                                     healerLevel: healerLevel,
                                     unspentAP: unspentAP,
                                     unspentSP: unspentSP,
@@ -531,7 +564,7 @@ function calculateTechs() {
                           'mus', 'dex', 'aur', 'int', 'res', 
                           'strAtk', 'agiAtk', 'sprAtk', 'mndAtk',
                           'level', 'hp_max', 'di', 'type',
-                          'hasDigDeep', 'hasOverloadLimits', 'hasEmpowerAttack', 'healerLevel'];
+                          'hasDigDeep', 'hasOverloadLimits', 'hasEmpowerAttack', 'hasResoluteStrike', 'healerLevel'];
     getSectionIDs('repeating_techs', function(tidarray) {
         for(var i=0; i < tidarray.length; i++) {
             techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_name');
@@ -1057,7 +1090,7 @@ function calculateTechs() {
                         } else {
                             totalModLevel += 2;
                         }
-                    } else if(mod.indexOf('reposition') == 0) {
+                    } else if(mod.indexOf('repo') == 0) {
                         var distance = 1 + modLevel;
                         if(techStat == 'str') {
                             distance++;
@@ -1085,10 +1118,10 @@ function calculateTechs() {
                     } else if(mod.indexOf('selective barrier') == 0) {
                         summary += 'Allies can move through the barrier freely. ';
                         totalModLevel++;
-                    } else if(mod.indexOf('terrain disruption')== 0) {
+                    } else if(mod.indexOf('disrupt') >= 0) {
                         summary += 'Target area becomes Difficult Terrain. ';
                         totalModLevel++;
-                    } else if(mod.indexOf('terrain repair') == 0) {
+                    } else if(mod.indexOf('repair') >= 0) {
                         summary += 'Difficult Terrain in the target area is eliminated. ';
                         totalModLevel++;
                     } else if(mod.indexOf('element') == 0) {
@@ -1403,8 +1436,6 @@ function calculateTechs() {
                 }
                 summary += limitSummary;
                 
-                log(techValues.hasEmpowerAttack);
-                log(techCore);
                 var attrs = {};
                 attrs['repeating_techs_' + tidarray[i] + '_tech_summary'] = summary;
                 attrs['repeating_techs_' + tidarray[i] + '_tech_warnings'] = warnings;
@@ -1425,6 +1456,10 @@ function calculateTechs() {
                 attrs['repeating_techs_' + tidarray[i] + '_tech_can_empower'] = (techValues.hasEmpowerAttack && 
                     (techCore == 'damage' || techCore == 'ultDamage' || techCore == 'mimic' || techCore == 'ultMimic'))
                     ? 'on' : 'off';
+                attrs['repeating_techs_' + tidarray[i] + '_tech_can_resolute_strike'] = (techValues.hasResoluteStrike && 
+                    (techCore == 'damage' || techCore == 'ultDamage' || techCore == 'mimic' || 
+                    techCore == 'ultMimic' || techCore == 'weaken'))
+                    ? 'on' : 'off';
                 setAttrs(attrs, { silent: true });
             }
         });
@@ -1434,7 +1469,8 @@ function calculateTechs() {
 /* Update displayed Technique info - Tech Level, Summary, Warnings, Mod/Limit Levels */
 on('change:tech_name change:tech_core_level change:tech_mod_level change:tech_limit_st ' +
    'change:tech_core change:tech_stat change:tech_mods change:tech_limits change:tech_description ' +
-   'change:tech_mimic_target change:tech_digDeep change:tech_overloadLimits change:tech_empowerAttack', function() {
+   'change:tech_mimic_target change:tech_digDeep change:tech_overloadLimits change:tech_empowerAttack ' +
+   'change:tech_resoluteStrike', function() {
     calculateTechs();
 });
 
@@ -1873,19 +1909,57 @@ on('sheet:opened', function() {
             <button type="roll" value="[[1d10+@{init}+@{rollbonus} &{tracker} &{noerror}]] Initiative" name="roll_res"></button>
         </td>
     </tr>
-    <tr>
-        <td colspan="2"></td> <!-- Blank space -->
-        <td>Roll Bonus:</td>
-        <td nowrap="nowrap">
-            <input type="number" class="short-number" name="attr_rollbonus" value="0">
-        </td>
-    </tr>
 </table>
 
 <br />
 
 <div class="label">
     Unspent Attribute Points: <span name="attr_unspentAP"></span>
+</div>
+
+<br />
+
+<table>
+    <tr>
+        <td class="label" colspan="2">
+            Roll Bonuses
+        </td>
+    </tr>
+    <tr>
+        <td>Universal:</td>
+        <td nowrap="nowrap">
+            <input type="number" class="short-number" name="attr_rollbonus" value="0">
+        </td>
+    </tr>
+    <tr>
+        <td>Attack:</td>
+        <td nowrap="nowrap">
+            <input type="number" class="short-number" name="attr_atkbonus" value="0">
+        </td>
+        <td>
+            <span class="derived-value" name="attr_iatkbonusdisp"></span>
+        </td>
+    </tr>
+    <tr>
+        <td>Defense:</td>
+        <td nowrap="nowrap">
+            <input type="number" class="short-number" name="attr_defbonus" value="0">
+        </td>
+        <td>
+            <span class="derived-value" name="attr_idefbonusdisp"></span>
+        </td>
+    </tr>
+</table>
+
+<br />
+
+<div class="label">Defense Rolls:</div>
+<div>
+    <button type="roll" value="[[1d10+@{mus}+@{rollbonus}+@{defbonus}+@{idefbonus}]] Muscle Defense" name="roll_aur">Muscle</button>
+    <button type="roll" value="[[1d10+@{dex}+@{rollbonus}+@{defbonus}+@{idefbonus}]] Dexterity Defense" name="roll_aur">Dexterity</button>
+    <button type="roll" value="[[1d10+@{aur}+@{rollbonus}+@{defbonus}+@{idefbonus}]] Aura Defense" name="roll_aur">Aura</button>
+    <button type="roll" value="[[1d10+@{int}+@{rollbonus}+@{defbonus}+@{idefbonus}]] Intuition Defense" name="roll_aur">Intuition</button>
+    <button type="roll" value="[[1d10+@{res}+@{rollbonus}+@{defbonus}+@{idefbonus}]] Resolve Defense" name="roll_aur">Resolve</button>
 </div>
 
 <br />
@@ -2244,6 +2318,13 @@ on('sheet:opened', function() {
                 <div class="conditional-block">
                     <input type="checkbox" name="attr_tech_empowerAttack">
                     <span class="label">Use Empower Attack</span>
+                </div>
+            </div>
+            <div>
+                <input type="checkbox" class="conditional-check" name="attr_tech_can_resolute_strike">
+                <div class="conditional-block">
+                    <input type="checkbox" name="attr_tech_resoluteStrike">
+                    <span class="label">Use Resolute Strike</span>
                 </div>
             </div>
         </div>

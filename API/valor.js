@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.12.1
+ * v0.13.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -319,6 +319,13 @@ function getTechs(charId) {
             } else {
                 techs.push({ id: techId, empowerAttack: empowerAttack});
             }
+        } else if(techName.indexOf('tech_resoluteStrike') > -1) {
+            var resoluteStrike = rawTech.get('current') == 'on';
+            if(oldTech) {
+                oldTech.resoluteStrike = resoluteStrike;
+            } else {
+                techs.push({ id: techId, resoluteStrike: resoluteStrike});
+            }
         }
     });
     
@@ -489,6 +496,55 @@ function getTechDescription(tech, charId) {
         case 'barrier':
             summary = 'Barrier power ' + tech.coreLevel;
             break;
+    }
+    
+    // Add certain mods to output
+    var mods = [];
+    tech.mods.forEach(m => {
+        var mod = m.toLowerCase();
+        var split = mod.split(' ');
+        var modLevel = parseInt(split[split.length - 1]);
+        if(modLevel != modLevel) {
+            // NaN, so there's no level listed - assume 1
+            modLevel = 1;
+        }
+        if(mod.indexOf('drain') == 0) {
+            mods.push('Drain');
+        } else if(mod.indexOf('persistent') == 0) {
+            mods.push('Persistent');
+        } else if(mod.indexOf('sapping') == 0) {
+            mods.push('Sapping');
+        } else if(mod.indexOf('darkness') == 0) {
+            mods.push('Darkness Zone');
+        } else if(mod.indexOf('drop') == 0) {
+            mods.push('Drop Attack');
+        } else if(mod.indexOf('immobiliz') == 0) {
+            mods.push('Immobilize');
+        } else if(mod.indexOf('knock') == 0) {
+            mods.push('Knock Down');
+        } else if(mod.indexOf('light') == 0) {
+            mods.push('Light Zone');
+        } else if(mod.indexOf('ram') == 0) {
+            mods.push('Ramming Attack');
+        } else if(mod.indexOf('repo') == 0) {
+            var distance = modLevel + 1;
+            if(tech.stat == 'str') {
+                distance++;
+            }
+            mods.push('Reposition ' + distance);
+        } else if(mod.indexOf('throw') == 0) {
+            mods.push('Throw');
+        } else if(mod.indexOf('launch') == 0) {
+            mods.push('Launching');
+        } else if(mod.indexOf('disrupt') >= 0) {
+            mods.push('Terrain Disruption');
+        } else if(mod.indexOf('repair') >= 0) {
+            mods.push('Terrain Repair');
+        }
+    });
+    if(mods.length > 0) {
+        summary += '<br />';
+        summary += '*' + mods.join(', ') + '*';
     }
     
     if(tech.grantedSkills) {
@@ -1152,11 +1208,6 @@ on('chat:message', function(msg) {
                 nextParam++;
             }
             
-            if(actorClass == 'master') {
-                // +1 to hit for Masters
-                rollBonus++;
-            }
-            
             var accurate = tech.mods && tech.mods.find(function(m) {
                 return m.toLowerCase().indexOf('accurate') > -1;
             });
@@ -1165,23 +1216,19 @@ on('chat:message', function(msg) {
                 rollBonus += 2;
             }
             
-            if(skills.find(function(s) {
-                return s && s.name && s.name.indexOf('increasedSize') == 0;
-            })) {
-                rollBonus++;
+            var universalBonus = parseInt(getAttrByName(actor.get('_id'), 'rollbonus'));
+            if(universalBonus == universalBonus) {
+                rollBonus += universalBonus;
             }
             
-            
-            if(skills.find(function(s) {
-                return s && s.name && s.name.indexOf('diminuitive') == 0;
-            })) {
-                rollBonus--;
+            var atkBonus = parseInt(getAttrByName(actor.get('_id'), 'atkbonus'));
+            if(atkBonus == atkBonus) {
+                rollBonus += atkBonus;
             }
             
-
-            var sheetBonus = parseInt(getAttrByName(actor.get('_id'), 'rollbonus'));
-            if(sheetBonus == sheetBonus) {
-                rollBonus += sheetBonus;
+            var iatkBonus = parseInt(getAttrByName(actor.get('_id'), 'iatkbonus'));
+            if(iatkBonus == iatkBonus) {
+                rollBonus += iatkBonus;
             }
             
             var roll = 0;
@@ -1208,6 +1255,10 @@ on('chat:message', function(msg) {
                 })) {
                     rollStat = 'mnd';
                 }
+            }
+            
+            if(tech.resoluteStrike) {
+                rollStat = 'gut';
             }
             
             switch(rollStat) {
@@ -1493,6 +1544,49 @@ on('chat:message', function(msg) {
                 var empowerAttack = techAttrs[0];
                 empowerAttack.set('current', '0');
             }
+        }
+        
+        if(tech.resoluteStrike) {
+            log('Resolute Strike was enabled.');
+            var techAttrs = filterObjs(function(obj) {
+                if(obj.get('_type') == 'attribute' &&
+                   obj.get('name').indexOf(tech.id) > -1 &&
+                   obj.get('name').indexOf('resoluteStrike') > -1) {
+                       return true;
+                }
+                return false;
+            });
+            if(techAttrs && techAttrs.length > 0) {
+                var resoluteStrike = techAttrs[0];
+                resoluteStrike.set('current', '0');
+            }
+        }
+        
+        // Reset number of targets and roll modifier on tech
+        var techTargetAttrs = filterObjs(function(obj) {
+            if(obj.get('_type') == 'attribute' &&
+               obj.get('name').indexOf(tech.id) > -1 &&
+               obj.get('name').indexOf('targets') > -1) {
+                   return true;
+            }
+            return false;
+        });
+        if(techTargetAttrs && techTargetAttrs.length > 0) {
+            var targets = techTargetAttrs[0];
+            targets.set('current', '1');
+        }
+        
+        var techBonusAttrs = filterObjs(function(obj) {
+            if(obj.get('_type') == 'attribute' &&
+               obj.get('name').indexOf(tech.id) > -1 &&
+               obj.get('name').indexOf('bonus') > -1) {
+                   return true;
+            }
+            return false;
+        });
+        if(techBonusAttrs && techBonusAttrs.length > 0) {
+            var bonus = techBonusAttrs[0];
+            bonus.set('current', '0');
         }
         
         log('Technique ' + tech.name + ' performed by ' + actor.get('name') + ' on Round ' + round + '.');
@@ -1840,6 +1934,56 @@ on('chat:message', function(msg) {
         });
         
         sendChat('Valor', message);
+    }
+});
+
+// !init command
+// Purge everything on the turn tracker, roll initiative for all characters on current page,
+// set everything up at once
+// Also sets everyone's Valor to starting values.
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!def') == 0
+        && playerIsGM(msg.playerid)) {
+        
+        log('Defense scan commencing');
+        
+        // Get list of tokens
+        var page = Campaign().get('playerpageid');
+        var allTokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
+        var actorIds = [];
+        var tokens = [];
+        var duplicateIds = [];
+        
+        allTokens.forEach(function(token) {
+            var actorId = token.get('represents');
+            if(actorId && actorIds.indexOf(actorId) == -1) {
+                log('Adding ' + token.get('name') + ' to defense token list');
+                actorIds.push(actorId);
+                tokens.push(token);
+            }
+        });
+
+        var message = '';
+        var turnOrder = [];
+        tokens.forEach(function(token) {
+            var actorId = token.get('represents');
+            var actor = getObj('character', actorId);
+            
+            if(actor) {
+                var def = getAttrByName(actorId, 'defense')
+                var res = getAttrByName(actorId, 'resistance')
+                var actorName = actor.get('name');
+                if(message.length > 0) {
+                    message += '<br />';
+                }
+                message += actorName + ': ' + 
+                    'Def **' + def + '**, ' + 
+                    'Res **' + res + '**';
+            }
+        });
+        message += '</table>';
+        
+        sendChat('Valor', '/w gm <div>' + message + '</div>');
     }
 });
 
@@ -2510,4 +2654,11 @@ on('change:campaign:turnorder', function(obj) {
  * - !rest and !fullRest now use the same logic for resetting valor.
  * - !init command no longer messes up valor scores.
  * - API no longer crashes when there's an ongoing effect called "Ongoing X" where X isn't a number.
+ * 
+ * v0.13.0:
+ * - Support for using Resolute Strike skill.
+ * - Targets and Roll Bonus fields on techs now reset after use.
+ * - Techs now display some info on important mods when used.
+ * - !def command added.
+ * - Refactored how attack/defense rolls are set up.
  **/
