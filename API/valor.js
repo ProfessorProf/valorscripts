@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.13.0
+ * v0.13.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -19,7 +19,7 @@ state.ignoreLimitsOnMinions = true; // Disables limit blocking for Flunkies and 
 state.hideNpcTechEffects = false; // For non-player characters, don't show players the tech effect when using !t.
 state.showTechAlerts = true; // Send alerts for when ammo changes and when techs come off of cooldown.
 state.showHealthAlerts = true; // Send alerts when characters enter or leave critical health.
-state.houseRulesEnabled = false; // Enables various unsupported house rules.
+state.houseRulesEnabled = true; // Enables various unsupported house rules.
 state.rollBehindScreen = false; // Hide NPC rolls from the players.
 
 // Status Tracker
@@ -500,48 +500,64 @@ function getTechDescription(tech, charId) {
     
     // Add certain mods to output
     var mods = [];
-    tech.mods.forEach(m => {
-        var mod = m.toLowerCase();
-        var split = mod.split(' ');
-        var modLevel = parseInt(split[split.length - 1]);
-        if(modLevel != modLevel) {
-            // NaN, so there's no level listed - assume 1
-            modLevel = 1;
-        }
-        if(mod.indexOf('drain') == 0) {
-            mods.push('Drain');
-        } else if(mod.indexOf('persistent') == 0) {
-            mods.push('Persistent');
-        } else if(mod.indexOf('sapping') == 0) {
-            mods.push('Sapping');
-        } else if(mod.indexOf('darkness') == 0) {
-            mods.push('Darkness Zone');
-        } else if(mod.indexOf('drop') == 0) {
-            mods.push('Drop Attack');
-        } else if(mod.indexOf('immobiliz') == 0) {
-            mods.push('Immobilize');
-        } else if(mod.indexOf('knock') == 0) {
-            mods.push('Knock Down');
-        } else if(mod.indexOf('light') == 0) {
-            mods.push('Light Zone');
-        } else if(mod.indexOf('ram') == 0) {
-            mods.push('Ramming Attack');
-        } else if(mod.indexOf('repo') == 0) {
-            var distance = modLevel + 1;
-            if(tech.stat == 'str') {
-                distance++;
+    if(tech.mods) {
+        tech.mods.forEach(m => {
+            var mod = m.toLowerCase();
+            var split = mod.split(' ');
+            var modLevel = parseInt(split[split.length - 1]);
+            if(modLevel != modLevel) {
+                // NaN, so there's no level listed - assume 1
+                modLevel = 1;
             }
-            mods.push('Reposition ' + distance);
-        } else if(mod.indexOf('throw') == 0) {
-            mods.push('Throw');
-        } else if(mod.indexOf('launch') == 0) {
-            mods.push('Launching');
-        } else if(mod.indexOf('disrupt') >= 0) {
-            mods.push('Terrain Disruption');
-        } else if(mod.indexOf('repair') >= 0) {
-            mods.push('Terrain Repair');
-        }
-    });
+            if(mod.indexOf('drain') == 0) {
+                mods.push('Drain');
+            } else if(mod.indexOf('persistent') == 0) {
+                mods.push('Persistent');
+            } else if(mod.indexOf('sapping') == 0) {
+                mods.push('Sapping');
+            } else if(mod.indexOf('darkness') == 0) {
+                mods.push('Darkness Zone');
+            } else if(mod.indexOf('drop') == 0) {
+                mods.push('Drop Attack');
+            } else if(mod.indexOf('immobiliz') == 0) {
+                mods.push('Immobilize');
+            } else if(mod.indexOf('knock') == 0) {
+                mods.push('Knock Down');
+            } else if(mod.indexOf('light') == 0) {
+                mods.push('Light Zone');
+            } else if(mod.indexOf('ram') == 0) {
+                mods.push('Ramming Attack');
+            } else if(mod.indexOf('repo') == 0) {
+                var distance = modLevel + 1;
+                if(tech.stat == 'str') {
+                    distance++;
+                }
+                mods.push('Reposition ' + distance);
+            } else if(mod.indexOf('throw') == 0) {
+                mods.push('Throw');
+            } else if(mod.indexOf('launch') == 0) {
+                mods.push('Launching');
+            } else if(mod.indexOf('disrupt') >= 0) {
+                mods.push('Terrain Disruption');
+            } else if(mod.indexOf('repair') >= 0) {
+                mods.push('Terrain Repair');
+            }
+        });
+    }
+    if(tech.limits) {
+        tech.limits.forEach(l => {
+            var limit = l.toLowerCase();
+            var split = limit.split(' ');
+            var limitLevel = parseInt(split[split.length - 1]);
+            if(limitLevel != limitLevel) {
+                // NaN, so there's no level listed - assume 1
+                limitLevel = 1;
+            }
+            if(limit.indexOf('mercy') == 0) {
+                mods.push('Mercy Limit');
+            }
+        });
+    }
     if(mods.length > 0) {
         summary += '<br />';
         summary += '*' + mods.join(', ') + '*';
@@ -2661,4 +2677,8 @@ on('change:campaign:turnorder', function(obj) {
  * - Techs now display some info on important mods when used.
  * - !def command added.
  * - Refactored how attack/defense rolls are set up.
+ * 
+ * v0.13.1:
+ * - Bugfix: Techs with no mods crashed the new mod display system.
+ * - Added Mercy Limit to mod display.
  **/

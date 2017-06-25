@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v0.5.0
+ * v0.5.1
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -127,6 +127,10 @@
  * v0.5.0:
  * - Support for Resolute Strike.
  * - Revamped UI for attack/defense rolls.
+ * 
+ * v0.5.1:
+ * - Fixed TP values for Flunkies, Soldiers and Swarms.
+ * - Fixed ATK values for Swarms.
  **/
 
 function calculateStats() {
@@ -198,14 +202,19 @@ function calculateStats() {
         var unspentSP = 14 + 6 * level;
         var unspentAP = 22 + 3 * level - str - agi - spr - mnd - gut;
         var unspentTP = 8 + 4 * level;
+        var flunkyTP = 2 + level;
+        var soldierTP = 4 + 2 * level;
         if(level > 5) {
             unspentTP += level - 5;
+            flunkyTP += level - 5;
+            soldierTP += level - 5;
         }
         if(level > 10) {
             unspentTP += level - 10;
         }
         if(level > 15) {
             unspentTP += level - 15;
+            soldierTP += level - 15;
         }
         
         var hasDigDeep = false;
@@ -218,7 +227,7 @@ function calculateStats() {
         switch(values.type) {
             case 'flunky':
                 unspentSP = Math.ceil(unspentSP / 2);
-                unspentTP = Math.ceil(unspentTP / 4);
+                unspentTP = flunkyTP;
                 strAtk = Math.ceil(strAtk / 2);
                 agiAtk = Math.ceil(agiAtk / 2);
                 sprAtk = Math.ceil(sprAtk / 2);
@@ -232,7 +241,7 @@ function calculateStats() {
                 break;
             case 'soldier':
                 unspentSP = Math.ceil(unspentSP / 2);
-                unspentTP = Math.ceil(unspentTP / 2);
+                unspentTP = soldierTP;
                 strAtk = Math.ceil(strAtk / 2);
                 agiAtk = Math.ceil(agiAtk / 2);
                 sprAtk = Math.ceil(sprAtk / 2);
@@ -245,7 +254,11 @@ function calculateStats() {
                 di = Math.ceil(di / 2);
                 break;
             case 'swarm':
-                unspentTP = Math.ceil(unspentTP / 2);
+                unspentTP = soldierTP;
+                strAtk = Math.ceil(strAtk / 2);
+                agiAtk = Math.ceil(agiAtk / 2);
+                sprAtk = Math.ceil(sprAtk / 2);
+                mndAtk = Math.ceil(mndAtk / 2);
                 break;
             case 'master':
                 strAtk = 2 * level + 3 * str;
