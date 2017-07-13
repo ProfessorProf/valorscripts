@@ -888,8 +888,7 @@ on('chat:message', function(msg) {
         tokens.forEach(function(token) {
             resetValor(token);
         });
-        log('Tech data: ' + state.techData);
-        log('Tech history: ' + state.techHistory);
+        
         state.techData = {};
         state.techHistory = [];
         log('Reset complete.');

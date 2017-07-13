@@ -16,7 +16,7 @@ This is a collection of scripts that will automate a lot of important Valor logi
 4. In the CSS Styling tab, copy the contents of valor.css into the editor.
 5. From your campaign's main page, click Settings, and go to API Scripts.
 6. Click New Script, and copy the contents of valor.js into the editor.
-7. On the lines below the initial documentation, decide which features you want to be on or off by setting them to 'true' or 'false'.
+7. On the lines below the initial header, decide which features you want to be on or off by setting them to 'true' or 'false'.
 8. Save Script.
 9. Refresh the Roll20 editor.
 
@@ -33,11 +33,6 @@ For maximum benefit, associate a token with a character sheet, then set the thre
 
 ## New Commands
 
-### Scan
-Syntax: `!scan`
-
-Displays, in the API Output Console, the URLs for the token images of all character-connected tokens in the game.
-
 ### Use Tech
 Syntax: `!t Fireball 3 +1`
 
@@ -52,8 +47,9 @@ Any of these will work:
 * `!t "Doom F" 2 -1` Performs the Doom Fist technique and rolls against 2 targets with a -1 penalty to the attack roll.
 * `!t Doom Fist +2 3` Performs the Doom Fist technique and rolls against 3 targets with a +2 bonus to the attack roll.
 
-#### Advanced usage
-* `!t Fireball --override` will skip past the warnings for any reasons the technique can't be used, such as Cooldown or Ammo limits.
+### Undo Tech Usage
+Syntax: `!t-undo`
+Reverses any expended resources from the most-recently used technique. Remembers up to the last 20 techniques used.
 
 ### Add Effect
 Syntax: `!e Poison 2`
@@ -72,15 +68,37 @@ Syntax: `!fullrest`
 
 As above, but all Health and Stamina is recovered.
 
-### Set Bravado
-Syntax: `!set-bravado 1`
+### Reset
+Syntax: `!reset`
 
-**Only use this if you are NOT using the Valor Character Sheet.** Gives any selected characters a Bravado Skill level equal to the number set in the command, to be used with the Rest and Full Rest commands. This will be ignored if they have a Valor Character Sheet, in which case the skill list on the character sheet will be used instead.
+Wipes tech usage history for cooldown or ammo limits, sets Valor to original values. Doesn't recover any HP or ST.
 
 ### Set Valor Rate
-Syntax: `!set-valor-rate 2`
+Syntax: `!set-vrate 2`
 
 Sets any selected characters to gain an amount of Valor per turn equal to the provided number. Use for anyone with the Limitless Power skill (Masters will automatically gain 2 Valor per round).
+
+### Show defenses
+Syntax: `!def`
+
+Shows you (and only you) the Defense and Resistance values of everyone on the current map.
+
+### Roll Initiative
+Syntax: `!init`
+
+Erases everything on the turn tracker and automatically rolls initiative for all combatants, setting everything up for a new scene. If multiple tokens represent the same character, initiative will be rolled just once for the whole group.
+
+### Create Mook
+Syntax: `!mook -l 10 -t soldier -s str guts`
+
+Creates a randomly-generated mook character sheet. Newly-created sheet will have the name 'New Mook', and will include a couple random skills and techniques based on its attributes.
+
+Has three parameters:
+* Level (`-l [level]`) sets the level of the character. Defaults to 1.
+* Type (`-t [type]`) sets the type. Accepted values are 'flunky' and 'soldier'. Defaults to Flunky.
+* Stats (`-s [stats separated by spaces]`) sets the high attributes for the character. Maximum three. Defaults to a random selection.
+
+###
 
 ## Automatic Features
 ### Status Tracker
