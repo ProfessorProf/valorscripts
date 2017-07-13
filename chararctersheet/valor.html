@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v0.5.1
+ * v0.5.2
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -131,6 +131,10 @@
  * v0.5.1:
  * - Fixed TP values for Flunkies, Soldiers and Swarms.
  * - Fixed ATK values for Swarms.
+ * 
+ * v0.5.2:
+ * - Various typos, Combat Toss was missing from skill list.
+ * - Fixed tech level warning regarding Summon Core.
  **/
 
 function calculateStats() {
@@ -1207,7 +1211,7 @@ function calculateTechs() {
                 }
                 
                 var techLevel = techCoreLevel + totalModLevel;
-                if(techLevel > level + 3 || (techLevel > level && techCore == 'summoning')) {
+                if(techLevel > level + 3 || (techCoreLevel > level && techCore == 'summoning')) {
                     warnings += 'WARNING: Technique Level is too high for current Character Level. '
                 }
                 
@@ -1262,7 +1266,7 @@ function calculateTechs() {
                         limitSummary += 'You must be transformed to use this Technique. ';
                         limitSt += 2 * limitLevel;
                     } else if(limit.indexOf('falling') == 0) {
-                        limitSummary += 'Fall prone after using this Technique.';
+                        limitSummary += 'Fall prone after using this Technique. ';
                         limitSt += 4;
                     } else if(limit.indexOf('grant flaw') == 0) {
                         limitSt += limitLevel;
@@ -1332,7 +1336,7 @@ function calculateTechs() {
                         limitSummary += 'Summon has a ' + limitLevel + ' in 10 chance to ignore orders. ';
                         limitSt += 4 * limitLevel;
                     } else if(limit.indexOf('upkeep') == 0) {
-                        limitSummary += 'Must spent ' + limitLevel + 'Stamina at the start of each turn to keep active. ';
+                        limitSummary += 'Must spent ' + limitLevel + ' Stamina at the start of each turn to keep active. ';
                         limitSt += 4 * limitLevel;
                     } else if(limit.indexOf('vitality') == 0) {
                         var threshold = Math.ceil(hp * 0.4);
@@ -1386,7 +1390,7 @@ function calculateTechs() {
                         limitSummary += 'After using this Technique, you automatically surrender to your Malevolent Entity. ';
                         limitSt += 30;
                     } else if(limit.indexOf('final') == 0) {
-                        limitSummary += 'After using this Technique, your Health and Valor are both reduced to 0.';
+                        limitSummary += 'After using this Technique, your Health and Valor are both reduced to 0. ';
                         limitSt = 9999;
                     } else if(limit.indexOf('sacrifice') == 0) {
                         limitSummary += "Costs " + 10 * limitLevel + " of an ally's Health. ";
@@ -1746,6 +1750,7 @@ on('sheet:opened', function() {
     });
     
     calculateStats();
+    calculateTechs();
 });
 
 </script>
@@ -2119,6 +2124,7 @@ on('sheet:opened', function() {
                 <option value="clash">Clash (3)</option>
                 <option value="clone">Clone (6/3)</option>
                 <option value="cloneTactics">Clone Tactics (5)</option>
+                <option value="combatToss">Combat Toss (4)</option>
                 <option value="companionZoneOfControl">Companion ZOC (4/4)</option>
                 <option value="damageFeedback">Damage Feedback (5)</option>
                 <option value="daredevil">Daredevil (4)</option>

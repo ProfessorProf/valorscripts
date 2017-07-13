@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.13.1
+ * v0.14.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -292,11 +292,25 @@ function getTechs(charId) {
             } else {
                 techs.push({ id: techId, grantedSkills: rawTech.get('current')});
             }
+        } else if(techName.indexOf('tech_has_skills') > -1) {
+            var hasSkills = rawTech.get('current') == 'on';
+            if(oldTech) {
+                oldTech.hasSkills = hasSkills;
+            } else {
+                techs.push({ id: techId, hasSkills: hasSkills});
+            }
         } else if(techName.indexOf('tech_inflicted_flaws') > -1) {
             if(oldTech) {
                 oldTech.inflictedFlaws = rawTech.get('current');
             } else {
                 techs.push({ id: techId, inflictedFlaws: rawTech.get('current')});
+            }
+        } else if(techName.indexOf('tech_has_flaws') > -1) {
+            var hasFlaws = rawTech.get('current') == 'on';
+            if(oldTech) {
+                oldTech.hasFlaws = hasFlaws;
+            } else {
+                techs.push({ id: techId, hasFlaws: hasFlaws});
             }
         } else if(techName.indexOf('tech_digDeep') > -1) {
             var digDeep = rawTech.get('current') == 'on';
@@ -563,14 +577,14 @@ function getTechDescription(tech, charId) {
         summary += '*' + mods.join(', ') + '*';
     }
     
-    if(tech.grantedSkills) {
+    if(tech.hasSkills && tech.grantedSkills) {
         if(summary.length > 0) {
             summary += '<br />';
         }
         summary += 'Skills: ' +  tech.grantedSkills;
     }
     
-    if(tech.inflictedFlaws) {
+    if(tech.hasFlaws && tech.inflictedFlaws) {
         if(summary.length > 0) {
             summary += '<br />';
         }
@@ -646,6 +660,10 @@ function getTechByName(techId, charId) {
             
             // Re-get the mimicked technique
             var oldCore = tech.core;
+            var empowerAttack = tech.empowerAttack;
+            var overloadLimits = tech.overloadLimits;
+            var resoluteStrike = tech.resoluteStrike;
+            var oldId = tech.id;
             var mimicTech = tech;
             tech = getTechByName(tech.mimicTarget);
             if(tech) {
@@ -658,6 +676,11 @@ function getTechByName(techId, charId) {
                     // Set core type back to mimic so that invocation can see it
                     tech.core = oldCore;
                 } else {
+                    // Put the checkboxes back as they were
+                    tech.empowerAttack = empowerAttack;
+                    tech.overloadLimits = overloadLimits;
+                    tech.resoluteStrike = resoluteStrike;
+                    
                     // Rewrite tech summary
                     log('Reproducing tech at core level ' + tech.coreLevel);
                     tech.summary = getTechDescription(tech, charId);
@@ -668,6 +691,7 @@ function getTechByName(techId, charId) {
                 
                 // Put the original core type (mimic vs ult mimic) in the object
                 tech.oldCore = oldCore;
+                tech.id = oldId;
             } else {
                 log("Mimic failed - couldn't find the target tech");
                 tech = mimicTech;
@@ -2127,11 +2151,45 @@ on('chat:message', function(msg) {
         var oldStMax = parseInt(oldSt.get('max'));
         var newStMax = parseInt(newSt.get('max'));
         
+        // Get list of skills/flaws/techs from old sheet
+        var oldFlaws = [];
+        var oldSkills = [];
+        var oldTechs = [];
+        var oldAttributes = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                   obj.get('_characterid') == oldActorId;
+        });
+        oldAttributes.forEach(function(attr) {
+            var attrName = attr.get('name');
+            if(attrName && attrName.indexOf('repeating_flaws_') > -1) {
+                var flawId = attrName.substring(16, 36);
+                if(oldFlaws.indexOf(flawId) == -1) {
+                    oldFlaws.push(flawId);
+                }
+            }
+            if(attrName && attrName.indexOf('repeating_skills_') > -1) {
+                var skillId = attrName.substring(17, 37);
+                if(oldSkills.indexOf(skillId) == -1) {
+                    oldSkills.push(skillId);
+                }
+            }
+            if(attrName && attrName.indexOf('repeating_techs_') > -1) {
+                var techId = attrName.substring(16, 36);
+                if(oldTechs.indexOf(techId) == -1) {
+                    oldTechs.push(techId);
+                }
+            }
+        });
+        
         // Paste over attributes
+        var newFlaws = [];
+        var newSkills = [];
+        var newTechs = [];
         var attributes = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                    obj.get('_characterid') == actorId;
         });
+        
         attributes.forEach(function(attr) {
             var attrName = attr.get('name');
             if(attrName != 'is_duplicate') {
@@ -2156,6 +2214,63 @@ on('chat:message', function(msg) {
                         characterid: oldActorId
                     });
                 }
+                
+                if(attrName && attrName.indexOf('repeating_flaws_') > -1) {
+                    var flawId = attrName.substring(16, 36);
+                    if(newFlaws.indexOf(flawId) == -1) {
+                        newFlaws.push(flawId);
+                    }
+                }
+                if(attrName && attrName.indexOf('repeating_skills_') > -1) {
+                    var skillId = attrName.substring(17, 37);
+                    if(newSkills.indexOf(skillId) == -1) {
+                        newSkills.push(skillId);
+                    }
+                }
+                if(attrName && attrName.indexOf('repeating_techs_') > -1) {
+                    var techId = attrName.substring(16, 36);
+                    if(newTechs.indexOf(techId) == -1) {
+                        newTechs.push(techId);
+                    }
+                }
+            }
+        });
+        
+        // Identify deleted flaws/skills/techs
+        oldFlaws.forEach(function(flaw) {
+            if(newFlaws.indexOf(flaw) == -1) {
+                log('Deleting Flaw ID ' + flaw);
+                
+                oldAttributes.forEach(function(attr) {
+                    var attrName = attr.get('name');
+                    if(attrName && attrName.indexOf(flaw) > -1) {
+                        attr.remove();
+                    }
+                });
+            }
+        });
+        oldSkills.forEach(function(skill) {
+            if(newSkills.indexOf(skill) == -1) {
+                log('Deleting Skill ID ' + skill);
+                
+                oldAttributes.forEach(function(attr) {
+                    var attrName = attr.get('name');
+                    if(attrName && attrName.indexOf(skill) > -1) {
+                        attr.remove();
+                    }
+                });
+            }
+        });
+        oldTechs.forEach(function(tech) {
+            if(newTechs.indexOf(tech) == -1) {
+                log('Deleting Tech ID ' + tech);
+                
+                oldAttributes.forEach(function(attr) {
+                    var attrName = attr.get('name');
+                    if(attrName && attrName.indexOf(tech) > -1) {
+                        attr.remove();
+                    }
+                });
             }
         });
         
@@ -2187,6 +2302,463 @@ on('chat:message', function(msg) {
         log('Character sheet for ' + oldactor.get('name') + ' has been updated.');
     }
 });
+
+// !mook command
+// Used by character sheet - create a temporary level-up sheet for a given character.
+// Also sets everyone's Valor to starting values.
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!mook') == 0) {
+        var split = msg.content.match(/(".*?")|(\S+)/g);
+        
+        // Get parameters
+        var level = 1;
+        var highStatsParam = [];
+        var type = 'flunky';
+        for(var i = 0; i < split.length - 1; i++) {
+            if(split[i] == '--level' || split[i] == '-l') {
+                level = parseInt(split[i+1]);
+                if(level != level) {
+                    level = 1;
+                }
+            }
+            
+            if(split[i] == '--type' || split[i] == '-t') {
+                type = split[i+1];
+                if(type != 'flunky' && type != 'soldier') {
+                    log('Unsupported mook type: ' + type);
+                    type = 'flunky';
+                }
+            }
+            if(split[i] == '--stats' || split[i] == '-s') {
+                highStatsString = split[i+1];
+                if(highStatsString[0] == '"') {
+                    highStatsString = highStatsString.substring(1, highStatsString.length - 1);
+                }
+                highStatsParam = highStatsString.split(',');
+                if(split.length > i + 2 && split[i+2][0] != '-') {
+                    highStatsParam.push(split[i+2]);
+                }
+                if(split.length > i + 3 && split[i+3][0] != '-') {
+                    highStatsParam.push(split[i+3]);
+                }
+            }
+        }
+        
+        var highStats = [];
+        highStatsParam.forEach(function(s) {
+            s = s.trim();
+            if(s.indexOf('str') == 0 || s.indexOf('mus') == 0) {
+                highStats.push(0);
+            }
+            if(s.indexOf('agi') == 0 || s.indexOf('dex') == 0) {
+                highStats.push(1);
+            }
+            if(s.indexOf('spr') == 0 || s.indexOf('aur') == 0 || s.indexOf('spirit') == 0) {
+                highStats.push(2);
+            }
+            if(s.indexOf('mnd') == 0 || s.indexOf('int') == 0 || s.indexOf('mind') == 0) {
+                highStats.push(3);
+            }
+            if(s.indexOf('gut') == 0 || s.indexOf('res') == 0) {
+                highStats.push(4);
+            }
+        });
+        
+        // Don't allow guts-only builds
+        if(highStats.length == 1 && highStats[0] == 4) {
+            highStats.push(randomInteger(4) - 1);
+        }
+        
+        // Determine character attributes
+        var attributes = [0,0,0,0,0];
+        
+        if(highStats.length == 0) {
+            var stats = 2;
+            var roll = randomInteger(10);
+            if(roll == 1) {
+                stats = 1;
+            }
+            else if(roll == 2 || roll == 3) {
+                stats == 3;
+            }
+            
+            var attrs = [0,1,2,3,4];
+            for(var i = 0; i < stats; i++) {
+                var aId = randomInteger(attrs.length) - 1;
+                highStats.push(attrs[aId]);
+                attrs.splice(aId, 1);
+            }
+        }
+        
+        var ap = level * 3 + 22;
+        var attributesLeft = 5;
+        
+        if(highStats.length == 1) {
+            attributes[highStats[0]] = level + 7;
+            ap -= level + 7;
+            attributesLeft = 4;
+        }
+        else if(highStats.length == 2) {
+            attributes[highStats[0]] = level + 7;
+            attributes[highStats[1]] = level + 7;
+            ap -= 2 * level + 14;
+            attributesLeft = 3;
+        }
+        else if(highStats.length == 3) {
+            attributes[highStats[0]] = level + 7;
+            attributes[highStats[1]] = level + 5;
+            attributes[highStats[2]] = level + 5;
+            ap -= 3 * level + 17;
+            attributesLeft = 2;
+        }
+        
+        for(var i = 0; i < 5; i++) {
+            if(attributes[i] == 0) {
+                if(attributesLeft == 1) {
+                    attributes[i] = ap;
+                    attributesLeft = 0;
+                } else {
+                    var value = randomInteger(ap - attributesLeft);
+                    attributes[i] = value;
+                    ap -= value;
+                    attributesLeft--;
+                }
+            }
+        }
+        
+        // Determine set of viable skills
+        var skillLibrary = [];
+        highStats.forEach(function(s) {
+            switch(s) {
+                case 0:
+                    // Strength skills
+                    skillLibrary = skillLibrary.concat([
+                        { name: 'physicalAttacker', progression: 1 },
+                        { name: 'counterattack', progression: 0 },
+                        { name: 'cover', progression: 1 },
+                        { name: 'teamTactics', progression: 0 }
+                        ]);
+                    if(level >= 6) {
+                        skillLibrary = skillLibrary.concat([
+                            { name: 'increasedSize', progression: 0 },
+                            { name: 'damageFeedback', progression: 1 }
+                            ]);
+                    }
+                    break;
+                    
+                case 1:
+                    // Agility skills
+                    skillLibrary = skillLibrary.concat([
+                        { name: 'physicalAttacker', progression: 1 },
+                        { name: 'sprinter', progression: 1 },
+                        { name: 'counterattack', progression: 0 },
+                        { name: 'quickToAct', progression: 0 }
+                        ]);
+                    if(level >= 6) {
+                        skillLibrary = skillLibrary.concat([
+                            { name: 'mobileDodge', progression: 0 },
+                            { name: 'interruptAttack', progression: 0 },
+                            { name: 'splitMove', progression: 0 }
+                            ]);
+                    }
+                    break;
+                    
+                case 2:
+                    // Spirit skills
+                    skillLibrary = skillLibrary.concat([
+                        { name: 'energyAttacker', progression: 1 },
+                        { name: 'tireless', progression: 1 },
+                        { name: 'discretion', progression: 0 }
+                        ]);
+                    if(level >= 6) {
+                        skillLibrary = skillLibrary.concat([
+                            { name: 'lineDeflect', progression: 0 },
+                            { name: 'areaShield', progression: 0 },
+                            { name: 'finalAttack', progression: 0 }
+                            ]);
+                    }
+                    break;
+                    
+                case 3:
+                    // Mind skills
+                    skillLibrary = skillLibrary.concat([
+                        { name: 'energyAttacker', progression: 1 },
+                        { name: 'tireless', progression: 1 },
+                        { name: 'nullify', progression: 0 },
+                        { name: 'versatileFighter', progression: 0 }
+                        ]);
+                    if(level >= 11) {
+                        skillLibrary = skillLibrary.concat([
+                            { name: 'battleAnalysis', progression: 0 },
+                            { name: 'exploitWeakness', progression: 0 }
+                            ]);
+                    }
+                    break;
+                    
+                case 4:
+                    // Guts skills
+                    skillLibrary = skillLibrary.concat([
+                        { name: 'toss', progression: 1 }
+                        ]);
+                    break;
+            }
+        });
+        if(type == 'soldier') {
+            skillLibrary = skillLibrary.concat([
+                { name: 'tough', progression: 2 },
+                { name: 'crisis', progression: 1 },
+                { name: 'unmovable', progression: 1 },
+                { name: 'empowerAttack', progression: 0 },
+                { name: 'resistant', progression: 1 },
+                { name: 'ironDefense', progression: 1 }
+                ]);
+        }
+        
+        var skills = [];
+        var skillCount = 1;
+        if(level >= 6) {
+            skillCount++;
+        }
+        if(level >= 11) {
+            skillCount++;
+        }
+        if(highStats.length == 3) {
+            skills.push({ name: 'balancedFighter' });
+            skillCount--;
+        }
+        
+        for(var i = 0; i < skillCount; i++) {
+            var skill = skillLibrary[randomInteger(skillLibrary.length) - 1];
+            var skillLevel = 1;
+            if(skill.progression == 1) {
+                skillLevel = Math.ceil(level / 5);
+            }
+            else if(skill.progression == 2) {
+                skillLevel = Math.ceil(level / 3);
+            }
+            
+            if(!skills.find(function(s) {
+                return s.name == skill.name;
+            })) {
+                skills.push({
+                    name: skill.name,
+                    level: skillLevel
+                });
+            }
+        }
+        
+        var tp = 1;
+        if(type == 'flunky') {
+            tp = 2 + level;
+            if(level > 5)
+                tp += level - 5;
+        } else {
+            tp = 4 + 2 * level;
+            if(level > 5)
+                tp += level - 5;
+            if(level > 15)
+                tp += level - 15;
+        }
+        
+        var techLevels = [Math.min(level + 3, tp)];
+        tp -= techLevels[0];
+        if(tp > 0 && level > 5) {
+            techLevels.push(Math.min(level, tp));
+        }
+        
+        var techStats = highStats.filter(function(s) {
+            return s != 4
+        });
+        log(techStats);
+        
+        var techs = [];
+        techLevels.forEach(function(techLevel) {
+            var techStatId = techStats[randomInteger(techStats.length) - 1];
+            var techStat = '';
+            var modLibrary = [];
+            switch(techStatId) {
+                case 0:
+                    techStat = 'str';
+                    // Strength mods
+                    modLibrary = modLibrary.concat([
+                        { name: 'Reposition 1', tp: 1 },
+                        { name: 'Whirlwind', tp: 1 }
+                        ]);
+                    if(level > 10) {
+                        modLibrary = modLibrary.concat([
+                            { name: 'Reposition 2', tp: 2 },
+                            { name: 'Knock Down', tp: 3 },
+                            { name: 'Ramming', tp: 1 },
+                            { name: 'Rush Attack', tp: 2 }
+                            ]);
+                    }
+                    break;
+                case 1:
+                    techStat = 'agi';
+                    // Agility mods
+                    modLibrary = modLibrary.concat([
+                        { name: 'Dash 1', tp: 1 },
+                        { name: 'Ranged Technique 1', tp: 1 },
+                        { name: 'Whirlwind', tp: 1 }
+                        ]);
+                    if(level > 10) {
+                        modLibrary = modLibrary.concat([
+                            { name: 'Ranged Technique 2', tp: 2 },
+                            { name: 'Dash 2', tp: 2 },
+                            { name: 'Ranged Technique 1\nMultiple Targets 1', tp: 2 },
+                            { name: 'Rush Attack', tp: 2 }
+                            ]);
+                    }
+                    break;
+                case 2:
+                    // Spirit mods
+                    techStat = 'spr';
+                    modLibrary = modLibrary.concat([
+                        { name: 'Line Attack 1', tp: 1 },
+                        { name: 'Ranged Technique 1', tp: 1 },
+                        { name: 'Blast Radius 1', tp: 1 }
+                        ]);
+                    if(level > 10) {
+                        modLibrary = modLibrary.concat([
+                            { name: 'Ranged Technique 2', tp: 2 },
+                            { name: 'Line Attack 2', tp: 2 },
+                            { name: 'Ranged Technique 1\nBlast Radius 1', tp: 2 }
+                            ]);
+                    }
+                    break;
+                case 3:
+                    // Mind mods
+                    techStat = 'mnd';
+                    modLibrary = modLibrary.concat([
+                        { name: 'Line Attack 1', tp: 1 },
+                        { name: 'Ranged Technique 1', tp: 1 },
+                        { name: 'Debilitating Strike', tp: 1 }
+                        ]);
+                    if(level > 10) {
+                        modLibrary = modLibrary.concat([
+                            { name: 'Ranged Technique 2', tp: 2 },
+                            { name: 'Ranged Technique 2\nMultiple Targets 1', tp: 3 },
+                            { name: 'Line Attack 2\nLine Variation 1', tp: 3 },
+                            { name: 'Indirect Attack', tp: 3 }
+                            ]);
+                    }
+                    break;
+            }
+            if(level > 5) {
+                modLibrary = modLibrary.concat([
+                    { name: 'Piercing Strike', tp: 0 },
+                    { name: 'Sapping Strike', tp: 0 },
+                    { name: 'Accurate Strike', tp: techStat == 'agi' ? 2 : 3 }
+                    ]);
+            }
+            
+            var mods = null;
+            var coreLevel = techLevel;
+            if(randomInteger(10) > 3) {
+                mods = modLibrary[randomInteger(modLibrary.length) - 1];
+                coreLevel -= mods.tp;
+            }
+            if(coreLevel > 0) {
+                techs.push( {
+                    stat: techStat,
+                    core: coreLevel,
+                    mods: mods ? mods.name : ''
+                });
+            }
+        });
+        
+        // Create new character, copy over basic stats
+        var newActor = createObj('character', {
+            name: 'New Mook',
+            type: type,
+            level: level
+        });
+        var newActorId = newActor.get('_id');
+        
+        createObj('attribute', {
+            characterid: newActorId, name: 'type', current: type
+        });
+        createObj('attribute', {
+            characterid: newActorId, name: 'level', current: level
+        });
+        createObj('attribute', {
+            characterid: newActorId, name: 'str', current: attributes[0]
+        });
+        createObj('attribute', {
+            characterid: newActorId, name: 'agi', current: attributes[1]
+        });
+        createObj('attribute', {
+            characterid: newActorId, name: 'spr', current: attributes[2]
+        });
+        createObj('attribute', {
+            characterid: newActorId, name: 'mnd', current: attributes[3]
+        });
+        createObj('attribute', {
+            characterid: newActorId, name: 'gut', current: attributes[4]
+        });
+        
+        skills.forEach(function(skill) {
+            var rowId = generateRowID();
+            
+            createObj('attribute', {
+                characterid: newActorId, name: 'repeating_skills_' + rowId + '_skillname', current: skill.name
+            });
+            createObj('attribute', {
+                characterid: newActorId, name: 'repeating_skills_' + rowId + '_skilllevel', current: skill.level
+            });
+        });
+        
+        techs.forEach(function(tech) {
+            var rowId = generateRowID();
+            
+            createObj('attribute', {
+                characterid: newActorId, name: 'repeating_techs_' + rowId + '_tech_name', current: 'Unnamed Technique'
+            });
+            createObj('attribute', {
+                characterid: newActorId, name: 'repeating_techs_' + rowId + '_tech_stat', current: tech.stat
+            });
+            createObj('attribute', {
+                characterid: newActorId, name: 'repeating_techs_' + rowId + '_tech_core', current: 'damage'
+            });
+            createObj('attribute', {
+                characterid: newActorId, name: 'repeating_techs_' + rowId + '_tech_core_level', current: tech.core
+            });
+            createObj('attribute', {
+                characterid: newActorId, name: 'repeating_techs_' + rowId + '_tech_mods', current: tech.mods
+            });
+        });
+    }
+});
+
+// Generates a unique ID that roll20 can parse. I didn't write this.
+function generateUUID() {
+    var a = 0, b = [];
+    var c = (new Date()).getTime() + 0, d = c === a;
+    a = c;
+    for (var e = new Array(8), f = 7; 0 <= f; f--) {
+        e[f] = "-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz".charAt(c % 64);
+        c = Math.floor(c / 64);
+    }
+    c = e.join("");
+    if (d) {
+        for (f = 11; 0 <= f && 63 === b[f]; f--) {
+            b[f] = 0;
+        }
+        b[f]++;
+    } else {
+        for (f = 0; 12 > f; f++) {
+            b[f] = Math.floor(64 * Math.random());
+        }
+    }
+    for (f = 0; 12 > f; f++){
+        c += "-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz".charAt(b[f]);
+    }
+    return c;
+};
+
+function generateRowID() {
+    return generateUUID().replace(/_/g, "Z");
+};
 
 // !set-bravado command
 // Enter !set-bravado X in the chat to assign the selected character a Bravado
@@ -2681,4 +3253,10 @@ on('change:campaign:turnorder', function(obj) {
  * v0.13.1:
  * - Bugfix: Techs with no mods crashed the new mod display system.
  * - Added Mercy Limit to mod display.
+ * 
+ * v0.14.0:
+ * - New command !mook generates basic stats for new soldier/flunky character sheets at random.
+ * - Bugfix: Finalizing level-up sheets now deletes removed skills/flaws/techs.
+ * - Bugfix: Empowered Attack, etc. now honored on mimic techs.
+ * - Bugfix: Attacks would sometimes erroneously show skills/flaws after changing the Core type.
  **/
