@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.14.0
+ * v0.14.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -394,6 +394,21 @@ function resetValor(token, skills, flaws) {
     log('Character ' + token.get('_id') + ' set to ' + startingValor + ' Valor.');
 }
 
+function resetBonuses(charId) {
+    var bonusList = ['rollbonus', 'atkrollbonus', 'defrollbonus', 'patkbonus', 'eatkbonus'];
+    bonusList.forEach(function(bonus) {
+        var bonus = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                   obj.get('_characterid') == charId &&
+                   obj.get('name') == bonus;
+        })[0];
+        
+        if(bonus) {
+            bonus.set('current', 0);
+        }
+    });
+}
+
 function getTechDamage(tech, charId) {
     var special = tech.mods && tech.mods.find(function(m) {
         return m.toLowerCase().indexOf('piercing') > -1 ||
@@ -447,6 +462,18 @@ function getTechDamage(tech, charId) {
                 empowerAttackLevel = 1;
             }
             damage += 3 + empowerAttackLevel * 3;
+        }
+    }
+    
+    if(tech.stat == 'agi' || tech.stat == 'str') {
+        var patk = parseInt(getAttrByName(charId, 'patkbonus'));
+        if(patk == patk) {
+            damage += patk;
+        }
+    } else {
+        var eatk = parseInt(getAttrByName(charId, 'eatkbonus'));
+        if(eatk == eatk) {
+            damage += eatk;
         }
     }
     
@@ -884,11 +911,17 @@ on('chat:message', function(msg) {
             return obj.get('_type') == 'graphic' &&
                    obj.get('represents');
         });
-        
+
         tokens.forEach(function(token) {
             resetValor(token);
+            resetBonuses(token.get('represents'));
         });
-        
+		
+        log('Tech data:');
+        log(state.techData);
+        log('Tech history:');
+        log(state.techHistory);
+		
         state.techData = {};
         state.techHistory = [];
         log('Reset complete.');
@@ -1260,12 +1293,12 @@ on('chat:message', function(msg) {
                 rollBonus += universalBonus;
             }
             
-            var atkBonus = parseInt(getAttrByName(actor.get('_id'), 'atkbonus'));
+            var atkBonus = parseInt(getAttrByName(actor.get('_id'), 'atkrollbonus'));
             if(atkBonus == atkBonus) {
                 rollBonus += atkBonus;
             }
             
-            var iatkBonus = parseInt(getAttrByName(actor.get('_id'), 'iatkbonus'));
+            var iatkBonus = parseInt(getAttrByName(actor.get('_id'), 'iatkrollbonus'));
             if(iatkBonus == iatkBonus) {
                 rollBonus += iatkBonus;
             }
@@ -1821,6 +1854,9 @@ on('chat:message', function(msg) {
             
             // Reset Valor
             resetValor(token, skills, flaws);
+            
+            // Reset bonuses
+            resetBonuses(charId);
         });
         
         state.techData = {};
@@ -1852,6 +1888,9 @@ on('chat:message', function(msg) {
             
             // Reset Valor
             resetValor(token);
+            
+            // Reset bonuses
+            resetBonuses(charId);
         });
         
         state.techData = {};
@@ -3258,4 +3297,8 @@ on('change:campaign:turnorder', function(obj) {
  * - Bugfix: Finalizing level-up sheets now deletes removed skills/flaws/techs.
  * - Bugfix: Empowered Attack, etc. now honored on mimic techs.
  * - Bugfix: Attacks would sometimes erroneously show skills/flaws after changing the Core type.
+ * 
+ * v0.14.1:
+ * - Implemented attack bonuses.
+ * - !reset, !rest and !fullrest now all reset the bonuses block.
  **/

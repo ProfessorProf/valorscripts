@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v0.5.2
+ * v0.5.3
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -135,6 +135,10 @@
  * v0.5.2:
  * - Various typos, Combat Toss was missing from skill list.
  * - Fixed tech level warning regarding Summon Core.
+ * 
+ * v0.5.3:
+ * - Fixed cost of Transform Ally.
+ * - Added attack bonus fields to character sheet.
  **/
 
 function calculateStats() {
@@ -553,10 +557,10 @@ function calculateStats() {
                                     hpCrit: Math.ceil(hp / 5) * 2,
                                     di: di,
                                     init: dex + initMod,
-                                    iatkbonus: atkBonus,
-                                    idefbonus: defBonus,
-                                    iatkbonusdisp: atkBonusDisp,
-                                    idefbonusdisp: defBonusDisp,
+                                    iatkrollbonus: atkBonus,
+                                    idefrollbonus: defBonus,
+                                    iatkrollbonusdisp: atkBonusDisp,
+                                    idefrollbonusdisp: defBonusDisp,
                                     hasDigDeep: hasDigDeep,
                                     hasOverloadLimits: hasOverloadLimits,
                                     hasEmpowerAttack: hasEmpowerAttack,
@@ -1020,7 +1024,7 @@ function calculateTechs() {
                         summary += 'On a hit, the target takes ongoing damage equal to a third of initial damage for 3 turns. ';
                     } else if(mod.indexOf('transform ally') == 0) {
                         summary += 'Can transform an ally within 5 spaces. ';
-                        totalModLevel += 2;
+                        totalModLevel += 1;
                     } else if(mod.indexOf('unerring') == 0) {
                         summary += 'Can be used again if you miss every target. ';
                         totalModLevel += 2;
@@ -1939,32 +1943,40 @@ on('sheet:opened', function() {
 
 <table>
     <tr>
-        <td class="label" colspan="2">
-            Roll Bonuses
+        <td class="label">
+            Bonuses
         </td>
     </tr>
     <tr>
-        <td>Universal:</td>
-        <td nowrap="nowrap">
+        <td>All Rolls:</td>
+        <td nowrap="nowrap" colspan="2">
             <input type="number" class="short-number" name="attr_rollbonus" value="0">
         </td>
     </tr>
     <tr>
-        <td>Attack:</td>
+        <td>Atk. Rolls:</td>
         <td nowrap="nowrap">
-            <input type="number" class="short-number" name="attr_atkbonus" value="0">
+            <input type="number" class="short-number" name="attr_atkrollbonus" value="0">
         </td>
         <td>
-            <span class="derived-value" name="attr_iatkbonusdisp"></span>
+            <span class="derived-value" name="attr_iatkrollbonusdisp"></span>
+        </td>
+        <td>Phys. Attack:</td>
+        <td nowrap="nowrap">
+            <input type="number" class="short-number" name="attr_patkbonus" value="0">
         </td>
     </tr>
     <tr>
-        <td>Defense:</td>
+        <td>Def. Rolls:</td>
         <td nowrap="nowrap">
-            <input type="number" class="short-number" name="attr_defbonus" value="0">
+            <input type="number" class="short-number" name="attr_defrollbonus" value="0">
         </td>
         <td>
-            <span class="derived-value" name="attr_idefbonusdisp"></span>
+            <span class="derived-value" name="attr_idefrollbonusdisp"></span>
+        </td>
+        <td>En. Attack:</td>
+        <td nowrap="nowrap">
+            <input type="number" class="short-number" name="attr_eatkbonus" value="0">
         </td>
     </tr>
 </table>
@@ -1973,11 +1985,11 @@ on('sheet:opened', function() {
 
 <div class="label">Defense Rolls:</div>
 <div>
-    <button type="roll" value="[[1d10+@{mus}+@{rollbonus}+@{defbonus}+@{idefbonus}]] Muscle Defense" name="roll_aur">Muscle</button>
-    <button type="roll" value="[[1d10+@{dex}+@{rollbonus}+@{defbonus}+@{idefbonus}]] Dexterity Defense" name="roll_aur">Dexterity</button>
-    <button type="roll" value="[[1d10+@{aur}+@{rollbonus}+@{defbonus}+@{idefbonus}]] Aura Defense" name="roll_aur">Aura</button>
-    <button type="roll" value="[[1d10+@{int}+@{rollbonus}+@{defbonus}+@{idefbonus}]] Intuition Defense" name="roll_aur">Intuition</button>
-    <button type="roll" value="[[1d10+@{res}+@{rollbonus}+@{defbonus}+@{idefbonus}]] Resolve Defense" name="roll_aur">Resolve</button>
+    <button type="roll" value="[[1d10+@{mus}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Muscle Defense" name="roll_aur">Muscle</button>
+    <button type="roll" value="[[1d10+@{dex}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Dexterity Defense" name="roll_aur">Dexterity</button>
+    <button type="roll" value="[[1d10+@{aur}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Aura Defense" name="roll_aur">Aura</button>
+    <button type="roll" value="[[1d10+@{int}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Intuition Defense" name="roll_aur">Intuition</button>
+    <button type="roll" value="[[1d10+@{res}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Resolve Defense" name="roll_aur">Resolve</button>
 </div>
 
 <br />
