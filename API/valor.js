@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.14.1
+ * v0.14.2
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -346,8 +346,11 @@ function getTechs(charId) {
     return techs;
 }
 
-function resetValor(token, skills, flaws) {
-    var charId = token.get('represents');
+function resetValor(charId, skills, flaws) {
+    if(!charId) {
+        return;
+    }
+    
     if(!skills) {
         skills = getSkills(charId);
     }
@@ -382,28 +385,23 @@ function resetValor(token, skills, flaws) {
             var level = getAttrByName(charId, 'level');
             startingValor += Math.ceil(level / 5) - 1;
         }
-    } else {
-        // No skillset found - use set-bravado value instead
-        if(state.charData && 
-           state.charData[token.get('represents')] &&
-           state.charData[token.get('represents')].bravado) {
-           startingValor = state.charData[token.get('represents')].bravado;
-        }
     }
-    token.set('bar3_value', startingValor);
-    log('Character ' + token.get('_id') + ' set to ' + startingValor + ' Valor.');
+    updateValueForCharacter(charId, 'valor', startingValor, false, true);
+    
+    log('Character ' + charId + ' set to ' + startingValor + ' Valor.');
 }
 
 function resetBonuses(charId) {
     var bonusList = ['rollbonus', 'atkrollbonus', 'defrollbonus', 'patkbonus', 'eatkbonus'];
-    bonusList.forEach(function(bonus) {
-        var bonus = filterObjs(function(obj) {
+    bonusList.forEach(function(b) {
+        var bonuses = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                    obj.get('_characterid') == charId &&
-                   obj.get('name') == bonus;
-        })[0];
+                   obj.get('name') == b;
+        });
         
-        if(bonus) {
+        if(bonuses.length > 0) {
+            bonus = bonuses[0];
             bonus.set('current', 0);
         }
     });
@@ -826,15 +824,10 @@ function updateValor(obj) {
             
             log('Character ' + token.get('name') + ' gains ' + valorRate + ' for new round.');
             
-            valor += valorRate;
+            updateValue(token.get('_id'), 'valor', valorRate);
             
             if(getSkill(charId, 'bounceBack') && valor < 0) {
-                valor++;
-            }
-            
-            token.set('bar3_value', valor);
-            if(valor > maxValor) {
-                token.set('bar3_value', maxValor);
+                updateValue(token.get('_id'), 'valor', 1);
             }
             
         }
@@ -901,6 +894,104 @@ function alertCooldowns() {
     }
 }
 
+function updateValue(tokenId, attribute, amount, ratio, absolute) {
+    var token = getObj('graphic', tokenId);
+    var bar = '1';
+    switch(attribute) {
+        case 'st':
+            bar = '2';
+            break;
+        case 'valor':
+            bar = '3';    
+    }
+    
+    if(!token) {
+        log("Couldn't find token for ID " + tokenId);
+        return;
+    }
+    
+    var attr = getObj('attribute', token.get('bar' + bar + '_link'));
+    if(attr) {
+        var oldValue = parseInt(attr.get('current'));
+        var maxValue = parseInt(attr.get('max'));
+        if(oldValue != oldValue) {
+            oldValue = 0;
+        }
+        if(maxValue != maxValue) {
+            maxValue = 0;
+        }
+        
+        var valueChange = ratio ? Math.ceil(amount * maxValue) : amount;
+        var newValue = absolute ? valueChange : oldValue + valueChange;
+        
+        if(newValue > maxValue) {
+            newValue = maxValue;
+        }
+        
+        attr.set('current', newValue);
+        if(attribute == 'hp') {
+            criticalHealthWarning(token, oldValue);
+        }
+    } else {
+        var oldValue = parseInt(token.get('bar' + bar + '_value'));
+        var maxValue = parseInt(token.get('bar' + bar + '_max'));
+        if(oldValue != oldValue) {
+            oldValue = 0;
+        }
+        if(maxValue != maxValue) {
+            maxValue = 0;
+        }
+        
+        var valueChange = ratio ? Math.ceil(amount * maxValue) : amount;
+        var newValue = absolute ? valueChange : oldValue + valueChange;
+        
+        if(newValue > maxValue) {
+            newValue = maxValue;
+        }
+        
+        token.set('bar' + bar + '_value', newValue);
+        if(attribute == 'hp') {
+            criticalHealthWarning(token, oldValue);
+        }
+    }
+}
+
+function updateValueForCharacter(characterId, attribute, amount, ratio, absolute) {
+    var actor = getObj('character', characterId);
+    
+    if(!actor) {
+        log("Couldn't find character for ID " + characterId);
+        return;
+    }
+    
+    var attrs = filterObjs(function(obj) {
+        return obj.get('_type') == 'attribute' &&
+            obj.get('characterid') == characterId &&
+            obj.get('name') == attribute;
+    });
+    
+    if(attrs && attrs.length > 0) {
+        var attr = attrs[0];
+        var oldValue = parseInt(attr.get('current'));
+        var maxValue = parseInt(attr.get('max'));
+        if(oldValue != oldValue) {
+            oldValue = 0;
+        }
+        if(maxValue != maxValue) {
+            maxValue = 0;
+        }
+        
+        var valueChange = ratio ? Math.ceil(amount * maxValue) : amount;
+        var newValue = absolute ? valueChange : oldValue + valueChange;
+        
+        if(newValue > maxValue) {
+            newValue = maxValue;
+        }
+        
+        attr.set('current', newValue);
+    }
+}
+
 // !reset command
 // Enter !reset in the chat to purge the tech data history and reset valor without healing anyone..
 on('chat:message', function(msg) {
@@ -925,6 +1016,48 @@ on('chat:message', function(msg) {
         state.techData = {};
         state.techHistory = [];
         log('Reset complete.');
+    }
+    
+});
+
+// !check command
+// Enter !reset in the chat to purge the tech data history and reset valor without healing anyone..
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!check') == 0
+        && playerIsGM(msg.playerid)) {
+        // Get params
+        var split = msg.content.match(/(".*?")|(\S+)/g);
+        if(split.length == 1) {
+            log('Please specify a token ID.');
+        } else {
+            var tokenId = split[1];
+            var tokens = findObjs({                         
+                _type: "graphic",
+                _id: tokenId
+            });
+            if(tokens.length > 0) {
+                token = tokens[0];
+                var name = token.get('name');
+                if(name) {
+                    log('Token ID ' + tokenId + ' is ' + name + '.');
+                } else {
+                    var characters = filterObjs(function(obj) {
+                        return obj.get('_type') === 'character' &&
+                               obj.get('_id') === token.get('represents');
+                    });
+                    
+                    if(characters.length > 0) {
+                        var actor = characters[0];
+                        name = actor.get('name');
+                        log('Token ID ' + tokenId + ' is ' + name + '.');
+                    } else {
+                        log('Token ID ' + tokenId + ' has no name.');
+                    }
+                }
+            } else {
+                log('No such token found.');
+            }
+        }
     }
     
 });
@@ -1412,12 +1545,10 @@ on('chat:message', function(msg) {
                 stCost = 0;
             }
             
-            st -= stCost;
+            updateValue(token.get('_id'), 'st', -stCost);
             if(stCost > 0) {
                 log('Consumed ' + stCost + ' ST');
             }
-            
-            token.set('bar2_value', st);
             
             if(tech.limits) {
                 var healthLimit = tech.limits.find(function(l) {
@@ -1465,10 +1596,8 @@ on('chat:message', function(msg) {
                     }
                     
                     valorCost = valorLimitLevel;
-                    valor -= valorCost;
+                    updateValue(token.get('_id'), 'valor', -valorCost);
                     log('Consumed ' + valorCost + ' Valor');
-                    
-                    token.set('bar3_value', valor);
                 }
                 
                 var initLimit = tech.limits.find(function(l) {
@@ -1493,15 +1622,10 @@ on('chat:message', function(msg) {
                 }
             }
             
-            var oldHp = hp;
-            hp -= hpCost;
+            updateValue(token.get('_id'), 'hp', -hpCost);
             if(hpCost > 0) {
                 log('Consumed ' + hpCost + ' HP');
             }
-            
-            token.set('bar1_value', hp);
-            
-            criticalHealthWarning(token, oldHp);
             
             if(!state.techHistory) {
                 state.techHistory = [];
@@ -1541,7 +1665,7 @@ on('chat:message', function(msg) {
                 valorCost: valorCost
             });
             state.techData[techDataId].timesUsed.push(round);
-            log('Updated tech data: ');
+            log('Updated tech data:');
             log(state.techData[techDataId]);
         }
         
@@ -1684,33 +1808,15 @@ on('chat:message', function(msg) {
         
         var techLog = state.techHistory[state.techHistory.length - 1];
         
-        var token = getObj('graphic', techLog.id);
-        
         // Refund lost resources
-        var hp = parseInt(token.get('bar1_value'));
-        var st = parseInt(token.get('bar2_value'));
-        var valor = parseInt(token.get('bar3_value'));
-        
-        if(hp != hp) {
-            hp = 0;
-        }
-        if(st != st) {
-            st = 0;
-        }
-        if(valor != valor) {
-            valor = 0;
-        }
-        
-        hp += techLog.hpCost;
-        st += techLog.stCost;
-        valor += techLog.valorCost;
-        
-        token.set('bar1_value', hp);
-        token.set('bar2_value', st);
-        token.set('bar3_value', valor);
+        updateValue(techLog.id, 'hp', techLog.hpCost);
+        updateValue(techLog.id, 'st', techLog.stCost);
+        updateValue(techLog.id, 'valor', techLog.valorCost);
         
         // Remove tech from history
         state.techHistory = state.techHistory.slice(0, state.techHistory.length - 1);
+        
+        var token = getObj('graphic', techLog.id);
         
         var techDataId = token.get('represents') + '.' + techLog.techName;
         if(state.techData[techDataId]) {
@@ -1797,32 +1903,19 @@ on('chat:message', function(msg) {
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!rest') == 0
         && playerIsGM(msg.playerid)) {
-        var tokens = filterObjs(function(obj) {
-            return obj.get('_type') == 'graphic' &&
-                   obj.get('represents');
+        var actors = filterObjs(function(obj) {
+            return obj.get('_type') == 'character';
         });
        
-        tokens.forEach(function(token) {
-            var charId = token.get('represents');
-            
-            var hp = parseInt(token.get('bar1_value'));
-            var maxHp = parseInt(token.get('bar1_max'));
-            var st = parseInt(token.get('bar2_value'));
-            var maxSt = parseInt(token.get('bar2_max'));
-            
-            if(hp != hp) {
-                hp = 0;
-            }
-            if(st != st) {
-                st = 0;
-            }
+        actors.forEach(function(actor) {
+            var charId = actor.get('_id');
             
             var skills = getSkills(charId);
             var flaws = getFlaws(charId);
             
-            // Restore Health
-            if(maxHp) {
-                var hpRestore = Math.ceil(maxHp / 5);
+            if(getAttrByName(charId, 'type') != 'flunky') {
+                updateValueForCharacter(actor.get('_id'), 'hp', 0.2, true);
+                updateValueForCharacter(actor.get('_id'), 'st', 0.2, true);
                 
                 // Check for Fast Healing
                 if(skills.find(function(s) {
@@ -1830,33 +1923,30 @@ on('chat:message', function(msg) {
                 })) {
                     var di = getAttrByName(charId, 'di');
                     if(di) {
-                        hpRestore += di;
+                        updateValueForCharacter(actor.get('_id'), 'hp', di);
                     }
                 }
-                
-                hp += hpRestore;
-                if(hp > maxHp) {
-                    hp = maxHp;
-                }
-                token.set('bar1_value', hp);
-                log('Character ' + token.get('name') + ' recovered ' + hpRestore + ' HP.');
-            }
-            
-            // Restore Stamina
-            if(maxSt) {
-                st += Math.ceil(maxSt / 5);
-                if(st > maxSt) {
-                    st = maxSt;
-                }
-                token.set('bar2_value', st);
-                log('Character ' + token.get('name') + ' recovered ' + st + ' ST.');
             }
             
             // Reset Valor
-            resetValor(token, skills, flaws);
-            
+            resetValor(charId, skills, flaws);
             // Reset bonuses
             resetBonuses(charId);
+        });
+        
+        // Handle values as best we can for current-page, Object layer unaffiliated tokens
+        var page = Campaign().get('playerpageid');
+        var tokens = filterObjs(function(obj) {
+            return obj.get('_type') == 'graphic' &&
+                obj.get('layer') == 'objects' &&
+                !obj.get('isdrawing') &&
+                !obj.get('represents');
+        });
+        tokens.forEach(function(token) {
+            var tokenId = token.get('_id');
+            updateValue(tokenId, 'hp', 0.2, true);
+            updateValue(tokenId, 'st', 0.2, true);
+            updateValue(tokenId, 'valor', 0, false, true);
         });
         
         state.techData = {};
@@ -1872,25 +1962,40 @@ on('chat:message', function(msg) {
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!fullrest') == 0
         && playerIsGM(msg.playerid)) {
-        var tokens = filterObjs(function(obj) {
-            return obj.get('_type') == 'graphic' &&
-                   obj.get('represents');
+        var actors = filterObjs(function(obj) {
+            return obj.get('_type') == 'character';
         });
        
-        if(!state.charData) {
-            state.charData = {};
-        }
-        
-        tokens.forEach(function(token) {
-            token.set('bar1_value', token.get('bar1_max'));
-            token.set('bar2_value', token.get('bar2_max'));
-            var charId = token.get('represents');
+        actors.forEach(function(actor) {
+            var charId = actor.get('_id');
+            
+            var skills = getSkills(charId);
+            var flaws = getFlaws(charId);
+            
+            if(getAttrByName(charId, 'type') != 'flunky') {
+                updateValueForCharacter(actor.get('_id'), 'hp', 1.0, true, true);
+                updateValueForCharacter(actor.get('_id'), 'st', 1.0, true, true);
+            }
             
             // Reset Valor
-            resetValor(token);
-            
+            resetValor(charId, skills, flaws);
             // Reset bonuses
             resetBonuses(charId);
+        });
+        
+        // Handle values as best we can for current-page, Object layer unaffiliated tokens
+        var page = Campaign().get('playerpageid');
+        var tokens = filterObjs(function(obj) {
+            return obj.get('_type') == 'graphic' &&
+                obj.get('layer') == 'objects' &&
+                !obj.get('isdrawing') &&
+                !obj.get('represents');
+        });
+        tokens.forEach(function(token) {
+            var tokenId = token.get('_id');
+            updateValue(tokenId, 'hp', 1.0, true, true);
+            updateValue(tokenId, 'st', 1.0, true, true);
+            updateValue(tokenId, 'valor', 0, false, true);
         });
         
         state.techData = {};
@@ -2008,7 +2113,7 @@ on('chat:message', function(msg) {
         
         // Init roll = new scene, so reset valor
         allTokens.forEach(function(token) {
-            resetValor(token);
+            resetValor(token.get('represents'));
         });
         
         sendChat('Valor', message);
@@ -2798,39 +2903,6 @@ function generateRowID() {
     return generateUUID().replace(/_/g, "Z");
 };
 
-// !set-bravado command
-// Enter !set-bravado X in the chat to assign the selected character a Bravado
-// skill of level X.
-on('chat:message', function(msg) {
-    if(msg.type == 'api' && msg.content.indexOf('!set-bravado') == 0
-        && playerIsGM(msg.playerid)) {
-        var args = msg.content.split(/\s+/);
-        
-        if(args.length < 2) {
-            log('Format: !set-bravado 2');
-            return;
-        }
-        
-        var setBravado = parseInt(args[1]);
-        if(!state.charData) {
-            state.charData = {};
-        }
-        
-        msg.selected.forEach(function(s) {
-            var token = getObj('graphic', s._id);
-            if(token.get('represents') != '') {
-                var id = token.get('represents');
-                if(!state.charData[id]) {
-                    state.charData[id] = {};
-                }
-                
-                state.charData[id].bravado = setBravado;
-                log('Set Bravado level to ' + setBravado + ' for ' + token.get('name') +'.');
-            }
-        });
-    }
-});
-
 // !set-vrate command
 // Enter !set-vrate X in the chat to make the selected character gain
 // X valor each round.
@@ -2865,53 +2937,17 @@ on('chat:message', function(msg) {
 
 // Max Value sync function
 // Makes HP and ST move in sync with their max values.
-on('change:graphic', function(obj, prev) {
-    if(!state.maxValueSyncEnabled) {
-        return;
-    }
-    if(obj.get('represents') == '') {
-        // Do nothing if the updated token has no backing character
-        return;
-    }
-    
-    if(!prev) {
-        return;
-    }
-    if(obj.get('bar1_max') == prev.bar1_max &&
-       obj.get('bar2_max') == prev.bar2_max) {
-        // Do nothing if none of the max values changed
-        return;
-    }
-    
-    if(obj.get('bar1_max') && prev.bar1_max) {
-        var bar1Value = parseInt(obj.get('bar1_value'));
-        var bar1Change = parseInt(obj.get('bar1_max')) - prev.bar1_max;
-        
-        if(bar1Value != bar1Value) {
-            bar1Value = 0;
-        }
-        if(bar1Change != bar1Change) {
-            bar1Change = 0;
-        }
-        
-        if(bar1Value) {
-            obj.set('bar1_value', bar1Value + bar1Change);
-        }
-    }
-    
-    if(obj.get('bar2_max') && prev.bar2_max) {
-        var bar2Value = parseInt(obj.get('bar2_value'));
-        var bar2Change = parseInt(obj.get('bar2_max')) - prev.bar2_max;
-        
-        if(bar2Value != bar2Value) {
-            bar2Value = 0;
-        }
-        if(bar2Change != bar2Change) {
-            bar2Change = 0;
-        }
-        
-        if(bar2Value) {
-            obj.set('bar2_value', bar2Value + bar2Change);
+on('change:attribute', function(obj, prev) {
+    if(obj.get('name') == 'hp' || 
+        obj.get('name') == 'st') {
+        if(prev.max && obj.get('max') && prev.max != obj.get('max')) {
+            var oldMax = parseInt(prev.max);
+            var newMax = parseInt(obj.get('max'));
+            if(oldMax == oldMax && newMax == newMax) {
+                var maxChange = newMax - oldMax;
+                var charId = obj.get('_characterid');
+                updateValueForCharacter(charId, obj.get('name'), maxChange);
+            }
         }
     }
 });
@@ -2930,17 +2966,27 @@ function criticalHealthWarning(obj, oldHp) {
         }
         if(message) {
             // Message character
+            var controlledBy;
+            var name;
+            
             var charId = obj.get('represents');
-            var actor = getObj('character',charId);
-            var controlledBy = actor.get('controlledby');
+            if(charId) {
+                var actor = getObj('character',charId);
+                controlledBy = actor.get('controlledby');
+                name = actor.get('name');
+            } else {
+                name = obj.get('name');
+            }
             
             var whisperTo = 'gm';
             
             if(controlledBy && controlledBy != '') {
-                whisperTo = actor.get('name');
+                whisperTo = name;
             }
             
-            sendChat('Valor', '/w "' + whisperTo + '" ' + actor.get('name') + message);
+            if(name) {
+                sendChat('Valor', '/w "' + whisperTo + '" ' + name + message);
+            }
             log('Alerted ' + whisperTo + ' about critical HP for token ID ' + obj.get('_id') + '.');
         }
     }
@@ -3032,23 +3078,15 @@ function processOngoingEffects(obj) {
     
     if(value == value) {
         if(parts[0] === 'Ongoing') {
-            lastChar.set('bar1_value', lastChar.get('bar1_value') - value);
-            criticalHealthWarning(lastChar, oldHp);
+            updateValue(lastCharId, 'hp', -value);
             sendChat('Valor', name + ' took ' + value + ' ongoing damage.');
             log('Dealt ' + value + ' ongoing damage to ' + lastChar.get('name') + '.');
         } else if(parts[0] === 'Regen') {
-            lastChar.set('bar1_value', parseInt(lastChar.get('bar1_value')) + value);
-            if(lastChar.get('bar1_value') > lastChar.get('bar1_max')) {
-                lastChar.set('bar1_value', lastChar.get('bar1_max'));
-            }
-            criticalHealthWarning(lastChar, oldHp);
+            updateValue(lastCharId, 'hp', value);
             sendChat('Valor', name + ' recovered ' + value + ' Health.');
             log('Regenerated ' + value + ' HP for ' + lastChar.get('name') + '.');
         } else if(parts[0] === 'SRegen') {
-            lastChar.set('bar2_value', parseInt(lastChar.get('bar2_value')) + value);
-            if(lastChar.get('bar2_value') > lastChar.get('bar2_max')) {
-                lastChar.set('bar2_value', lastChar.get('bar2_max'));
-            }
+            updateValue(lastCharId, 'st', value);
             sendChat('Valor', name + ' recovered ' + value + ' Stamina.');
             log('Regenerated ' + value + ' ST for ' + lastChar.get('name') + '.');
         }
@@ -3301,4 +3339,10 @@ on('change:campaign:turnorder', function(obj) {
  * v0.14.1:
  * - Implemented attack bonuses.
  * - !reset, !rest and !fullrest now all reset the bonuses block.
+ * 
+ * v0.14.2:
+ * - Massive refactor of all logic to increase/decrease HP/ST/Valor.
+ * - !set-bravado no longer supported.
+ * - !check debug command added.
+ * - Various bugfixes.
  **/
