@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.14.2
+ * v0.14.3
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -639,6 +639,12 @@ function getTechByName(techId, charId) {
         return undefined;
     }
     
+    // Trim quotes
+    if(techId[0] == '"') {
+        techId = techId.substring(1, techId.length - 1);
+        log(techId);
+    }
+    
     var techs = getTechs(charId);
     var tech;
     // They put a string, pull up tech by name
@@ -659,12 +665,14 @@ function getTechByName(techId, charId) {
         } else {
             // Drop all non-alphanumeric characters and try again
             var alphaTechId = techId.replace(/\W/g, '');
-            matchingTech = techs.find(function(t) {
-                return t && t.name &&
-                t.name.toLowerCase().replace(/\W/g, '').indexOf(alphaTechId.toLowerCase()) > -1;
-            });
-            if(matchingTech) {
-                tech = matchingTech;
+            if(alphaTechId && alphaTechId.length > 0) {
+                matchingTech = techs.find(function(t) {
+                    return t && t.name &&
+                    t.name.toLowerCase().replace(/\W/g, '').indexOf(alphaTechId.toLowerCase()) > -1;
+                });
+                if(matchingTech) {
+                    tech = matchingTech;
+                }
             }
         }
     }
@@ -992,6 +1000,44 @@ function updateValueForCharacter(characterId, attribute, amount, ratio, absolute
     }
 }
 
+function startEvent(eventName) {
+    if(!state.timer) {
+        state.timer = {};
+    }
+    
+    state.timer[eventName] = new Date();
+    log("Event '" + eventName + "' initiated.");
+}
+
+function checkEvent(eventName) {
+    if(!state.timer) {
+        state.timer = {};
+    }
+    
+    if(state.timer[eventName]) {
+        var date = new Date();
+        var time = (date.getTime() - state.timer[eventName].getTime()) / 1000;
+        log("Event '" + eventName + "' ongoing for " + time + ' seconds.');
+    } else {
+        log("Event '" + eventName + "' not found.");
+    }
+}
+
+function endEvent(eventName) {
+    if(!state.timer) {
+        state.timer = {};
+    }
+    
+    if(state.timer[eventName]) {
+        var date = new Date();
+        var time = (date.getTime() - state.timer[eventName].getTime()) / 1000;
+        log("Event '" + eventName + "' took " + time + ' seconds.');
+        state.timer[eventName] = null;
+    } else {
+        log("Event '" + eventName + "' not found.");
+    }
+}
+
 // !reset command
 // Enter !reset in the chat to purge the tech data history and reset valor without healing anyone..
 on('chat:message', function(msg) {
@@ -1021,7 +1067,7 @@ on('chat:message', function(msg) {
 });
 
 // !check command
-// Enter !reset in the chat to purge the tech data history and reset valor without healing anyone..
+// Identifies a given character by token ID.
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!check') == 0
         && playerIsGM(msg.playerid)) {
@@ -1067,6 +1113,7 @@ on('chat:message', function(msg) {
     if(msg.type == 'api' && (msg.content.indexOf('!t ') == 0 || 
     msg.content.indexOf('!tech') == 0 ||
     msg.content == '!t')) {
+        startEvent('!tech');
         // Get params
         var split = msg.content.match(/(".*?")|(\S+)/g);
         // Figure out who's using a tech
@@ -1099,6 +1146,7 @@ on('chat:message', function(msg) {
         }
         if(!actor) {
             log('No usable character found for ' + msg.playerid);
+            endEvent('!tech');
             return;
         }
         var actorClass = getAttrByName(actor.get('_id'), 'type');
@@ -1115,6 +1163,7 @@ on('chat:message', function(msg) {
                 var cleanMessage = message.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
                 sendChat('Valor', '/w "' + msg.who + '" ' + cleanMessage);
             }
+            endEvent('!tech');
             return;
         }
         
@@ -1167,6 +1216,7 @@ on('chat:message', function(msg) {
         if(!tech) {
             log('Tech does not exist.');
             sendChat('Valor', '/w "' + msg.who + "\" I can't find that technique.");
+            endEvent('!tech');
             return;
         }
         
@@ -1174,6 +1224,7 @@ on('chat:message', function(msg) {
         if((tech.core == 'mimic' || tech.core == 'ultMimic') && tech.coreLevel <= 0) {
             log('Mimic failed, effective tech level ' + tech.coreLevel + '.');
             sendChat('Valor', '/w "' + actor.get('name') + '" ' + 'Core Level is too low to mimic this technique.');
+            endEvent('!tech');
             return;
         }
         
@@ -1182,6 +1233,7 @@ on('chat:message', function(msg) {
             tech.core == 'transform' || tech.core == 'domain')) {
             log('Mimic failed, target core type ' + tech.oldCore + '.');
             sendChat('Valor', '/w "' + actor.get('name') + '" ' + "You can't mimic an Ultimate Technique with a normal Mimic Core.");
+            endEvent('!tech');
             return;
         }
         
@@ -1374,6 +1426,7 @@ on('chat:message', function(msg) {
                 errorMessage += '[Override](' + cleanButton + ' --override)';
                 sendChat('Valor', '/w "' + actor.get('name') + '" ' + errorMessage);
                 log('Tech failed on turn ' + round);
+                endEvent('!tech');
                 return;
             }
         }
@@ -1786,6 +1839,7 @@ on('chat:message', function(msg) {
         }
         
         log('Technique ' + tech.name + ' performed by ' + actor.get('name') + ' on Round ' + round + '.');
+        endEvent('!tech');
     }
 });
 
@@ -1903,6 +1957,8 @@ on('chat:message', function(msg) {
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!rest') == 0
         && playerIsGM(msg.playerid)) {
+        startEvent('!rest');
+            
         var actors = filterObjs(function(obj) {
             return obj.get('_type') == 'character';
         });
@@ -1952,7 +2008,7 @@ on('chat:message', function(msg) {
         state.techData = {};
         state.techHistory = [];
         
-        log('Partial rest complete.');
+        endEvent('!rest');
     }
 });
 
@@ -1962,6 +2018,7 @@ on('chat:message', function(msg) {
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!fullrest') == 0
         && playerIsGM(msg.playerid)) {
+        startEvent('!fullrest');
         var actors = filterObjs(function(obj) {
             return obj.get('_type') == 'character';
         });
@@ -2001,7 +2058,8 @@ on('chat:message', function(msg) {
         state.techData = {};
         state.techHistory = [];
         
-        log('Full rest complete.');
+
+        endEvent('!fullrest');
     }
 });
 
@@ -2012,6 +2070,7 @@ on('chat:message', function(msg) {
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!init') == 0
         && playerIsGM(msg.playerid)) {
+        startEvent('!init');
         var split = msg.content.match(/(".*?")|(\S+)/g);
         var turnOrder = JSON.parse(Campaign().get('turnorder'));
         
@@ -2117,18 +2176,16 @@ on('chat:message', function(msg) {
         });
         
         sendChat('Valor', message);
+        endEvent('!init');
     }
 });
 
-// !init command
-// Purge everything on the turn tracker, roll initiative for all characters on current page,
-// set everything up at once
-// Also sets everyone's Valor to starting values.
+// !def command
+// Displays defense and resistance for all active characters.
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!def') == 0
         && playerIsGM(msg.playerid)) {
-        
-        log('Defense scan commencing');
+        startEvent('!def');
         
         // Get list of tokens
         var page = Campaign().get('playerpageid');
@@ -2167,6 +2224,7 @@ on('chat:message', function(msg) {
         message += '</table>';
         
         sendChat('Valor', '/w gm <div>' + message + '</div>');
+        endEvent('!def');
     }
 });
 
@@ -2180,6 +2238,8 @@ on('chat:message', function(msg) {
             log('Not enough arguments.');
             return;
         }
+        
+        startEvent('!duplicate');
         
         if(!state.linkedSheets) {
             state.linkedSheets = {};
@@ -2237,6 +2297,7 @@ on('chat:message', function(msg) {
         state.linkedSheets[newActorId] = actorId;
         
         log('Character ' + actor.get('name') + ' created a new level up sheet.');
+        endEvent('!duplicate');
     }
 });
 
@@ -2250,6 +2311,8 @@ on('chat:message', function(msg) {
             log('Not enough arguments.');
             return;
         }
+        
+        startEvent('!d-finalize');
         
         if(!state.linkedSheets) {
             state.linkedSheets = {};
@@ -2443,6 +2506,7 @@ on('chat:message', function(msg) {
         
         sendChat('Valor', 'Character sheet for ' + oldactor.get('name') + ' has been updated.');
         log('Character sheet for ' + oldactor.get('name') + ' has been updated.');
+        endEvent('!d-finalize');
     }
 });
 
@@ -2451,6 +2515,7 @@ on('chat:message', function(msg) {
 // Also sets everyone's Valor to starting values.
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!mook') == 0) {
+        startEvent('!mook');
         var split = msg.content.match(/(".*?")|(\S+)/g);
         
         // Get parameters
@@ -2870,6 +2935,8 @@ on('chat:message', function(msg) {
                 characterid: newActorId, name: 'repeating_techs_' + rowId + '_tech_mods', current: tech.mods
             });
         });
+        
+        endEvent('!mook');
     }
 });
 
@@ -3344,5 +3411,10 @@ on('change:campaign:turnorder', function(obj) {
  * - Massive refactor of all logic to increase/decrease HP/ST/Valor.
  * - !set-bravado no longer supported.
  * - !check debug command added.
+ * - Various bugfixes.
+ * 
+ * v0.14.3:
+ * - Added timing information to logs on various events.
+ * - Non-alphanumeric technique names would confuse the !t command.
  * - Various bugfixes.
  **/
