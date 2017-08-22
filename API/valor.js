@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.14.3
+ * v0.14.4
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -1958,37 +1958,155 @@ on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!rest') == 0
         && playerIsGM(msg.playerid)) {
         startEvent('!rest');
-            
-        var actors = filterObjs(function(obj) {
-            return obj.get('_type') == 'character';
+        
+        // Find all characters with Fast Healing
+        var fastHealingSkills = filterObjs(function(obj) {
+            if(obj.get('_type') == 'attribute' &&
+               obj.get('name').indexOf('repeating_skills') > -1 &&
+               obj.get('current') == 'fastHealing') {
+                   return true;
+            }
+            return false;
         });
-       
-        actors.forEach(function(actor) {
-            var charId = actor.get('_id');
+        var fastHealingCharacters = {};
+        fastHealingSkills.forEach(function(skill) {
+            var charId = skill.get('_characterid');
+            var di = parseInt(getAttrByName(charId, 'di'));
+            if(di == di) {
+                fastHealingCharacters[charId] = di;
+            }
+        })
+        
+        var startingValor = {};
+        
+        // Determine starting Valor for every charId
+        if(state.houseRulesEnabled) {
+            var levelAttrs = filterObjs(function(obj) {
+                return obj.get('_type') == 'attribute' &&
+                    obj.get('name') == 'level';
+            });
             
-            var skills = getSkills(charId);
-            var flaws = getFlaws(charId);
-            
-            if(getAttrByName(charId, 'type') != 'flunky') {
-                updateValueForCharacter(actor.get('_id'), 'hp', 0.2, true);
-                updateValueForCharacter(actor.get('_id'), 'st', 0.2, true);
-                
-                // Check for Fast Healing
-                if(skills.find(function(s) {
-                    return s.name == 'fastHealing';
-                })) {
-                    var di = getAttrByName(charId, 'di');
-                    if(di) {
-                        updateValueForCharacter(actor.get('_id'), 'hp', di);
+            levelAttrs.forEach(function(levelAttr) {
+                var level = parseInt(levelAttr.get('current'));
+                var charId = levelAttr.get('_characterid');
+                if(level == level) {
+                    startingValor[charId] = Math.ceil(level / 5) - 1;
+                }
+            });
+        }
+        
+        // Find all characters with Bravado
+        var bravadoSkills = filterObjs(function(obj) {
+            if(obj.get('_type') == 'attribute' &&
+               obj.get('name').indexOf('repeating_skills') > -1 &&
+               obj.get('current') == 'bravado') {
+                   return true;
+            }
+            return false;
+        });
+        
+        bravadoSkills.forEach(function(skill) {
+            var valor = 1;
+            if(!state.houseRulesEnabled) {
+                // Get the corresponding skill level
+                var skillId = skillName.split('_')[2];
+                var skillLevelAttr = filterObjs(function(obj) {
+                    if(obj.get('_type') == 'attribute' &&
+                       obj.get('name').indexOf('skilllevel') > -1 &&
+                       obj.get('name').indexOf(skillId) > -1) {
+                           return true;
+                    }
+                    return false;
+                });
+                if(skillLevelAttr) {
+                    skillLevelAttrValue = parseInt(skillLevelAttr.get('current'));
+                    if(skillLevelAttrValue == skillLevelAttrValue) {
+                        valor = skillLevelAttrValue;
                     }
                 }
             }
             
-            // Reset Valor
-            resetValor(charId, skills, flaws);
-            // Reset bonuses
-            resetBonuses(charId);
+            var charId = skill.get('_characterid');
+            if(startingValor[charId]) {
+                startingValor[charId] += valor;
+            } else {
+                startingValor[charId] = valor;
+            }
         });
+        
+        // Update every HP attribute
+        var hpAttrs = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                obj.get('name') == 'hp';
+        });
+        
+        hpAttrs.forEach(function(hpAttr) {
+            var oldValue = parseInt(hpAttr.get('current'));
+            var maxValue = parseInt(hpAttr.get('max'));
+            if(oldValue != oldValue) {
+                oldValue = 0;
+            }
+            if(maxValue != maxValue) {
+                maxValue = 0;
+            }
+            
+            var newValue = oldValue + Math.ceil(maxValue / 5);
+            
+            var charId = hpAttr.get('_characterid');
+            if(fastHealingCharacters[charId]) {
+                // Apply Fast Healing skill
+                newValue += fastHealingCharacters[charId];
+            }
+            
+            if(newValue > maxValue) {
+                newValue = maxValue;
+            }
+            
+            hpAttr.set('current', newValue);
+        });
+        
+        // Update every ST attribute
+        var stAttrs = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                obj.get('name') == 'st';
+        });
+        
+        stAttrs.forEach(function(stAttr) {
+            var oldValue = parseInt(stAttr.get('current'));
+            var maxValue = parseInt(stAttr.get('max'));
+            if(oldValue != oldValue) {
+                oldValue = 0;
+            }
+            if(maxValue != maxValue) {
+                maxValue = 0;
+            }
+            
+            var newValue = oldValue + Math.ceil(maxValue / 5);
+            
+            if(newValue > maxValue) {
+                newValue = maxValue;
+            }
+            
+            stAttr.set('current', newValue);
+        });
+        
+        // Update every Valor attribute
+        var vAttrs = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                obj.get('name') == 'valor';
+        });
+        
+        vAttrs.forEach(function(vAttr) {
+            var charId = vAttr.get('_characterid');
+            
+            if(startingValor[charId]) {
+                vAttr.set('current', startingValor[charId]);
+            } else {
+                vAttr.set('current', 0);
+            }
+        });
+        
+        checkEvent('!rest');
         
         // Handle values as best we can for current-page, Object layer unaffiliated tokens
         var page = Campaign().get('playerpageid');
@@ -2019,26 +2137,111 @@ on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!fullrest') == 0
         && playerIsGM(msg.playerid)) {
         startEvent('!fullrest');
-        var actors = filterObjs(function(obj) {
-            return obj.get('_type') == 'character';
+        
+        var startingValor = {};
+        
+        // Determine starting Valor for every charId
+        if(state.houseRulesEnabled) {
+            var levelAttrs = filterObjs(function(obj) {
+                return obj.get('_type') == 'attribute' &&
+                    obj.get('name') == 'level';
+            });
+            
+            levelAttrs.forEach(function(levelAttr) {
+                var level = parseInt(levelAttr.get('current'));
+                var charId = levelAttr.get('_characterid');
+                if(level == level) {
+                    startingValor[charId] = Math.ceil(level / 5) - 1;
+                }
+            });
+        }
+        
+        // Find all characters with Bravado
+        var bravadoSkills = filterObjs(function(obj) {
+            if(obj.get('_type') == 'attribute' &&
+               obj.get('name').indexOf('repeating_skills') > -1 &&
+               obj.get('current') == 'bravado') {
+                   return true;
+            }
+            return false;
         });
-       
-        actors.forEach(function(actor) {
-            var charId = actor.get('_id');
-            
-            var skills = getSkills(charId);
-            var flaws = getFlaws(charId);
-            
-            if(getAttrByName(charId, 'type') != 'flunky') {
-                updateValueForCharacter(actor.get('_id'), 'hp', 1.0, true, true);
-                updateValueForCharacter(actor.get('_id'), 'st', 1.0, true, true);
+        
+        bravadoSkills.forEach(function(skill) {
+            var valor = 1;
+            if(!state.houseRulesEnabled) {
+                // Get the corresponding skill level
+                var skillId = skillName.split('_')[2];
+                var skillLevelAttr = filterObjs(function(obj) {
+                    if(obj.get('_type') == 'attribute' &&
+                       obj.get('name').indexOf('skilllevel') > -1 &&
+                       obj.get('name').indexOf(skillId) > -1) {
+                           return true;
+                    }
+                    return false;
+                });
+                if(skillLevelAttr) {
+                    skillLevelAttrValue = parseInt(skillLevelAttr.get('current'));
+                    if(skillLevelAttrValue == skillLevelAttrValue) {
+                        valor = skillLevelAttrValue;
+                    }
+                }
             }
             
-            // Reset Valor
-            resetValor(charId, skills, flaws);
-            // Reset bonuses
-            resetBonuses(charId);
+            var charId = skill.get('_characterid');
+            if(startingValor[charId]) {
+                startingValor[charId] += valor;
+            } else {
+                startingValor[charId] = valor;
+            }
         });
+        
+        // Update every HP attribute
+        var hpAttrs = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                obj.get('name') == 'hp';
+        });
+        
+        hpAttrs.forEach(function(hpAttr) {
+            var maxValue = parseInt(hpAttr.get('max'));
+            if(maxValue != maxValue) {
+                maxValue = 0;
+            }
+            
+            hpAttr.set('current', maxValue);
+        });
+        
+        // Update every ST attribute
+        var stAttrs = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                obj.get('name') == 'st';
+        });
+        
+        stAttrs.forEach(function(stAttr) {
+            var maxValue = parseInt(stAttr.get('max'));
+            if(maxValue != maxValue) {
+                maxValue = 0;
+            }
+            
+            stAttr.set('current', maxValue);
+        });
+        
+        // Update every Valor attribute
+        var vAttrs = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                obj.get('name') == 'valor';
+        });
+        
+        vAttrs.forEach(function(vAttr) {
+            var charId = vAttr.get('_characterid');
+            
+            if(startingValor[charId]) {
+                vAttr.set('current', startingValor[charId]);
+            } else {
+                vAttr.set('current', 0);
+            }
+        });
+        
+        checkEvent('!fullrest');
         
         // Handle values as best we can for current-page, Object layer unaffiliated tokens
         var page = Campaign().get('playerpageid');
@@ -2058,7 +2261,6 @@ on('chat:message', function(msg) {
         state.techData = {};
         state.techHistory = [];
         
-
         endEvent('!fullrest');
     }
 });
@@ -3417,4 +3619,7 @@ on('change:campaign:turnorder', function(obj) {
  * - Added timing information to logs on various events.
  * - Non-alphanumeric technique names would confuse the !t command.
  * - Various bugfixes.
+ * 
+ * v0.14.4:
+ * - Optimized !rest and !fullrest to make them run faster and prevent infinite-loop errors.
  **/
