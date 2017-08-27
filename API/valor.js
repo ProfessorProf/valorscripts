@@ -3208,8 +3208,7 @@ on('chat:message', function(msg) {
 // Performs a specific roll as a specific character.
 // Meant to be used by the character sheet, not the user.
 on('chat:message', function(msg) {
-    if(msg.type == 'api' && msg.content.indexOf('!roll-as') == 0
-        && playerIsGM(msg.playerid)) {
+    if(msg.type == 'api' && msg.content.indexOf('!roll-as') == 0) {
         var split = msg.content.match(/(".*?")|(\S+)/g);
         
         if(split.length < 3) {
