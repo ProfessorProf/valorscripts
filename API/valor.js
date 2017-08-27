@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.14.4
+ * v0.14.5
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -3204,6 +3204,35 @@ on('chat:message', function(msg) {
     }
 });
 
+// !roll-as command
+// Performs a specific roll as a specific character.
+// Meant to be used by the character sheet, not the user.
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!roll-as') == 0
+        && playerIsGM(msg.playerid)) {
+        var split = msg.content.match(/(".*?")|(\S+)/g);
+        
+        if(split.length < 3) {
+            log('!roll-as: Not enough arguments.');
+        }
+        
+        var as = split[1];
+        var roll = split[2];
+        var label = split.length > 3 ? split[3] : null;
+        
+        // Trim quotes
+        if(roll[0] == '"') {
+            roll = roll.substring(1, roll.length - 1);
+        }
+        
+        if(label[0] == '"') {
+            label = label.substring(1, label.length - 1);
+        }
+        
+        sendChat('character|' + as, '[[' + roll + ']] ' + label);
+    }
+});
+
 // Max Value sync function
 // Makes HP and ST move in sync with their max values.
 on('change:attribute', function(obj, prev) {
@@ -3622,4 +3651,7 @@ on('change:campaign:turnorder', function(obj) {
  * 
  * v0.14.4:
  * - Optimized !rest and !fullrest to make them run faster and prevent infinite-loop errors.
+ * 
+ * v0.14.5:
+ * - Stat rolls and defense rolls are automatically rolled as the character the sheet belongs to.
  **/

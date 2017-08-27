@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v0.5.3.1
+ * v0.5.4
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -139,6 +139,9 @@
  * v0.5.3:
  * - Fixed cost of Transform Ally.
  * - Added attack bonus fields to character sheet.
+ * 
+ * v0.5.4:
+ * - All rolls are now performed as the character the sheet belongs to (requires scripts v0.14.5).
  **/
 
 function calculateStats() {
@@ -1826,7 +1829,7 @@ on('sheet:opened', function() {
         <td>Muscle:</td>
         <td nowrap="nowrap">
             <span class="derived-value" name="attr_mus"></span>
-            <button type="roll" value="[[1d10+@{mus}+@{rollbonus}]] Muscle" name="roll_mus"></button>
+            <button type="roll" value='!roll-as @{character_id} "1d10+@{mus}+@{rollbonus}" "Muscle"' name="roll_mus"></button>
         </td>
         <td>Strength:</td>
         <td class="derived-value">
@@ -1849,7 +1852,7 @@ on('sheet:opened', function() {
         <td>Dexterity:</td>
         <td nowrap="nowrap">
             <span class="derived-value" name="attr_dex"></span>
-            <button type="roll" value="[[1d10+@{dex}+@{rollbonus}]] Dexterity" name="roll_dex"></button>
+            <button type="roll" value='!roll-as @{character_id} "1d10+@{dex}+@{rollbonus}" "Dexterity"' name="roll_dex"></button>
         </td>
         <td>Agility:</td>
         <td class="derived-value">
@@ -1872,7 +1875,7 @@ on('sheet:opened', function() {
         <td>Aura:</td>
         <td nowrap="nowrap">
             <span class="derived-value" name="attr_aur"></span>
-            <button type="roll" value="[[1d10+@{aur}+@{rollbonus}]] Aura" name="roll_aur"></button>
+            <button type="roll" value='!roll-as @{character_id} "1d10+@{aur}+@{rollbonus}" "Aura"' name="roll_aur"></button>
         </td>
         <td>Spirit:</td>
         <td class="derived-value">
@@ -1895,7 +1898,7 @@ on('sheet:opened', function() {
         <td>Intuition:</td>
         <td nowrap="nowrap">
             <span class="derived-value" name="attr_int"></span>
-            <button type="roll" value="[[1d10+@{int}+@{rollbonus}]] Intuition" name="roll_int"></button>
+            <button type="roll" value='!roll-as @{character_id} "1d10+@{int}+@{rollbonus}" "Intuition"' name="roll_int"></button>
         </td>
         <td>Mind:</td>
         <td class="derived-value">
@@ -1918,7 +1921,7 @@ on('sheet:opened', function() {
         <td>Resolve:</td>
         <td nowrap="nowrap">
             <span class="derived-value" name="attr_res"></span>
-            <button type="roll" value="[[1d10+@{res}+@{rollbonus}]] Resolve" name="roll_res"></button>
+            <button type="roll" value='!roll-as @{character_id} "1d10+@{res}+@{rollbonus}" "Resolve"' name="roll_res"></button>
         </td>
         <td colspan="2"></td> <!-- No Guts attack -->
         <td>Speed:</td>
@@ -1985,11 +1988,11 @@ on('sheet:opened', function() {
 
 <div class="label">Defense Rolls:</div>
 <div>
-    <button type="roll" value="[[1d10+@{mus}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Muscle Defense" name="roll_aur">Muscle</button>
-    <button type="roll" value="[[1d10+@{dex}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Dexterity Defense" name="roll_aur">Dexterity</button>
-    <button type="roll" value="[[1d10+@{aur}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Aura Defense" name="roll_aur">Aura</button>
-    <button type="roll" value="[[1d10+@{int}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Intuition Defense" name="roll_aur">Intuition</button>
-    <button type="roll" value="[[1d10+@{res}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Resolve Defense" name="roll_aur">Resolve</button>
+    <button type="roll" value='!roll-as @{character_id} "1d10+@{mus}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Muscle Defense"' name="roll_mus_def">Muscle</button>
+    <button type="roll" value='!roll-as @{character_id} "1d10+@{dex}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Dexterity Defense"' name="roll_dex_def">Dexterity</button>
+    <button type="roll" value='!roll-as @{character_id} "1d10+@{aur}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Aura Defense"' name="roll_aur_def">Aura</button>
+    <button type="roll" value='!roll-as @{character_id} "1d10+@{int}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Intuition Defense"' name="roll_int_def">Intuition</button>
+    <button type="roll" value='!roll-as @{character_id} "1d10+@{res}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Resolve Defense"' name="roll_res_def">Resolve</button>
 </div>
 
 <br />
