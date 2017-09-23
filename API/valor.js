@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.14.5
+ * v0.14.6
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -16,10 +16,10 @@ state.valorUpdaterEnabled = true; // Add Valor for all Elites and Masters when a
 state.maxValueSyncEnabled = true; // Move HP and ST to match when max HP and max ST change.
 state.ongoingEffectProcessor = true; // Parse regen and ongoing damage as they happen.
 state.ignoreLimitsOnMinions = true; // Disables limit blocking for Flunkies and Soldiers.
-state.hideNpcTechEffects = false; // For non-player characters, don't show players the tech effect when using !t.
 state.showTechAlerts = true; // Send alerts for when ammo changes and when techs come off of cooldown.
 state.showHealthAlerts = true; // Send alerts when characters enter or leave critical health.
 state.houseRulesEnabled = true; // Enables various unsupported house rules.
+state.hideNpcTechEffects = false; // For non-player characters, don't show players the tech effect when using !t.
 state.rollBehindScreen = false; // Hide NPC rolls from the players.
 
 // Status Tracker
@@ -391,19 +391,18 @@ function resetValor(charId, skills, flaws) {
     log('Character ' + charId + ' set to ' + startingValor + ' Valor.');
 }
 
-function resetBonuses(charId) {
+// Resets all bonus fields for all characterse
+function resetBonuses() {
     var bonusList = ['rollbonus', 'atkrollbonus', 'defrollbonus', 'patkbonus', 'eatkbonus'];
     bonusList.forEach(function(b) {
         var bonuses = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
-                   obj.get('_characterid') == charId &&
                    obj.get('name') == b;
         });
         
-        if(bonuses.length > 0) {
-            bonus = bonuses[0];
+        bonuses.forEach(function(bonus) {
             bonus.set('current', 0);
-        }
+        });
     });
 }
 
@@ -527,9 +526,13 @@ function getTechDescription(tech, charId) {
             
             break;
         case 'healing':
-            var healing = (tech.coreLevel + 3) * 4;
+            var healing;
             var power = getAttrByName(charId, tech.stat);
-            healing += power;
+            if(state.houseRulesEnabled) {
+                healing = (tech.coreLevel + 3) * 3 + Math.ceil(power / 2);
+            } else {
+                healing = (tech.coreLevel + 3) * 4 + power;
+            }
             summary = 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP'
             break;
         case 'barrier':
@@ -1051,8 +1054,8 @@ on('chat:message', function(msg) {
 
         tokens.forEach(function(token) {
             resetValor(token);
-            resetBonuses(token.get('represents'));
         });
+        resetBonuses();
 		
         log('Tech data:');
         log(state.techData);
@@ -2106,6 +2109,8 @@ on('chat:message', function(msg) {
             }
         });
         
+        resetBonuses();
+        
         checkEvent('!rest');
         
         // Handle values as best we can for current-page, Object layer unaffiliated tokens
@@ -2240,6 +2245,8 @@ on('chat:message', function(msg) {
                 vAttr.set('current', 0);
             }
         });
+        
+        resetBonuses();
         
         checkEvent('!fullrest');
         
@@ -2376,6 +2383,7 @@ on('chat:message', function(msg) {
         allTokens.forEach(function(token) {
             resetValor(token.get('represents'));
         });
+        resetBonuses();
         
         sendChat('Valor', message);
         endEvent('!init');
@@ -3653,4 +3661,8 @@ on('change:campaign:turnorder', function(obj) {
  * 
  * v0.14.5:
  * - Stat rolls and defense rolls are automatically rolled as the character the sheet belongs to.
+ * 
+ * v0.14.6:
+ * - Updated for Healing test errata (gated behind enableHouseRules).
+ * - Fixed the bonus reset on !reset, !rest, !fullrest and !init.
  **/

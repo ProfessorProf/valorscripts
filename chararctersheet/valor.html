@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v0.5.4
+ * v0.5.5
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -142,6 +142,9 @@
  * 
  * v0.5.4:
  * - All rolls are now performed as the character the sheet belongs to (requires scripts v0.14.5).
+ * 
+ * v0.5.5:
+ * - Incorporated new experimental errata for Healing Core and Drain.
  **/
 
 function calculateStats() {
@@ -773,13 +776,13 @@ function calculateTechs() {
                     case 'healing':
                         switch(techStat) {
                             case 'spr':
-                                healing = 12 + 4 * techCoreLevel + spr;
+                                healing = 9 + 3 * techCoreLevel + Math.ceil(spr / 2);
                                 break;
                             case 'mnd':
-                                healing = 12 + 4 * techCoreLevel + mnd;
+                                healing = 9 + 3 * techCoreLevel + Math.ceil(mnd / 2);
                                 break;
                             case 'gut':
-                                healing = 12 + 4 * techCoreLevel + gut;
+                                healing = 9 + 3 * techCoreLevel + Math.ceil(gut / 2);
                                 break;
                         }
                         if(techValues.healerLevel > 0) {
@@ -1014,7 +1017,7 @@ function calculateTechs() {
                     } else if(mod.indexOf('boosting') == 0) {
                         hasSkills = true;
                     } else if(mod.indexOf('drain') == 0) {
-                        summary += 'On a hit, recover Health equal to half of damage dealt. ';
+                        summary += 'On a hit, recover Health equal to the largest amount of damage dealt to a single target. ';
                     } else if(mod.indexOf('persistent') == 0) {
                         summary += 'Attacks again in the same area at the start of your next 2 turns. ';
                     } else if(mod.indexOf('piercing') == 0) {
