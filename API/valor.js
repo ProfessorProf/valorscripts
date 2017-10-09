@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.14.6
+ * v0.15.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -407,6 +407,11 @@ function resetBonuses() {
 }
 
 function getTechDamage(tech, charId) {
+    if(tech.core != 'damage' && tech.core != 'ultDamage') {
+        // This isn't a damaging tech
+        return 0;
+    }
+    
     var special = tech.mods && tech.mods.find(function(m) {
         return m.toLowerCase().indexOf('piercing') > -1 ||
                m.toLowerCase().indexOf('sapping') > -1 ||
@@ -477,7 +482,7 @@ function getTechDamage(tech, charId) {
     return damage;
 }
 
-function getTechDescription(tech, charId) {
+function getTechDescription(tech, charId, suppressDamageDisplay) {
     if(!tech) {
         return '';
     }
@@ -485,45 +490,46 @@ function getTechDescription(tech, charId) {
     switch(tech.core) {
         case 'damage':
         case 'ultDamage':
-            summary = 'Damage: <span style="color: darkred">**' + 
-                           getTechDamage(tech, charId) +
-                           '**</span>';
-                           
-            var piercing = tech.mods && tech.mods.find(function(m) {
-                return m.toLowerCase().indexOf('piercing') > -1
-            });
-            if(!piercing) {
-                var physical = tech.stat == 'str' || tech.stat == 'agi';
-                if(tech.mods && tech.mods.find(function(m) {
-                    return m.toLowerCase().indexOf('shift') > -1
-                })) {
-                    physical = !physical;
+            if(!suppressDamageDisplay) {
+                summary = 'Damage: <span style="color: darkred">**' + 
+                               getTechDamage(tech, charId) +
+                               '**</span>';
+                               
+                var piercing = tech.mods && tech.mods.find(function(m) {
+                    return m.toLowerCase().indexOf('piercing') > -1
+                });
+                if(!piercing) {
+                    var physical = tech.stat == 'str' || tech.stat == 'agi';
+                    if(tech.mods && tech.mods.find(function(m) {
+                        return m.toLowerCase().indexOf('shift') > -1
+                    })) {
+                        physical = !physical;
+                    }
+                    summary += physical ? ' - Defense' : ' - Resistance';
                 }
-                summary += physical ? ' - Defense' : ' - Resistance';
-            }
-            
-            var bonuses = [];
-            var hp = getAttrByName(charId, 'hp');
-            var hpMax = getAttrByName(charId, 'hp', 'max');
-            if(hp / hpMax <= 0.4) {
-                var crisis = getSkill(charId, 'crisis');
-                if(crisis && crisis.level) {
-                    bonuses.push('Crisis');
+                
+                var bonuses = [];
+                var hp = getAttrByName(charId, 'hp');
+                var hpMax = getAttrByName(charId, 'hp', 'max');
+                if(hp / hpMax <= 0.4) {
+                    var crisis = getSkill(charId, 'crisis');
+                    if(crisis && crisis.level) {
+                        bonuses.push('Crisis');
+                    }
+                    var berserker = getFlaw(charId, 'berserker')
+                    if(berserker) {
+                        bonuses.push('Berserker');
+                    }
                 }
-                var berserker = getFlaw(charId, 'berserker')
-                if(berserker) {
-                    bonuses.push('Berserker');
+                
+                if(tech.empowerAttack) {
+                    bonuses.push('Empowered');
+                }
+                
+                if(bonuses.length > 0) {
+                    summary += ' **(' + bonuses.join(', ') + ')**';
                 }
             }
-            
-            if(tech.empowerAttack) {
-                bonuses.push('Empowered');
-            }
-            
-            if(bonuses.length > 0) {
-                summary += ' **(' + bonuses.join(', ') + ')**';
-            }
-            
             break;
         case 'healing':
             var healing;
@@ -601,7 +607,9 @@ function getTechDescription(tech, charId) {
         });
     }
     if(mods.length > 0) {
-        summary += '<br />';
+        if(summary.length > 0) {
+            summary += '<br />';
+        }
         summary += '*' + mods.join(', ') + '*';
     }
     
@@ -637,7 +645,7 @@ function getTechDescription(tech, charId) {
     return summary;
 }
 
-function getTechByName(techId, charId) {
+function getTechByName(techId, charId, suppressDamageDisplay) {
     if(!techId) {
         return undefined;
     }
@@ -645,7 +653,6 @@ function getTechByName(techId, charId) {
     // Trim quotes
     if(techId[0] == '"') {
         techId = techId.substring(1, techId.length - 1);
-        log(techId);
     }
     
     var techs = getTechs(charId);
@@ -689,7 +696,7 @@ function getTechByName(techId, charId) {
             tech.coreLevel = 1;
         }
         
-        tech.summary = getTechDescription(tech, charId);
+        tech.summary = getTechDescription(tech, charId, suppressDamageDisplay);
     
         if((tech.core == 'mimic' || tech.core == 'ultMimic') && tech.mimicTarget && charId) {
             log('Mimic target: ' + tech.mimicTarget);
@@ -1154,6 +1161,19 @@ on('chat:message', function(msg) {
         }
         var actorClass = getAttrByName(actor.get('_id'), 'type');
         
+        // Check for --targets list
+        var targetsList = [];
+        var targetsParam = split.indexOf('--targets');
+        if(targetsParam > -1) {
+            for(var targetParam = targetsParam + 1; targetParam < split.length; targetParam++) {
+                var target = getObj('graphic', split[targetParam]);
+                if(target) {
+                    targetsList.push(target);
+                }
+            }
+        }
+        
+        
         if(split.length < 2) {
             // Show a list of techs for this character
             if(actor) {
@@ -1214,7 +1234,7 @@ on('chat:message', function(msg) {
             nextParam++;
         }
         
-        var tech = getTechByName(techId, actor.get('_id'));
+        var tech = getTechByName(techId, actor.get('_id'), targetsList.length > 0);
         
         if(!tech) {
             log('Tech does not exist.');
@@ -1550,14 +1570,95 @@ on('chat:message', function(msg) {
             } else if(rollBonus < 0) {
                 rollText += '-' + (-rollBonus);
             }
+        }
+        
+        if(targetsList.length > 0) {
+            var fullList = (!state.hideNpcTechEffects || !state.rollBehindScreen || actor.get('controlledby')) &&
+                (tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken');
+            var hiddenFullList = ((state.hideNpcTechEffects || state.rollBehindScreen) && !actor.get('controlledby')) &&
+                (tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken');
+                
+            if(fullList) {
+                rollText += ':';
+            } else {
+                if(tech.core == 'boost' || tech.core == 'transform' || tech.core == 'healing') {
+                    rollText += targetsList.length == 1 ? 'Target' : 'Targets';
+                } else {
+                    rollText += ' VS';
+                }
+            }
             
+            var firstTarget = true;
+            
+            targetsList.forEach(function(target) {
+                var targetCharId = target.get('represents');
+                var targetChar = getObj('character', targetCharId);
+                var targetName = target.get('name');
+                if(!targetName && targetChar) {
+                    targetName = targetChar.get('name');
+                }
+                
+                // Get damage;
+                var damage = getTechDamage(tech, actor.get('_id'));
+                
+                // Get def/res
+                var defRes = 0;
+                var physical = tech.stat == 'str' || tech.stat == 'agi';
+                if(tech.mods && tech.mods.find(function(m) {
+                    return m.toLowerCase().indexOf('shift') > -1
+                })) {
+                    physical = !physical;
+                }
+                if(physical) {
+                    defRes = getAttrByName(targetCharId, 'defense');
+                } else {
+                    defRes = getAttrByName(targetCharId, 'resistance');
+                }
+                
+                if(fullList) {
+                    rollText += '<br />VS ' + targetName + ': ';
+                    
+                    if(!state.rollBehindScreen || actor.get('controlledby')) {
+                        rollText += '[[1d10+' + roll + ']]';
+                    }
+                    
+                    if((!state.hideNpcTechEffects || actor.get('controlledby')) && tech.core != 'weaken') {
+                        if(!state.rollBehindScreen || actor.get('controlledby')) {
+                            rollText += ', ';
+                        }
+                        rollText += 'Damage [[' + damage + ' - ' + defRes + ']]';
+                    }
+                    
+                } else {
+                    rollText += (firstTarget ? ' ' : ', ') + targetName;
+                    firstTarget = false;
+                }
+                
+                if(hiddenFullList) {
+                    // Add hidden info
+                    hiddenRollText += '<br />VS ' + targetName + ': ';
+                    if(state.rollBehindScreen) {
+                        hiddenRollText += '[[1d10+' + roll + ']]';
+                    }
+                    
+                    if(state.hideNpcTechEffects && tech.core != 'weaken') {
+                        if(state.rollBehindScreen) {
+                            hiddenRollText += ', ';
+                        }
+                        hiddenRollText += 'Damage [[' + damage + ' - ' + defRes + ']]';
+                    }
+                }
+            });
+        } else {
             if(state.rollBehindScreen && !actor.get('controlledby')) {
                 hiddenRollText = 'Hidden roll';
                 if(targets > 1) {
                     hiddenRollText += 's, left to right';
                 }
                 
-                hiddenRollText += ':';
+                if(tech.core == 'damage' || tech.core == 'ultDamate' || tech.core == 'weaken') {
+                    hiddenRollText += ':';
+                }
                 
                 for(i = 0; i < targets; i++) {
                     hiddenRollText += ' [[1d10+' + roll + ']]';
@@ -1568,7 +1669,9 @@ on('chat:message', function(msg) {
                     rollText += ', left to right';
                 }
                 
-                rollText += ':';
+                if(tech.core == 'damage' || tech.core == 'ultDamate' || tech.core == 'weaken') {
+                    rollText += ':';
+                }
                 
                 for(i = 0; i < targets; i++) {
                     rollText += ' [[1d10+' + roll + ']]';
@@ -1745,7 +1848,8 @@ on('chat:message', function(msg) {
         if(!showSummary && tech.summary) {
             sendChat('Valor', '/w gm ' + tech.summary);
         }
-        if(state.rollBehindScreen && hiddenRollText && hiddenRollText.length > 0) {
+        
+        if(hiddenRollText && hiddenRollText.length > 0) {
             sendChat('Valor', '/w gm ' + hiddenRollText);
         }
         
@@ -2987,7 +3091,6 @@ on('chat:message', function(msg) {
         var techStats = highStats.filter(function(s) {
             return s != 4
         });
-        log(techStats);
         
         var techs = [];
         techLevels.forEach(function(techLevel) {
@@ -3665,4 +3768,7 @@ on('change:campaign:turnorder', function(obj) {
  * v0.14.6:
  * - Updated for Healing test errata (gated behind enableHouseRules).
  * - Fixed the bonus reset on !reset, !rest, !fullrest and !init.
+ * 
+ * v0.15.0:
+ * - Support for auto-targetting Use Tech button.
  **/
