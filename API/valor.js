@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.15.0
+ * v0.15.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -382,10 +382,16 @@ function resetValor(charId, skills, flaws) {
             if(startingValor > 1) {
                 startingValor = 1;
             }
-            var level = getAttrByName(charId, 'level');
-            startingValor += Math.ceil(level / 5) - 1;
         }
     }
+    
+    var level = getAttrByName(charId, 'level');
+    var valorBySeason = Math.ceil(level / 5) - 1;
+    if(getAttrByName(charId, 'type') == 'master') {
+        valorBySeason *= 2;
+    }
+    startingValor += valorBySeason;
+    
     updateValueForCharacter(charId, 'valor', startingValor, false, true);
     
     log('Character ' + charId + ' set to ' + startingValor + ' Valor.');
@@ -1577,7 +1583,7 @@ on('chat:message', function(msg) {
                 (tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken');
             var hiddenFullList = ((state.hideNpcTechEffects || state.rollBehindScreen) && !actor.get('controlledby')) &&
                 (tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken');
-                
+            
             if(fullList) {
                 rollText += ':';
             } else {
@@ -1603,16 +1609,21 @@ on('chat:message', function(msg) {
                 
                 // Get def/res
                 var defRes = 0;
-                var physical = tech.stat == 'str' || tech.stat == 'agi';
-                if(tech.mods && tech.mods.find(function(m) {
-                    return m.toLowerCase().indexOf('shift') > -1
+                
+                if(!tech.mods || !tech.mods.find(function(m) {
+                    return m.toLowerCase().indexOf('piercing') > -1
                 })) {
-                    physical = !physical;
-                }
-                if(physical) {
-                    defRes = getAttrByName(targetCharId, 'defense');
-                } else {
-                    defRes = getAttrByName(targetCharId, 'resistance');
+                    var physical = tech.stat == 'str' || tech.stat == 'agi';
+                    if(tech.mods && tech.mods.find(function(m) {
+                        return m.toLowerCase().indexOf('shift') > -1
+                    })) {
+                        physical = !physical;
+                    }
+                    if(physical) {
+                        defRes = getAttrByName(targetCharId, 'defense');
+                    } else {
+                        defRes = getAttrByName(targetCharId, 'resistance');
+                    }
                 }
                 
                 if(fullList) {
@@ -2097,7 +2108,11 @@ on('chat:message', function(msg) {
                 var level = parseInt(levelAttr.get('current'));
                 var charId = levelAttr.get('_characterid');
                 if(level == level) {
-                    startingValor[charId] = Math.ceil(level / 5) - 1;
+                    var valorBySeason = Math.ceil(level / 5) - 1;
+                    if(getAttrByName(charId, 'type') == 'master') {
+                        valorBySeason *= 2;
+                    }
+                    startingValor[charId] = valorBySeason;
                 }
             });
         }
@@ -2260,7 +2275,11 @@ on('chat:message', function(msg) {
                 var level = parseInt(levelAttr.get('current'));
                 var charId = levelAttr.get('_characterid');
                 if(level == level) {
-                    startingValor[charId] = Math.ceil(level / 5) - 1;
+                    var valorBySeason = Math.ceil(level / 5) - 1;
+                    if(getAttrByName(charId, 'type') == 'master') {
+                        valorBySeason *= 2;
+                    }
+                    startingValor[charId] = valorBySeason;
                 }
             });
         }
@@ -3771,4 +3790,9 @@ on('change:campaign:turnorder', function(obj) {
  * 
  * v0.15.0:
  * - Support for auto-targetting Use Tech button.
+ * 
+ * v0.15.1:
+ * - Bugfix: Use Tech button now honors Piercing properly.
+ * - Bugfix: Characters with no skills wouldn't gain house rule Valor bonuses.
+ * - House rules Valor bonuses are now doubled for Masters.
  **/
