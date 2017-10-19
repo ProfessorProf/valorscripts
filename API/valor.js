@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.15.1
+ * v0.15.2
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -19,6 +19,7 @@ state.ignoreLimitsOnMinions = true; // Disables limit blocking for Flunkies and 
 state.showTechAlerts = true; // Send alerts for when ammo changes and when techs come off of cooldown.
 state.showHealthAlerts = true; // Send alerts when characters enter or leave critical health.
 state.houseRulesEnabled = true; // Enables various unsupported house rules.
+state.autoResolveHealing = true; // Enables automatic adjustment of HP for Healing and Transformations.
 state.hideNpcTechEffects = false; // For non-player characters, don't show players the tech effect when using !t.
 state.rollBehindScreen = false; // Hide NPC rolls from the players.
 
@@ -1587,7 +1588,7 @@ on('chat:message', function(msg) {
             if(fullList) {
                 rollText += ':';
             } else {
-                if(tech.core == 'boost' || tech.core == 'transform' || tech.core == 'healing') {
+                if(tech.core == 'boost' || tech.core == 'ultTransform' || tech.core == 'healing') {
                     rollText += targetsList.length == 1 ? 'Target' : 'Targets';
                 } else {
                     rollText += ' VS';
@@ -1803,6 +1804,51 @@ on('chat:message', function(msg) {
             if(state.techHistory.length > 20) {
                 // Don't let the tech history get too long
                 state.techHistory = state.techHistory.slice(1);
+            }
+        }
+        
+        // Update HP for Transformations and Heals
+        if(state.autoResolveHealing) {
+            if(tech.core == 'ultTransform' || tech.core == 'healing') {
+                var charIds = [];
+                
+                if(targetsList.length > 0) {
+                    targetsList.forEach(function(target) {
+                        charIds.push(target.get('represents'));
+                    });
+                } else {
+                    charIds.push(actor.get('_id'));
+                }
+                
+                var hpGain = 0;
+                if(tech.core == 'ultTransform') {
+                    var level = parseInt(getAttrByName(actor.get('_id'), 'level'));
+                    if(level != level) {
+                        level = 1;
+                    }
+                    
+                    hpGain = level * 10;
+                    if(getAttrByName(actor.get('_id'), 'type') == 'master') {
+                        hpGain *= 2;
+                    }
+                } else {
+                    var power = getAttrByName(actor.get('_id'), tech.stat);
+                    if(state.houseRulesEnabled) {
+                        hpGain = (tech.coreLevel + 3) * 3 + Math.ceil(power / 2);
+                    } else {
+                        hpGain = (tech.coreLevel + 3) * 4 + power;
+                    }
+                }
+                
+                charIds.forEach(function(charId) {
+                    var aggravatedWounds = getFlaw(charId, 'aggravatedWounds');
+                    if(aggravatedWounds && tech.core == 'healing') {
+                        updateValueForCharacter(charId, 'hp', Math.ceil(hpGain / 2));
+                    } else {
+                        updateValueForCharacter(charId, 'hp', hpGain);
+                    }
+                });
+                
             }
         }
         
@@ -3795,4 +3841,8 @@ on('change:campaign:turnorder', function(obj) {
  * - Bugfix: Use Tech button now honors Piercing properly.
  * - Bugfix: Characters with no skills wouldn't gain house rule Valor bonuses.
  * - House rules Valor bonuses are now doubled for Masters.
+ * 
+ * v0.15.2:
+ * - Healing techs now automatically process HP recovery.
+ * - Transformations now automatically process HP recovery.
  **/
