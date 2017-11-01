@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v0.7.0
+ * v0.7.1
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -154,6 +154,9 @@
  * - Added Defense and Resistance bonus fields.
  * - Added warnings for skills and flaws over allowed level.
  * 
+ * v0.7.1:
+ * - Fixed fatal tech update bug.
+ * - "Targets" is now a dropdown.
  **/
 
 function calculateBaseAttributes() {
@@ -2209,7 +2212,7 @@ on('change:repeating_techs:tech_name change:repeating_techs:tech_core_level ' +
    'change:repeating_techs:tech_mods change:repeating_techs:tech_targets change:repeating_techs:tech_bonus ' +
    'change:repeating_techs:tech_limits change:repeating_techs:tech_description remove:repeating_techs', function(eventInfo) {
     var techId = eventInfo.sourceAttribute.substring(16, 36);
-    calculateTech(e);
+    calculateTech(techId);
 });
 
 on('sheet:opened', function() {
@@ -3071,7 +3074,28 @@ on('sheet:opened', function() {
         </div>
         <div class="sheet-col">
             <button type='roll' name='attr_tech_command'> Use Technique</button>
-            Targets: <input type='number' value='1' name='attr_tech_targets'>
+            Targets: <select name="attr_tech_targets" class="number-select">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                    <option value="13">13</option>
+                    <option value="14">14</option>
+                    <option value="15">15</option>
+                    <option value="16">16</option>
+                    <option value="17">17</option>
+                    <option value="18">18</option>
+                    <option value="19">19</option>
+                    <option value="20">20</option>
+                </select>
             Bonus: <input type='number' value='0' name='attr_tech_bonus'>
             <div>
                 <input type="checkbox" class="conditional-check" name="attr_tech_can_dig_deep">
