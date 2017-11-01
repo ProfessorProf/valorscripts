@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.15.2
+ * v0.15.3
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -400,7 +400,8 @@ function resetValor(charId, skills, flaws) {
 
 // Resets all bonus fields for all characterse
 function resetBonuses() {
-    var bonusList = ['rollbonus', 'atkrollbonus', 'defrollbonus', 'patkbonus', 'eatkbonus'];
+    var bonusList = ['rollbonus', 'atkrollbonus', 'defrollbonus',
+                     'patkbonus', 'eatkbonus', 'defensebonus', 'resistancebonus'];
     bonusList.forEach(function(b) {
         var bonuses = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
@@ -1622,8 +1623,16 @@ on('chat:message', function(msg) {
                     }
                     if(physical) {
                         defRes = getAttrByName(targetCharId, 'defense');
+                        var bonus = parseInt(getAttrByName(targetCharId, 'defensebonus'));
+                        if(bonus == bonus) {
+                            defRes += bonus;
+                        }
                     } else {
                         defRes = getAttrByName(targetCharId, 'resistance');
+                        var bonus = parseInt(getAttrByName(targetCharId, 'resistancebonus'));
+                        if(bonus == bonus) {
+                            defRes += bonus;
+                        }
                     }
                 }
                 
@@ -1638,7 +1647,7 @@ on('chat:message', function(msg) {
                         if(!state.rollBehindScreen || actor.get('controlledby')) {
                             rollText += ', ';
                         }
-                        rollText += 'Damage [[' + damage + ' - ' + defRes + ']]';
+                        rollText += 'Damage [[{' + damage + ' - ' + defRes + ', 0}kh1]]';
                     }
                     
                 } else {
@@ -1986,7 +1995,7 @@ on('chat:message', function(msg) {
         });
         if(techTargetAttrs && techTargetAttrs.length > 0) {
             var targets = techTargetAttrs[0];
-            targets.set('current', '1');
+            targets.setWithWorker({current: '1'});
         }
         
         var techBonusAttrs = filterObjs(function(obj) {
@@ -1999,7 +2008,7 @@ on('chat:message', function(msg) {
         });
         if(techBonusAttrs && techBonusAttrs.length > 0) {
             var bonus = techBonusAttrs[0];
-            bonus.set('current', '0');
+            bonus.setWithWorker({current: '0'});
         }
         
         log('Technique ' + tech.name + ' performed by ' + actor.get('name') + ' on Round ' + round + '.');
@@ -3843,6 +3852,9 @@ on('change:campaign:turnorder', function(obj) {
  * - House rules Valor bonuses are now doubled for Masters.
  * 
  * v0.15.2:
- * - Healing techs now automatically process HP recovery.
- * - Transformations now automatically process HP recovery.
+ * - Healing now automatically processes its HP recovery.
+ * 
+ * v0.15.3:
+ * - Displayed damage never goes below 0.
+ * - Def/Res bonuses honored by damage calculations.
  **/
