@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.15.3
+ * v0.15.4
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -1467,7 +1467,8 @@ on('chat:message', function(msg) {
         
         if(tech.core == 'damage' ||
            tech.core == 'ultDamage' ||
-           tech.core == 'weaken') {
+           tech.core == 'weaken' ||
+           tech.core == 'custom') {
             var targets = 1;
             var rollBonus = 0;
             while(split.length > nextParam) {
@@ -1549,7 +1550,7 @@ on('chat:message', function(msg) {
             if(tech.resoluteStrike) {
                 rollStat = 'gut';
             }
-            
+            log(rollStat);
             switch(rollStat) {
                 case 'str':
                     rollText += 'Rolling Muscle';
@@ -1582,9 +1583,9 @@ on('chat:message', function(msg) {
         
         if(targetsList.length > 0) {
             var fullList = (!state.hideNpcTechEffects || !state.rollBehindScreen || actor.get('controlledby')) &&
-                (tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken');
+                (tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken' || tech.core == 'custom') && rollStat != 'none';
             var hiddenFullList = ((state.hideNpcTechEffects || state.rollBehindScreen) && !actor.get('controlledby')) &&
-                (tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken');
+                (tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken' || tech.core == 'custom') && rollStat != 'none';
             
             if(fullList) {
                 rollText += ':';
@@ -1643,7 +1644,7 @@ on('chat:message', function(msg) {
                         rollText += '[[1d10+' + roll + ']]';
                     }
                     
-                    if((!state.hideNpcTechEffects || actor.get('controlledby')) && tech.core != 'weaken') {
+                    if((!state.hideNpcTechEffects || actor.get('controlledby')) && tech.core != 'weaken' && tech.core != 'custom') {
                         if(!state.rollBehindScreen || actor.get('controlledby')) {
                             rollText += ', ';
                         }
@@ -1662,7 +1663,7 @@ on('chat:message', function(msg) {
                         hiddenRollText += '[[1d10+' + roll + ']]';
                     }
                     
-                    if(state.hideNpcTechEffects && tech.core != 'weaken') {
+                    if(state.hideNpcTechEffects && tech.core != 'weaken' && tech.core != 'custom') {
                         if(state.rollBehindScreen) {
                             hiddenRollText += ', ';
                         }
@@ -1670,14 +1671,14 @@ on('chat:message', function(msg) {
                     }
                 }
             });
-        } else {
+        } else if(rollStat != 'none') {
             if(state.rollBehindScreen && !actor.get('controlledby')) {
                 hiddenRollText = 'Hidden roll';
                 if(targets > 1) {
                     hiddenRollText += 's, left to right';
                 }
                 
-                if(tech.core == 'damage' || tech.core == 'ultDamate' || tech.core == 'weaken') {
+                if(tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken' || tech.core == 'custom') {
                     hiddenRollText += ':';
                 }
                 
@@ -1690,7 +1691,7 @@ on('chat:message', function(msg) {
                     rollText += ', left to right';
                 }
                 
-                if(tech.core == 'damage' || tech.core == 'ultDamate' || tech.core == 'weaken') {
+                if(tech.core == 'damage' || tech.core == 'ultDamate' || tech.core == 'weaken' || tech.core == 'custom') {
                     rollText += ':';
                 }
                 
@@ -3857,4 +3858,8 @@ on('change:campaign:turnorder', function(obj) {
  * v0.15.3:
  * - Displayed damage never goes below 0.
  * - Def/Res bonuses honored by damage calculations.
+ * 
+ * v0.15.4:
+ * - Added Custom core support.
+ * - Use Tech doesn't try to roll attacks if no stat is selected.
  **/

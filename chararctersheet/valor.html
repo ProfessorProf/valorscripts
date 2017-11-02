@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v0.7.1
+ * v0.7.2
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -157,6 +157,10 @@
  * v0.7.1:
  * - Fixed fatal tech update bug.
  * - "Targets" is now a dropdown.
+ * 
+ * v0.7.2:
+ * - Growth rates for fast/slow skills were reversed.
+ * - Added Custom core.
  **/
 
 function calculateBaseAttributes() {
@@ -952,7 +956,6 @@ function calculateFlawsAndSkills() {
             case 'master':
                 unspentSP += 4 + level;
                 break;
-                
         }
 
         // Apply Flaws
@@ -982,10 +985,10 @@ function calculateFlawsAndSkills() {
                         var flawMaxLevel = 1;
                         switch(flaw.speed) {
                             case 1:
-                                flawMaxLevel = Math.ceil(level / 3);
+                                flawMaxLevel = Math.ceil(level / 5);
                                 break;
                             case 2:
-                                flawMaxLevel = Math.ceil(level / 5);
+                                flawMaxLevel = Math.ceil(level / 3);
                                 break;
                             case 3:
                                 flawMaxLevel = 100; // Custom Flaw
@@ -1056,14 +1059,15 @@ function calculateFlawsAndSkills() {
                                 var skillMaxLevel = 1;
                                 switch(skill.speed) {
                                     case 1:
-                                        skillMaxLevel = Math.ceil(level / 3);
+                                        skillMaxLevel = Math.ceil(level / 5);
                                         break;
                                     case 2:
-                                        skillMaxLevel = Math.ceil(level / 5);
+                                        skillMaxLevel = Math.ceil(level / 3);
                                         break;
                                     case 3:
                                         skillMaxLevel = 100; // Custom Skill
                                 }
+                                
                                 if(skillLevel > skillMaxLevel) {
                                     if(skillWarnings == ' ') {
                                         skillWarnings = 'The following skills are above their maximum levels: ';
@@ -1320,7 +1324,9 @@ function calculateTech(techId) {
         if((techCore == 'summoning' && techMods.indexOf('quick summon') == -1) || techLimits.indexOf('slow') > -1) {
             action = 'Slow';
         }
-        summary += action + ' Action. ';
+        if(techCore != 'custom') {
+            summary += action + ' Action. ';
+        }
         
         // Display core functionality
         var rollStat = techStat;
@@ -1339,7 +1345,8 @@ function calculateTech(techId) {
         }
         if(techCore == 'damage' ||
            techCore == 'ultDamage' ||
-           techCore == 'weaken') {
+           techCore == 'weaken' ||
+           techCore == 'custom') {
             var hitBonus = 0;
             if(techMods.indexOf('accurate') > -1) {
                 hitBonus += 2;
@@ -1509,6 +1516,10 @@ function calculateTech(techId) {
 				hasSkills = true;
 				hasFlaws = true;
                 hasTargets = false;
+                break;
+            case 'custom':
+				hasSkills = true;
+				hasFlaws = true;
                 break;
             default:
                 warnings += "WARNING: Unknown Core '" + techCore + "'. ";
@@ -2111,7 +2122,7 @@ function calculateTech(techId) {
             }
         });
         
-        if(core && techCore != 'mimic' && techCore != 'ultMimic') {
+        if(core && techCore != 'mimic' && techCore != 'ultMimic' && techCore != 'custom') {
             var cost = core.cost + core.levelUp * (techCoreLevel + totalModLevel) - limitSt;
             if(cost < 0) {
                 cost = 0;
@@ -3063,6 +3074,7 @@ on('sheet:opened', function() {
                                 <option value="ultMimic">Ultimate Mimic</option>
                                 <option value="ultTransform">Transformation</option>
                             </optgroup>
+                            <option value="custom">Custom Core</option>
                         </select>
                     </td>
                     <td>Core Level:</td>
