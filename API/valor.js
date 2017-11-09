@@ -341,6 +341,13 @@ function getTechs(charId) {
             } else {
                 techs.push({ id: techId, resoluteStrike: resoluteStrike});
             }
+        } else if(techName.indexOf('tech_persist') > -1) {
+            var persist = rawTech.get('current') == 'on';
+            if(oldTech) {
+                oldTech.persist = persist;
+            } else {
+                techs.push({ id: techId, persist: persist});
+            }
         }
     });
     
@@ -1268,11 +1275,16 @@ on('chat:message', function(msg) {
             return;
         }
         
-        
         // Check for Overload Limits
         if(tech.overloadLimits) {
             overrideLimits = true;
             log('Overloading limits.');
+        }
+        
+        // Check for Overload Limits
+        if(tech.persist) {
+            overrideLimits = true;
+            log('Rerolling persistent tech.');
         }
         
         // Pull Skill list
@@ -1550,7 +1562,7 @@ on('chat:message', function(msg) {
             if(tech.resoluteStrike) {
                 rollStat = 'gut';
             }
-            log(rollStat);
+            
             switch(rollStat) {
                 case 'str':
                     rollText += 'Rolling Muscle';
@@ -1702,7 +1714,7 @@ on('chat:message', function(msg) {
         }
         
         // Pay costs
-        if(token) {
+        if(token && !tech.persist) {
             var hpCost = 0;
             var stCost = tech.cost;
             var valorCost = 0;
@@ -1863,7 +1875,12 @@ on('chat:message', function(msg) {
         }
         
         var message = '<table>';
-        message += '<tr><td>Performing Technique: **' + tech.name + '**</td></tr>';
+        if(tech.persist) {
+            message += '<tr><td>Persisting Technique: **' + tech.name + '**</td></tr>';
+        } else {
+            message += '<tr><td>Performing Technique: **' + tech.name + '**</td></tr>';
+        }
+        
         if(rollText) {
             message += '<tr><td>' + rollText + '</td></tr>';
         }
@@ -1982,6 +1999,23 @@ on('chat:message', function(msg) {
             if(techAttrs && techAttrs.length > 0) {
                 var resoluteStrike = techAttrs[0];
                 resoluteStrike.set('current', '0');
+            }
+        }
+        
+        if(tech.persist) {
+            log('Persistent Reroll was enabled.');
+            var techAttrs = filterObjs(function(obj) {
+                if(obj.get('_type') == 'attribute' &&
+                   obj.get('name').indexOf(tech.id) > -1 &&
+                   obj.get('name').indexOf('persist') > -1 &&
+                   obj.get('name').indexOf('can_persist') == -1) {
+                       return true;
+                }
+                return false;
+            });
+            if(techAttrs && techAttrs.length > 0) {
+                var persist = techAttrs[0];
+                persist.set('current', '0');
             }
         }
         

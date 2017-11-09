@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v0.7.2
+ * v0.7.3
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -161,6 +161,10 @@
  * v0.7.2:
  * - Growth rates for fast/slow skills were reversed.
  * - Added Custom core.
+ * 
+ * v0.7.3:
+ * - Added Persistent Reroll checkbox.
+ * - Made Use Techniques target count update faster.
  **/
 
 function calculateBaseAttributes() {
@@ -1234,6 +1238,69 @@ function calculateTP() {
     });
 }
 
+function calculateTechCommand(techId) {
+    log('VALOR - Recalculating Technique Command ID ' + techId);
+    
+    var techFieldNames = [];
+
+    techFieldNames.push('repeating_techs_' + techId + '_tech_name');
+    techFieldNames.push('repeating_techs_' + techId + '_tech_core');
+    techFieldNames.push('repeating_techs_' + techId + '_tech_mods');
+    techFieldNames.push('repeating_techs_' + techId + '_tech_limits');
+    techFieldNames.push('repeating_techs_' + techId + '_tech_targets');
+    
+    getAttrs(techFieldNames, function(techValues) {
+        var techName = techValues['repeating_techs_' + techId + '_tech_name'];
+        var techCore = 'damage';
+        if(techValues['repeating_techs_' + techId + '_tech_core']) {
+            techCore = techValues['repeating_techs_' + techId + '_tech_core'];
+        }
+        var techMods = '';
+        if(techValues['repeating_techs_' + techId + '_tech_mods']) {
+            techMods = techValues['repeating_techs_' + techId + '_tech_mods'].toLowerCase();
+        }
+        var techLimits = '';
+        if(techValues['repeating_techs_' + techId + '_tech_limits']) {
+            techLimits = techValues['repeating_techs_' + techId + '_tech_limits'].toLowerCase();
+        }
+        var techTargets = 1;
+        if(techValues['repeating_techs_' + techId + '_tech_targets']) {
+            techTargets = parseInt(techValues['repeating_techs_' + techId + '_tech_targets']);
+        }
+        if(techTargets > 20) {
+            techTargets = 20;
+        }
+        
+        var hasTargets = true;
+        
+        if(techCore == 'barrier' || techCore == 'summoning' ||
+           techCore == 'ultTransform' || techCore == 'domain') {
+            hasTargets = false;
+        }
+        
+        if(techMods.indexOf('transform ally') > -1) {
+            hasTargets = true;
+        }
+        
+        if(techLimits.indexOf('self') > -1) {
+            hasTargets = false;
+        }
+        
+        var techCommand = '!t --as "@{character_id}" "@{tech_name}" +@{tech_bonus}';
+        if(techTargets > 0 && hasTargets) {
+            techCommand += ' --targets'
+            for(var j = 0; j < techTargets; j++) {
+                var targetId = 'Target #' + (j + 1);
+                techCommand += ' @{target|' + targetId + '|token_id}'
+            }
+        }
+        
+        var attrs = {};
+        attrs['repeating_techs_' + techId + '_tech_command'] = techCommand;
+        setAttrs(attrs, { silent: true });
+    });
+}
+
 function calculateTech(techId) {
     log('VALOR - Recalculating Technique ID ' + techId);
     
@@ -1300,7 +1367,7 @@ function calculateTech(techId) {
 		var hasSkills = false;
 		var hasFlaws = false;
         var barrierFreebie = false;
-        var hasTargets = true;
+        var isPersistent = false;
         
         if(techCoreLevel < 1) {
             warnings += 'WARNING: Core Level cannot be less than 1. ';
@@ -1453,7 +1520,6 @@ function calculateTech(techId) {
             case 'barrier':
                 summary += 'Create a Barrier of power ' + techCoreLevel + '. ';
                 barrierFreebie = true;
-                hasTargets = false;
                 break;
             case 'mimic':
                 summary += 'Mimics a witnessed enemy Technique at Tech Level ' + techCoreLevel + '. ';
@@ -1463,7 +1529,6 @@ function calculateTech(techId) {
                 break;
             case 'summoning':
                 summary += 'Summons a Level ' + techCoreLevel + ' ally. Command it with a Support Action. ';
-                hasTargets = false;
                 break;
             case 'ultTransform':
                 var bonusHp = level * 10;
@@ -1479,7 +1544,6 @@ function calculateTech(techId) {
                     summary += ' ';
                 }
 				hasSkills = true;
-                hasTargets = false;
                 break;
             case 'boost':
                 if(techGrantedSkills) {
@@ -1515,7 +1579,6 @@ function calculateTech(techId) {
                 }
 				hasSkills = true;
 				hasFlaws = true;
-                hasTargets = false;
                 break;
             case 'custom':
 				hasSkills = true;
@@ -1687,6 +1750,7 @@ function calculateTech(techId) {
                 summary += 'On a hit, recover Health equal to the largest amount of damage dealt to a single target. ';
             } else if(mod.indexOf('persistent') == 0) {
                 summary += 'Attacks again in the same area at the start of your next 2 turns. ';
+                isPersistent = true;
             } else if(mod.indexOf('piercing') == 0) {
                 if(techStat == 'str' || techStat == 'agi') {
                     summary += 'Ignores Defense. ';
@@ -1697,7 +1761,6 @@ function calculateTech(techId) {
                 summary += 'On a hit, the target takes ongoing damage equal to a third of initial damage for 3 turns. ';
             } else if(mod.indexOf('transform ally') == 0) {
                 summary += 'Can transform an ally within 5 spaces. ';
-                hasTargets = true;
                 totalModLevel += 1;
             } else if(mod.indexOf('unerring') == 0) {
                 summary += 'Can be used again if you miss every target. ';
@@ -1995,7 +2058,6 @@ function calculateTech(techId) {
                 limitSt += 4;
             } else if(limit.indexOf('self') == 0) {
                 limitSummary += 'Can only target yourself. ';
-                hasTargets = false;
                 limitSt++;
             } else if(limit.indexOf('setup') == 0 ||
                       limit.indexOf('set-up') == 0 ||
@@ -2132,15 +2194,6 @@ function calculateTech(techId) {
         }
         summary += limitSummary;
         
-        var techCommand = '!t --as "@{character_id}" "@{tech_name}" +@{tech_bonus}';
-        if(techTargets > 0 && hasTargets) {
-            techCommand += ' --targets'
-            for(var j = 0; j < techTargets; j++) {
-                var targetId = 'Target #' + (j + 1);
-                techCommand += ' @{target|' + targetId + '|token_id}'
-            }
-        }
-
         var attrs = {};
         attrs['repeating_techs_' + techId + '_tech_summary'] = summary;
         attrs['repeating_techs_' + techId + '_tech_warnings'] = warnings;
@@ -2165,7 +2218,7 @@ function calculateTech(techId) {
             (techCore == 'damage' || techCore == 'ultDamage' || techCore == 'mimic' || 
             techCore == 'ultMimic' || techCore == 'weaken'))
             ? 'on' : 'off';
-        attrs['repeating_techs_' + techId + '_tech_command'] = techCommand;
+        attrs['repeating_techs_' + techId + '_tech_can_persist'] = isPersistent ? 'on' : 'off';
         setAttrs(attrs, { silent: true });
     });
 }
@@ -2224,6 +2277,12 @@ on('change:repeating_techs:tech_name change:repeating_techs:tech_core_level ' +
    'change:repeating_techs:tech_limits change:repeating_techs:tech_description remove:repeating_techs', function(eventInfo) {
     var techId = eventInfo.sourceAttribute.substring(16, 36);
     calculateTech(techId);
+});
+
+on('change:repeating_techs:tech_mods change:repeating_techs:tech_targets change:repeating_techs:tech_core ' +
+   'change:repeating_techs:tech_limits change:repeating_techs:tech_name', function(eventInfo) {
+    var techId = eventInfo.sourceAttribute.substring(16, 36);
+    calculateTechCommand(techId);
 });
 
 on('sheet:opened', function() {
@@ -3135,6 +3194,13 @@ on('sheet:opened', function() {
                 <div class="conditional-block">
                     <input type="checkbox" name="attr_tech_resoluteStrike">
                     <span class="label">Use Resolute Strike</span>
+                </div>
+            </div>
+            <div>
+                <input type="checkbox" class="conditional-check" name="attr_tech_can_persist">
+                <div class="conditional-block">
+                    <input type="checkbox" name="attr_tech_persist">
+                    <span class="label">Persistent Reroll</span>
                 </div>
             </div>
         </div>
