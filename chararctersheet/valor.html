@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v0.7.3
+ * v0.7.4
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -165,6 +165,11 @@
  * v0.7.3:
  * - Added Persistent Reroll checkbox.
  * - Made Use Techniques target count update faster.
+ * 
+ * v0.7.4:
+ * - Fixed Int/Res values on Soldiers/Flunkies.
+ * - Custom mods/limits no longer accidentally trigger other mods/limits.
+ * - Tech descriptions update when changing granted skill/flaw lists.
  **/
 
 function calculateBaseAttributes() {
@@ -245,8 +250,8 @@ function calculateActiveAttributes() {
                 mus--;
                 dex--;
                 aur--;
-                mnd--;
-                gut--;
+                int--;
+                res--;
                 break;
         }
         
@@ -1278,11 +1283,11 @@ function calculateTechCommand(techId) {
             hasTargets = false;
         }
         
-        if(techMods.indexOf('transform ally') > -1) {
+        if(techMods.indexOf('custom') == -1 && techMods.indexOf('transform ally') > -1) {
             hasTargets = true;
         }
         
-        if(techLimits.indexOf('self') > -1) {
+        if(techLimits.indexOf('custom') == -1 && techLimits.indexOf('self') > -1) {
             hasTargets = false;
         }
         
@@ -1603,7 +1608,9 @@ function calculateTech(techId) {
                 modLevel = 1;
             }
             
-            if(mod.indexOf('range') == 0) {
+            if(mod.indexOf('custom') == 0) {
+                totalModLevel += modLevel;
+            } else if(mod.indexOf('range') == 0) {
                 var range = 3 * modLevel;
                 switch(techStat) {
                     case 'str':
@@ -1939,8 +1946,6 @@ function calculateTech(techId) {
             } else if(mod.indexOf('touch of mal') == 0) {
                 summary += "Whenever you hit a target with a Damage or Weaken tech in this form, they gain 1 Malevolence. ";
                 totalModLevel += 6;
-            } else if(mod.indexOf('custom') == 0) {
-                totalModLevel += modLevel;
             } else if(mod.length > 0) {
                 warnings += "WARNING: Unrecognized Modifier '" + mod + "'. ";
             }
@@ -1974,7 +1979,9 @@ function calculateTech(techId) {
                 limitLevel = 1;
             }
             
-            if(limit.indexOf('health') == 0) {
+            if(limit.indexOf('custom') == 0) {
+                limitSt += limitLevel;
+            } else if(limit.indexOf('health') == 0) {
                 var healthLost = 5 * limitLevel;
                 limitSummary += 'Costs ' + healthLost + ' Health. ';
                 limitSt += 2 * limitLevel;
@@ -2175,8 +2182,6 @@ function calculateTech(techId) {
             } else if(limit.indexOf('water') == 0) {
                 limitSummary += "Can only be used underwater. ";
                 limitSt += 3;
-            } else if(limit.indexOf('custom') == 0) {
-                limitSt += limitLevel;
             } else if(limit.length > 0 &&
                       limit.indexOf('slow') == -1 &&
                       limit.indexOf('grant') == -1) {
@@ -2274,7 +2279,8 @@ on('change:level change:type change:repeating_skills remove:repeating_skills ' +
 on('change:repeating_techs:tech_name change:repeating_techs:tech_core_level ' +
    'change:repeating_techs:tech_core change:repeating_techs:tech_stat ' +
    'change:repeating_techs:tech_mods change:repeating_techs:tech_targets change:repeating_techs:tech_bonus ' +
-   'change:repeating_techs:tech_limits change:repeating_techs:tech_description remove:repeating_techs', function(eventInfo) {
+   'change:repeating_techs:tech_limits change:repeating_techs:tech_description ' +
+   'change:repeating_techs:tech_granted_skills change:repeating_techs:tech_inflicted_flaws remove:repeating_techs', function(eventInfo) {
     var techId = eventInfo.sourceAttribute.substring(16, 36);
     calculateTech(techId);
 });
