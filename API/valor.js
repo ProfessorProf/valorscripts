@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.15.4
+ * v0.15.5
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -190,20 +190,20 @@ function getTechs(charId) {
             if(oldTech) {
                 oldTech.name = rawTech.get('current');
             } else {
-                techs.push({ id: techId, name: rawTech.get('current')});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), name: rawTech.get('current')});
             }
         } else if(techName.indexOf('tech_core') > -1 && 
                   techName.indexOf('tech_core_') == -1) {
             if(oldTech) {
                 oldTech.core = rawTech.get('current');
             } else {
-                techs.push({ id: techId, core: rawTech.get('current')});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), core: rawTech.get('current')});
             }
         } else if(techName.indexOf('tech_stat') > -1) {
             if(oldTech) {
                 oldTech.stat = rawTech.get('current');
             } else {
-                techs.push({ id: techId, stat: rawTech.get('current')});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), stat: rawTech.get('current')});
             }
         } else if(techName.indexOf('tech_cost') > -1) {
             var cost = parseInt(rawTech.get('current'));
@@ -214,7 +214,7 @@ function getTechs(charId) {
             if(oldTech) {
                 oldTech.cost = cost;
             } else {
-                techs.push({ id: techId, cost: cost});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), cost: cost});
             }
         } else if(techName.indexOf('tech_limit_st') > -1) {
             var limitSt = parseInt(rawTech.get('current'));
@@ -225,7 +225,7 @@ function getTechs(charId) {
             if(oldTech) {
                 oldTech.limitSt = limitSt;
             } else {
-                techs.push({ id: techId, limitSt: limitSt});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), limitSt: limitSt});
             }
         } else if(techName.indexOf('tech_limits') > -1) {
             var limits = rawTech.get('current').split('\n');
@@ -233,7 +233,7 @@ function getTechs(charId) {
             if(oldTech) {
                 oldTech.limits = limits;
             } else {
-                techs.push({ id: techId, limits: limits});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), limits: limits});
             }
         } else if(techName.indexOf('tech_mods') > -1) {
             var mods = rawTech.get('current').split('\n');
@@ -241,25 +241,25 @@ function getTechs(charId) {
             if(oldTech) {
                 oldTech.mods = mods;
             } else {
-                techs.push({ id: techId, mods: mods});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), mods: mods});
             }
         } else if(techName.indexOf('tech_micro_summary') > -1) {
             if(oldTech) {
                 oldTech.summary = rawTech.get('current');
             } else {
-                techs.push({ id: techId, summary: rawTech.get('current')});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), summary: rawTech.get('current')});
             }
         } else if(techName.indexOf('tech_is_mimic') > -1) {
             if(oldTech) {
                 oldTech.isMimic = rawTech.get('current');
             } else {
-                techs.push({ id: techId, isMimic: rawTech.get('current')});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), isMimic: rawTech.get('current')});
             }
         } else if(techName.indexOf('tech_mimic_target') > -1) {
             if(oldTech) {
                 oldTech.mimicTarget = rawTech.get('current');
             } else {
-                techs.push({ id: techId, mimicTarget: rawTech.get('current')});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), mimicTarget: rawTech.get('current')});
             }
         } else if(techName.indexOf('tech_core_level') > -1) {
             var coreLevel = parseInt(rawTech.get('current'));
@@ -269,7 +269,7 @@ function getTechs(charId) {
             if(oldTech) {
                 oldTech.coreLevel = coreLevel;
             } else {
-                techs.push({ id: techId, coreLevel: coreLevel});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), coreLevel: coreLevel});
             }
         } else if(techName.indexOf('tech_level') > -1) {
             var techLevel = parseInt(rawTech.get('current'));
@@ -279,74 +279,74 @@ function getTechs(charId) {
             if(oldTech) {
                 oldTech.techLevel = techLevel;
             } else {
-                techs.push({ id: techId, techLevel: techLevel});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), techLevel: techLevel});
             }
         } else if(techName.indexOf('tech_tech_stat') > -1) {
             if(oldTech) {
                 oldTech.techStat = rawTech.get('current');
             } else {
-                techs.push({ id: techId, techLevel: rawTech.get('current')});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), techLevel: rawTech.get('current')});
             }
         } else if(techName.indexOf('tech_granted_skills') > -1) {
             if(oldTech) {
                 oldTech.grantedSkills = rawTech.get('current');
             } else {
-                techs.push({ id: techId, grantedSkills: rawTech.get('current')});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), grantedSkills: rawTech.get('current')});
             }
         } else if(techName.indexOf('tech_has_skills') > -1) {
             var hasSkills = rawTech.get('current') == 'on';
             if(oldTech) {
                 oldTech.hasSkills = hasSkills;
             } else {
-                techs.push({ id: techId, hasSkills: hasSkills});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), hasSkills: hasSkills});
             }
         } else if(techName.indexOf('tech_inflicted_flaws') > -1) {
             if(oldTech) {
                 oldTech.inflictedFlaws = rawTech.get('current');
             } else {
-                techs.push({ id: techId, inflictedFlaws: rawTech.get('current')});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), inflictedFlaws: rawTech.get('current')});
             }
         } else if(techName.indexOf('tech_has_flaws') > -1) {
             var hasFlaws = rawTech.get('current') == 'on';
             if(oldTech) {
                 oldTech.hasFlaws = hasFlaws;
             } else {
-                techs.push({ id: techId, hasFlaws: hasFlaws});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), hasFlaws: hasFlaws});
             }
         } else if(techName.indexOf('tech_digDeep') > -1) {
             var digDeep = rawTech.get('current') == 'on';
             if(oldTech) {
                 oldTech.digDeep = digDeep;
             } else {
-                techs.push({ id: techId, digDeep: digDeep});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), digDeep: digDeep});
             }
         } else if(techName.indexOf('tech_overloadLimits') > -1) {
             var overloadLimits = rawTech.get('current') == 'on';
             if(oldTech) {
                 oldTech.overloadLimits = overloadLimits;
             } else {
-                techs.push({ id: techId, overloadLimits: overloadLimits});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), overloadLimits: overloadLimits});
             }
         } else if(techName.indexOf('tech_empowerAttack') > -1) {
             var empowerAttack = rawTech.get('current') == 'on';
             if(oldTech) {
                 oldTech.empowerAttack = empowerAttack;
             } else {
-                techs.push({ id: techId, empowerAttack: empowerAttack});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), empowerAttack: empowerAttack});
             }
         } else if(techName.indexOf('tech_resoluteStrike') > -1) {
             var resoluteStrike = rawTech.get('current') == 'on';
             if(oldTech) {
                 oldTech.resoluteStrike = resoluteStrike;
             } else {
-                techs.push({ id: techId, resoluteStrike: resoluteStrike});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), resoluteStrike: resoluteStrike});
             }
         } else if(techName.indexOf('tech_persist') > -1) {
             var persist = rawTech.get('current') == 'on';
             if(oldTech) {
                 oldTech.persist = persist;
             } else {
-                techs.push({ id: techId, persist: persist});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), persist: persist});
             }
         }
     });
@@ -435,7 +435,9 @@ function getTechDamage(tech, charId) {
                m.toLowerCase().indexOf('debilitating') > -1 ||
                m.toLowerCase().indexOf('boosting') > -1;
     });
-    var atk = getAttrByName(charId, tech.stat + 'Atk');
+    
+    var stat = tech.newStat ? tech.newStat : tech.stat;
+    var atk = getAttrByName(charId, stat + 'Atk');
     
     if(!atk || atk != atk) {
         atk = 0;
@@ -521,28 +523,6 @@ function getTechDescription(tech, charId, suppressDamageDisplay) {
                         physical = !physical;
                     }
                     summary += physical ? ' - Defense' : ' - Resistance';
-                }
-                
-                var bonuses = [];
-                var hp = getAttrByName(charId, 'hp');
-                var hpMax = getAttrByName(charId, 'hp', 'max');
-                if(hp / hpMax <= 0.4) {
-                    var crisis = getSkill(charId, 'crisis');
-                    if(crisis && crisis.level) {
-                        bonuses.push('Crisis');
-                    }
-                    var berserker = getFlaw(charId, 'berserker')
-                    if(berserker) {
-                        bonuses.push('Berserker');
-                    }
-                }
-                
-                if(tech.empowerAttack) {
-                    bonuses.push('Empowered');
-                }
-                
-                if(bonuses.length > 0) {
-                    summary += ' **(' + bonuses.join(', ') + ')**';
                 }
             }
             break;
@@ -703,6 +683,10 @@ function getTechByName(techId, charId, suppressDamageDisplay) {
     }
     
     if(tech) {
+        if(!charId) {
+            charId = tech.charId;
+        }
+        
         if(!tech.core) {
             tech.core = 'damage';
         }
@@ -723,7 +707,7 @@ function getTechByName(techId, charId, suppressDamageDisplay) {
             var resoluteStrike = tech.resoluteStrike;
             var oldId = tech.id;
             var mimicTech = tech;
-            tech = getTechByName(tech.mimicTarget);
+            tech = getTechByName(tech.mimicTarget, null, suppressDamageDisplay);
             if(tech) {
                 tech.name = mimicTech.name + ' [' + tech.name + ']';
         
@@ -741,10 +725,11 @@ function getTechByName(techId, charId, suppressDamageDisplay) {
                     
                     // Rewrite tech summary
                     log('Reproducing tech at core level ' + tech.coreLevel);
-                    tech.summary = getTechDescription(tech, charId);
+                    tech.summary = getTechDescription(tech, charId, suppressDamageDisplay);
                 }
                 
                 // Roll using the chosen stat
+                tech.newStat = tech.stat;
                 tech.stat = mimicTech.stat;
                 
                 // Put the original core type (mimic vs ult mimic) in the object
@@ -801,7 +786,6 @@ function getActor(msg) {
 // To use: Put a label on the turn tracker called 'Round' at the end of the
 // round. When you reach the end of the round, all characters with a red
 // bar max value will gain 1 Valor.
-// Does not consider Masters or Limitless Power skill.
 function updateValor(obj) {
     if(!state.valorUpdaterEnabled) {
         // Settings check
@@ -849,6 +833,10 @@ function updateValor(obj) {
                 valorRate = parseInt(state.charData[charId].valorRate);
             } else {
                 var charClass = getAttrByName(charId, 'type');
+                if(getSkill(charId, 'limitlessPower')) {
+                    // +1 valor rate for Valiant skill
+                    valorRate++;
+                }
                 if(charClass == 'master') {
                     // +1 to hit for Masters
                     valorRate *= 2;
@@ -1064,7 +1052,7 @@ function endEvent(eventName) {
 }
 
 // !reset command
-// Enter !reset in the chat to purge the tech data history and reset valor without healing anyone..
+// Enter !reset in the chat to purge the tech data history and reset valor without healing anyone.
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!reset') == 0
         && playerIsGM(msg.playerid)) {
@@ -1187,7 +1175,6 @@ on('chat:message', function(msg) {
                 }
             }
         }
-        
         
         if(split.length < 2) {
             // Show a list of techs for this character
@@ -1618,17 +1605,21 @@ on('chat:message', function(msg) {
                 if(!targetName && targetChar) {
                     targetName = targetChar.get('name');
                 }
+                if(!targetName) {
+                    targetName = 'Target';
+                }
                 
-                // Get damage;
+                // Get damage
                 var damage = getTechDamage(tech, actor.get('_id'));
                 
                 // Get def/res
                 var defRes = 0;
+                var defResStat = tech.newStat ? tech.newStat : tech.stat;
                 
-                if(!tech.mods || !tech.mods.find(function(m) {
+                if(targetChar && (!tech.mods || !tech.mods.find(function(m) {
                     return m.toLowerCase().indexOf('piercing') > -1
-                })) {
-                    var physical = tech.stat == 'str' || tech.stat == 'agi';
+                }))) {
+                    var physical = defResStat == 'str' || defResStat == 'agi';
                     if(tech.mods && tech.mods.find(function(m) {
                         return m.toLowerCase().indexOf('shift') > -1
                     })) {
@@ -1874,11 +1865,37 @@ on('chat:message', function(msg) {
             }
         }
         
+        var techQualifiers = [];
+        if(tech.empowerAttack) {
+            techQualifiers.push('Empowered');
+        }
+        
+        var hp = parseInt(token.get('bar1_value'));
+        var hpMax = parseInt(token.get('bar1_max'));
+        if(hp / hpMax <= 0.4) {
+            var crisis = getSkill(actor.get('_id'), 'crisis');
+            if(crisis && crisis.level) {
+                techQualifiers.push('Crisis');
+            }
+            var berserker = getFlaw(actor.get('_id'), 'berserker')
+            if(berserker) {
+                techQualifiers.push('Berserker');
+            }
+        }
+        
         var message = '<table>';
         if(tech.persist) {
-            message += '<tr><td>Persisting Technique: **' + tech.name + '**</td></tr>';
+            message += '<tr><td>Persisting Technique: **' + tech.name;
+            if(techQualifiers.length > 0) {
+                message += ' (' + techQualifiers.join(', ') + ')';
+            }
+            message += '**</td></tr>';
         } else {
-            message += '<tr><td>Performing Technique: **' + tech.name + '**</td></tr>';
+            message += '<tr><td>Performing Technique: **' + tech.name;
+            if(techQualifiers.length > 0) {
+                message += ' (' + techQualifiers.join(', ') + ')';
+            }
+            message += '**</td></tr>';
         }
         
         if(rollText) {
@@ -3896,4 +3913,11 @@ on('change:campaign:turnorder', function(obj) {
  * v0.15.4:
  * - Added Custom core support.
  * - Use Tech doesn't try to roll attacks if no stat is selected.
+ * 
+ * v0.15.5
+ * - Mimic Tech now uses right attack stat and targets right defense.
+ * - Mimic-related bugs resolved.
+ * - Valiant skill now honored.
+ * - Scripts no longer crash when targeting a non-character token.
+ * - Empowered, etc. now appear regardless of tech display mode.
  **/
