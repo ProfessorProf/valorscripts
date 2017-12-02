@@ -51,6 +51,10 @@ Any of these will work:
 Syntax: `!t-undo`
 Reverses any expended resources from the most-recently used technique. Remembers up to the last 20 techniques used.
 
+### Get critical hit damage
+Syntax: `!crit`
+Shows you (and only you) how much damage the previous technique would have done if it had scored a critical hit.
+
 ### Add Effect
 Syntax: `!e Poison 2`
 
@@ -82,6 +86,11 @@ Sets any selected characters to gain an amount of Valor per turn equal to the pr
 Syntax: `!def`
 
 Shows you (and only you) the Defense and Resistance values of everyone on the current map.
+
+### Show damage increments
+Syntax: `!di`
+
+Shows you (and only you) the Damage Increment values of everyone on the current map.
 
 ### Roll Initiative
 Syntax: `!init`

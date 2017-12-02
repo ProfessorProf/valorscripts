@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.15.5
+ * v0.16.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -421,7 +421,7 @@ function resetBonuses() {
     });
 }
 
-function getTechDamage(tech, charId) {
+function getTechDamage(tech, charId, crit) {
     if(tech.core != 'damage' && tech.core != 'ultDamage') {
         // This isn't a damaging tech
         return 0;
@@ -443,6 +443,7 @@ function getTechDamage(tech, charId) {
         atk = 0;
     }
     
+    var baseAtk = atk;
     var damage = 0;
     if(tech.core == 'damage' && special) {
         damage = (tech.coreLevel + 3) * 4;
@@ -454,6 +455,10 @@ function getTechDamage(tech, charId) {
     }
     
     damage += atk;
+    
+    if(crit) {
+        damage += baseAtk;
+    }
     
     var hp = getAttrByName(charId, 'hp');
     var hpMax = getAttrByName(charId, 'hp', 'max');
@@ -1922,7 +1927,8 @@ on('chat:message', function(msg) {
                 techName: tech.name,
                 hpCost: hpCost,
                 stCost: stCost,
-                valorCost: valorCost
+                valorCost: valorCost,
+                targets: targetsList.map(t => t.get('_id'))
             });
             state.techData[techDataId].timesUsed.push(round);
             log('Updated tech data:');
@@ -2661,10 +2667,159 @@ on('chat:message', function(msg) {
                     'Res **' + res + '**';
             }
         });
-        message += '</table>';
         
         sendChat('Valor', '/w gm <div>' + message + '</div>');
         endEvent('!def');
+    }
+});
+
+// !di command
+// Displays damage increments for all active characters.
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!di') == 0
+        && playerIsGM(msg.playerid)) {
+        startEvent('!di');
+        
+        // Get list of tokens
+        var page = Campaign().get('playerpageid');
+        var allTokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
+        var actorIds = [];
+        var tokens = [];
+        var duplicateIds = [];
+        
+        allTokens.forEach(function(token) {
+            var actorId = token.get('represents');
+            if(actorId && actorIds.indexOf(actorId) == -1) {
+                log('Adding ' + token.get('name') + ' to defense token list');
+                actorIds.push(actorId);
+                tokens.push(token);
+            }
+        });
+
+        var message = '';
+        var turnOrder = [];
+        tokens.forEach(function(token) {
+            var actorId = token.get('represents');
+            var actor = getObj('character', actorId);
+            
+            if(actor) {
+                var di = getAttrByName(actorId, 'di')
+                var actorName = actor.get('name');
+                if(message.length > 0) {
+                    message += '<br />';
+                }
+                message += actorName + ': ' + 
+                    'DI **' + di + '**';
+            }
+        });
+        
+        sendChat('Valor', '/w gm <div>' + message + '</div>');
+        endEvent('!di');
+    }
+});
+
+// !crit command
+// Shows critical hit damage for previously-used technique.
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!crit') == 0
+        && playerIsGM(msg.playerid)) {
+        startEvent('!crit');
+        
+        if(!state.techHistory) {
+            state.techHistory = [];
+        }
+        
+        // Get params
+        var split = msg.content.match(/(".*?")|(\S+)/g);
+        var lookback = 1;
+        if(split.length > 1) {
+            lookback = parseInt(split[1]);
+        }
+        
+        if(lookback > state.techHistory.length) {
+            sendChat('Valor', '/w gm Not enough techniques found in tech history.');
+            return;
+        }
+        
+        // Get tech data
+        var techData = state.techHistory[state.techHistory.length - lookback];
+        var tech = getTechByName(techData.techName, techData.userId);
+        var actorToken = getObj('graphic', techData.id);
+        
+        if(tech.core != 'damage' && tech.core != 'ultDamage') {
+            sendChat('Valor', '/w gm ' + techData.techName + ' is not a damage technique.');
+            return;
+        }
+        
+        var targetsList = techData.targets ? techData.targets : [];
+        
+        var output = 'Critical hit for **' + techData.techName + '**:';
+        
+        if(targetsList.length > 0) {
+            var firstTarget = true;
+            
+            targetsList.forEach(function(targetId) {
+                var target = getObj('graphic', targetId);
+                var targetChar = getObj('character', target.get('represents'));
+                
+                var targetName = target.get('name');
+                if(!targetName && targetChar) {
+                    targetName = targetChar.get('name');
+                }
+                if(!targetName) {
+                    targetName = 'Target';
+                }
+                
+                // Get crit damage
+                var damage = getTechDamage(tech, actorToken.get('represents'), true);
+                
+                // Get def/res
+                var defRes = 0;
+                var defResStat = tech.newStat ? tech.newStat : tech.stat;
+                
+                if(targetChar && (!tech.mods || !tech.mods.find(function(m) {
+                    return m.toLowerCase().indexOf('piercing') > -1
+                }))) {
+                    var physical = defResStat == 'str' || defResStat == 'agi';
+                    if(tech.mods && tech.mods.find(function(m) {
+                        return m.toLowerCase().indexOf('shift') > -1
+                    })) {
+                        physical = !physical;
+                    }
+                    if(physical) {
+                        defRes = getAttrByName(targetChar.get('_id'), 'defense');
+                        var bonus = parseInt(getAttrByName(targetChar.get('_id'), 'defensebonus'));
+                        if(bonus == bonus) {
+                            defRes += bonus;
+                        }
+                    } else {
+                        defRes = getAttrByName(targetChar.get('_id'), 'resistance');
+                        var bonus = parseInt(getAttrByName(targetChar.get('_id'), 'resistancebonus'));
+                        if(bonus == bonus) {
+                            defRes += bonus;
+                        }
+                    }
+                }
+                
+                output += '<br />VS ' + targetName + ': Damage [[{' + damage + ' - ' + defRes + ', 0}kh1]]';
+            });
+        } else {
+            // Get crit damage
+            var damage = getTechDamage(tech, actorToken.get('represents'), true);
+            
+            if(tech.mods && tech.mods.find(function(m) {
+                return m.toLowerCase().indexOf('shift') > -1
+            })) {
+                physical = !physical;
+            }
+            output += ' Damage: <span style="color: darkred">**' + 
+                           damage +
+                       '**</span>';
+        }
+        
+        sendChat('Valor', '/w gm ' + output);
+        
+        endEvent('!crit');
     }
 });
 
@@ -3914,10 +4069,14 @@ on('change:campaign:turnorder', function(obj) {
  * - Added Custom core support.
  * - Use Tech doesn't try to roll attacks if no stat is selected.
  * 
- * v0.15.5
+ * v0.15.5:
  * - Mimic Tech now uses right attack stat and targets right defense.
  * - Mimic-related bugs resolved.
  * - Valiant skill now honored.
  * - Scripts no longer crash when targeting a non-character token.
  * - Empowered, etc. now appear regardless of tech display mode.
+ * 
+ * v0.16.0:
+ * - New command !di to display damage increments for all active characters.
+ * - New command !crit to display crit damage for most recent tech.
  **/
