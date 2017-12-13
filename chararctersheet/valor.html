@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v0.7.4
+ * v0.7.5
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -170,6 +170,9 @@
  * - Fixed Int/Res values on Soldiers/Flunkies.
  * - Custom mods/limits no longer accidentally trigger other mods/limits.
  * - Tech descriptions update when changing granted skill/flaw lists.
+ * 
+ * v0.7.5:
+ * - Fixed the issue where techs fail to execute.
  **/
 
 function calculateBaseAttributes() {
@@ -1253,6 +1256,7 @@ function calculateTechCommand(techId) {
     techFieldNames.push('repeating_techs_' + techId + '_tech_mods');
     techFieldNames.push('repeating_techs_' + techId + '_tech_limits');
     techFieldNames.push('repeating_techs_' + techId + '_tech_targets');
+    techFieldNames.push('repeating_techs_' + techId + '_tech_bonus');
     
     getAttrs(techFieldNames, function(techValues) {
         var techName = techValues['repeating_techs_' + techId + '_tech_name'];
@@ -1275,6 +1279,10 @@ function calculateTechCommand(techId) {
         if(techTargets > 20) {
             techTargets = 20;
         }
+        var techBonus = 0;
+        if(techValues['repeating_techs_' + techId + '_tech_bonus']) {
+            techBonus = parseInt(techValues['repeating_techs_' + techId + '_tech_bonus']);
+        }
         
         var hasTargets = true;
         
@@ -1291,7 +1299,10 @@ function calculateTechCommand(techId) {
             hasTargets = false;
         }
         
-        var techCommand = '!t --as "@{character_id}" "@{tech_name}" +@{tech_bonus}';
+        var techCommand = '!t --as "@{character_id}" "@{tech_name}"';
+        if(techBonus) {
+             techCommand += ' +@{tech_bonus}';
+        }
         if(techTargets > 0 && hasTargets) {
             techCommand += ' --targets'
             for(var j = 0; j < techTargets; j++) {

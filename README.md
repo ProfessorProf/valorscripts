@@ -51,7 +51,11 @@ Any of these will work:
 Syntax: `!t-undo`
 Reverses any expended resources from the most-recently used technique. Remembers up to the last 20 techniques used.
 
-### Get critical hit damage
+### Get Tech Status
+Syntax: `!status`
+Shows you (and only you) which of your techniques are ready to use, and which are blocked by Limits.
+
+### Get Critical Hit Damage
 Syntax: `!crit`
 Shows you (and only you) how much damage the previous technique would have done if it had scored a critical hit.
 

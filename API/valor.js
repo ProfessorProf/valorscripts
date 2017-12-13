@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.16.0
+ * v0.17.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -1126,6 +1126,263 @@ on('chat:message', function(msg) {
     
 });
 
+// !status command
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && (msg.content.indexOf('!status') == 0)) {
+        startEvent('!status');
+        // Figure out who's using a tech
+        var actor = getActor(msg);
+        if(!actor) {
+            log('No usable character found for ' + msg.playerid);
+            endEvent('!tech');
+            return;
+        }
+    
+        // Use selected token or first token on active page that represents character
+        var token;
+        if(msg.selected && msg.selected.length > 0) {
+            var selectedToken = getObj('graphic', msg.selected[0]._id);
+            if(selectedToken.get('represents') == actor.get('_id')) {
+                token = selectedToken;
+            }
+        }
+        
+        if(!token) {
+            var tokens = findObjs({
+                _pageid: Campaign().get("playerpageid"),                 
+                _type: "graphic",
+                represents: actor.get('_id')
+            });
+            if(tokens.length > 0) {
+                token = tokens[0];
+            }
+        }
+        
+        // Get the initiative tracker, we may need it later
+        var turnOrder;
+        if(Campaign().get('turnorder') == '') {
+            turnOrder = [];
+        } else {
+            turnOrder = JSON.parse(Campaign().get('turnorder'));
+        }
+        
+        var roundItem = turnOrder.find(function(t) {
+            return t && t.custom && 
+            t.custom.toLowerCase() == 'round';
+        });
+        var round = roundItem ? roundItem.pr : 1;
+
+        // Show a list of techs for this character
+        if(actor) {
+            var techs = getTechs(actor.get('_id'));
+            var message = '<table>';
+            techs.forEach(function(tech) {
+                message += '<tr><td>**' + tech.name + '**: ';
+                
+                // Pull tech usage data from the state
+                var techDataId = actor.get('_id') + '.' + tech.name;
+                if(!state.techData) {
+                    state.techData = {};
+                }
+                if(!state.techData[techDataId]) {
+                    state.techData[techDataId] = {
+                        timesUsed: [],
+                        techName: tech.name,
+                        userId: actor.get('_id'),
+                        userName: actor.get('name')
+                    };
+                }
+                var techData = state.techData[techDataId];
+                
+                // Check for blocking limits
+                var techStatus = [];
+                if(tech.limits) {
+                    
+                    if(token) {
+                        // Check stamina
+                        var st = parseInt(token.get('bar2_value'));
+                        
+                        if(st == st && st < tech.cost && !tech.digDeep) {
+                            techStatus.push("Not enough ST");
+                        }
+                        
+                        // Check Initiative Limit
+                        var initiativeLimit = tech.limits.find(function(l) {
+                            return l.toLowerCase().indexOf('init') == 0;
+                        });
+                        
+                        if(initiativeLimit) {
+                            var initiativeLimitSplit = initiativeLimit.split(' ');
+                            var initiativeLimitLevel = parseInt(initiativeLimitSplit[initiativeLimitSplit.length - 1]);
+                            if(initiativeLimitLevel != initiativeLimitLevel) {
+                                initiativeLimitLevel = 1;
+                            }
+                            
+                            turnOrder.forEach(function(turn) {
+                                if(turn && turn.id === token.get('_id')) {
+                                    if(turn.pr <= initiativeLimitLevel) {
+                                        techStatus.push('Not enough Init');
+                                    }
+                                }
+                            });
+                        }
+                    }
+                    
+                    // Check valor limit
+                    var valorLimit = tech.limits.find(function(l) {
+                        var name = l.toLowerCase();
+                        return ((name.indexOf('valor') == 0 &&
+                                 name.indexOf('valor c') != 0) ||
+                                 name.indexOf('ultimate v') == 0);
+                    });
+                    
+                    if(valorLimit) {
+                        var valorLimitSplit = valorLimit.split(' ');
+                        var valorLimitLevel = parseInt(valorLimitSplit[valorLimitSplit.length - 1]);
+                        if(valorLimitLevel != valorLimitLevel) {
+                            valorLimitLevel = 1;
+                        }
+                        
+                        var currentValor = getAttrByName(actor.get('_id'), 'valor');
+                        if(currentValor < valorLimitLevel) {
+                            techStatus.push('Not enough Valor');
+                        }
+                    }
+                    
+                    // Check Injury Limit
+                    var injuryLimit = tech.limits.find(function(l) {
+                        return l.toLowerCase().indexOf('injury') == 0;
+                    });
+                    
+                    if(injuryLimit && token) {
+                        var injuryLimitSplit = injuryLimit.split(' ');
+                        var injuryLimitLevel = parseInt(injuryLimitSplit[injuryLimitSplit.length - 1]);
+                        if(injuryLimitLevel != injuryLimitLevel) {
+                            injuryLimitLevel = 1;
+                        }
+                        
+                        var hp = parseInt(token.get('bar1_value'));
+                        var hpMax = parseInt(token.get('bar1_max'));
+                        if(hp != hp) {
+                            hp = 0;
+                        }
+                        if(hpMax != hpMax) {
+                            hpMax = 0;
+                        }
+                        
+                        var hpTarget = Math.ceil(hpMax / 5 * (5 - injuryLimitLevel));
+                        
+                        if(hp > hpTarget) {
+                            techStatus.push('HP too high');
+                        }
+                    }
+                    
+                    // Check Vitality Limit
+                    var vitalityLimit = tech.limits.find(function(l) {
+                        return l.toLowerCase().indexOf('vitality') == 0;
+                    });
+                    
+                    if(vitalityLimit && token) {
+                        var hp = parseInt(token.get('bar1_value'));
+                        var hpMax = parseInt(token.get('bar1_max'));
+                        if(hp != hp) {
+                            hp = 0;
+                        }
+                        if(hpMax != hpMax) {
+                            hpMax = 0;
+                        }
+                        
+                        var hpTarget = Math.ceil(hpMax * 0.6);
+                        
+                        if(hp < hpTarget) {
+                            techStatus.push('HP too low');
+                        }
+                    }
+                    
+                    // Check Set-Up Limit
+                    var setUpLimit = tech.limits.find(function(l) {
+                        return l.toLowerCase().indexOf('set') == 0;
+                    });
+                    
+                    if(setUpLimit) {
+                        if(round) {
+                            var setUpLimitSplit = setUpLimit.split(' ');
+                            var setUpLimitLevel = parseInt(setUpLimitSplit[setUpLimitSplit.length - 1]);
+                            if(setUpLimitLevel != setUpLimitLevel) {
+                                setUpLimitLevel = 1;
+                            }
+                            
+                            if(round <= setUpLimitLevel) {
+                                techStatus.push('Not ready yet');
+                            }
+                        }
+                    }
+                    
+                    // Check Ammunition Limit
+                    var ammoLimit = tech.limits.find(function(l) {
+                        return l.toLowerCase().indexOf('amm') == 0;
+                    });
+                    
+                    if(ammoLimit) {
+                        var ammoLimitSplit = ammoLimit.split(' ');
+                        var ammoLimitLevel = parseInt(ammoLimitSplit[ammoLimitSplit.length - 1]);
+                        if(ammoLimitLevel != ammoLimitLevel) {
+                            ammoLimitLevel = 1;
+                        }
+                        
+                        if(techData.timesUsed.length > 3 - ammoLimitLevel) {
+                            techStatus.push('Out of ammo');
+                        } else {
+                            var ammoLeft = 3 - ammoLimitLevel - techData.timesUsed.length;
+                            techStatus.push(ammoLeft + ' ammo left');
+                        }
+                    }
+                    
+                    // Check Cooldown Limit
+                    var cooldownLimit = tech.limits.find(function(l) {
+                        return l.toLowerCase().indexOf('cooldown') == 0;
+                    });
+                    
+                    if(cooldownLimit && round) {
+                        var cooldownLimitSplit = cooldownLimit.split(' ');
+                        var cooldownLimitLevel = parseInt(cooldownLimitSplit[cooldownLimitSplit.length - 1]);
+                        if(cooldownLimitLevel != cooldownLimitLevel) {
+                            cooldownLimitLevel = 1;
+                        }
+                        
+                        if(techData.timesUsed.length > 0) {
+                            var lastTurnUsed = parseInt(techData.timesUsed[techData.timesUsed.length - 1]);
+                            if(round <= lastTurnUsed + cooldownLimitLevel) {
+                                techStatus.push('On cooldown');
+                            }
+                        }
+                    }
+                }
+                
+                // Check for Ultimate usage
+                if(tech.core == 'ultDamage' || tech.core == 'transform' ||
+                    tech.core == 'ultMimic' || tech.core == 'domain') {
+                    if(techData.timesUsed.length > 0) {
+                        techStatus.push('Already used');
+                    }
+                }
+                
+                if(techStatus.length > 0) {
+                    message += techStatus.join(', ');
+                } else {
+                    message += 'OK';
+                }
+                
+                message +='</td></tr>';
+            });
+            message += '</table>';
+            var cleanMessage = message.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
+            sendChat('Valor', '/w "' + msg.who + '" ' + cleanMessage);
+        }
+        endEvent('!status');
+    }
+});
+
 // !tech command
 on('chat:message', function(msg) {
     if(msg.type == 'api' && (msg.content.indexOf('!t ') == 0 || 
@@ -1179,6 +1436,7 @@ on('chat:message', function(msg) {
                     targetsList.push(target);
                 }
             }
+            split.splice(targetsParam);
         }
         
         if(split.length < 2) {
@@ -1234,12 +1492,15 @@ on('chat:message', function(msg) {
         }
         
         // Identify the technique
+        log('AAAAAAAAAA');
+        log(split);
         var techId = split[1];
         var nextParam = 2;
         while(nextParam < split.length && parseInt(split[nextParam]) != parseInt(split[nextParam])) {
             techId += ' ' + split[nextParam];
             nextParam++;
         }
+        log(techId);
         
         var tech = getTechByName(techId, actor.get('_id'), targetsList.length > 0);
         
@@ -1301,12 +1562,11 @@ on('chat:message', function(msg) {
         }
         
         // Check for blocking limits
+        var blocked = false;
+        var errorMessage = '';
         if(tech.limits && !overrideLimits && 
-                (!state.ignoreStaminaOnMinions || 
+                (!state.ignoreLimitsOnMinions || 
                 (actorClass != 'flunky' && actorClass != 'soldier'))) {
-            var blocked = false;
-            var errorMessage = '';
-            
             if(token) {
                 // Check stamina
                 var st = parseInt(token.get('bar2_value'));
@@ -1394,6 +1654,30 @@ on('chat:message', function(msg) {
                 }
             }
             
+            // Check Vitality Limit
+            var vitalityLimit = tech.limits.find(function(l) {
+                return l.toLowerCase().indexOf('vitality') == 0;
+            });
+            
+            if(vitalityLimit && token) {
+                var hp = parseInt(token.get('bar1_value'));
+                var hpMax = parseInt(token.get('bar1_max'));
+                if(hp != hp) {
+                    hp = 0;
+                }
+                if(hpMax != hpMax) {
+                    hpMax = 0;
+                }
+                
+                var hpTarget = Math.ceil(hpMax * 0.6);
+                
+                if(hp < hpTarget) {
+                    log('Tech blocked - Vitality Limit');
+                    errorMessage += 'Your Health must be ' + hpTarget + ' or lower to use this Technique.<br>';
+                    blocked = true;
+                }
+            }
+            
             // Check Set-Up Limit
             var setUpLimit = tech.limits.find(function(l) {
                 return l.toLowerCase().indexOf('set') == 0;
@@ -1455,15 +1739,29 @@ on('chat:message', function(msg) {
                     }
                 }
             }
+        }
+        
+        // Check for Ultimate usage
+        if(tech.core == 'ultDamage' || tech.core == 'transform' ||
+            tech.core == 'ultMimic' || tech.core == 'domain') {
+            var unerring = tech.mods.find(function(m) {
+                return m.toLowerCase().indexOf('unerring') == 0;
+            });
             
-            if(blocked) {
-                var cleanButton = msg.content.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
-                errorMessage += '[Override](' + cleanButton + ' --override)';
-                sendChat('Valor', '/w "' + actor.get('name') + '" ' + errorMessage);
-                log('Tech failed on turn ' + round);
-                endEvent('!tech');
-                return;
+            if(!unerring && techData.timesUsed.length > 0) {
+                log('Tech blocked - Ultimate already used');
+                errorMessage += 'You already used this Ultimate Technique.<br>'
+                blocked = true;
             }
+        }
+            
+        if(blocked) {
+            var cleanButton = msg.content.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
+            errorMessage += '[Override](' + cleanButton + ' --override)';
+            sendChat('Valor', '/w "' + actor.get('name') + '" ' + errorMessage);
+            log('Tech failed on turn ' + round);
+            endEvent('!tech');
+            return;
         }
         
         var rollText = '';
@@ -1679,7 +1977,7 @@ on('chat:message', function(msg) {
                     }
                 }
             });
-        } else if(rollStat != 'none') {
+        } else if(rollStat && rollStat != 'none') {
             if(state.rollBehindScreen && !actor.get('controlledby')) {
                 hiddenRollText = 'Hidden roll';
                 if(targets > 1) {
@@ -1875,8 +2173,16 @@ on('chat:message', function(msg) {
             techQualifiers.push('Empowered');
         }
         
-        var hp = parseInt(token.get('bar1_value'));
-        var hpMax = parseInt(token.get('bar1_max'));
+        var hp = 1;
+        var hpMax = 1;
+        
+        if(token) {
+            hp = parseInt(token.get('bar1_value'));
+            hpMax = parseInt(token.get('bar1_max'));
+        } else {
+            hp = getAttrByName(actor.get('_id'), 'hp');
+            hpMax = getAttrByName(actor.get('_id'), 'hp', 'max');
+        }
         if(hp / hpMax <= 0.4) {
             var crisis = getSkill(actor.get('_id'), 'crisis');
             if(crisis && crisis.level) {
@@ -2584,19 +2890,21 @@ on('chat:message', function(msg) {
         var message = '<table><tr><td>**ROLLING INITIATIVE**</td></tr>';
         var turnOrder = [];
         tokens.forEach(function(token) {
-            var actorId = token.get('represents');
-            var actor = getObj('character', actorId);
-            
-            if(actor) {
-                var initMod = getAttrByName(actorId, 'init')
-                var init = initMod + randomInteger(10);
-                var actorName = actor.get('name');
-                turnOrder.push({
-                    id: token.get('_id'),
-                    pr: init,
-                    custom: ''
-                });
-                message += '<tr><td>' + actorName + ' - **' + init + '**</td></tr>';
+            if(token) {
+                var actorId = token.get('represents');
+                var actor = getObj('character', actorId);
+                
+                if(actor) {
+                    var initMod = getAttrByName(actorId, 'init')
+                    var init = initMod + randomInteger(10);
+                    var actorName = actor.get('name');
+                    turnOrder.push({
+                        id: token.get('_id'),
+                        pr: init,
+                        custom: ''
+                    });
+                    message += '<tr><td>' + actorName + ' - **' + init + '**</td></tr>';
+                }
             }
         });
         turnOrder = turnOrder.sort(function(a, b) {
@@ -4079,4 +4387,11 @@ on('change:campaign:turnorder', function(obj) {
  * v0.16.0:
  * - New command !di to display damage increments for all active characters.
  * - New command !crit to display crit damage for most recent tech.
+ * 
+ * v0.17.0:
+ * - Vitality Limit now respected by Use Technique button.
+ * - Ultimate Technique usage now tracked for Use Technique button.
+ * - New command !status to check usability of all techniques.
+ * - Bugfix: 'Ignore limits for Flunkies/Soldiers' works now.
+ * - Bugfix: Custom cores no longer try to roll if they have no stat specified.
  **/
