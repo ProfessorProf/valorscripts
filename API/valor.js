@@ -1492,15 +1492,12 @@ on('chat:message', function(msg) {
         }
         
         // Identify the technique
-        log('AAAAAAAAAA');
-        log(split);
         var techId = split[1];
         var nextParam = 2;
         while(nextParam < split.length && parseInt(split[nextParam]) != parseInt(split[nextParam])) {
             techId += ' ' + split[nextParam];
             nextParam++;
         }
-        log(techId);
         
         var tech = getTechByName(techId, actor.get('_id'), targetsList.length > 0);
         
