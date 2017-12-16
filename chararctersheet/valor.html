@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.0.0
+ * v1.0.1
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -176,6 +176,11 @@
  * 
  * v1.0.0:
  * - Massive visual update.
+ * 
+ * v1.0.1:
+ * - Fixed bug that prevented deletion of techs.
+ * - Fixed issue with skill level warnings not being displayed.
+ * - Fixed a bug where Granted Skills weren't working.
  **/
 
 function calculateBaseAttributes() {
@@ -1081,13 +1086,11 @@ function calculateFlawsAndSkills() {
                                         skillMaxLevel = 100; // Custom Skill
                                 }
                                 
-                                if(skillLevel > skillMaxLevel && flaw.skill != 3) {
+                                if(skillLevel > skillMaxLevel && skill.level != 3) {
                                     warning = 'Warning: Level cap for this Skill is ' + skillMaxLevel + '.';
                                 }
                         
                                 var skillAttrs = {};
-                                log('repeating_skills_' + sidarray[i] + '_warning');
-                                log(warning);
                                 skillAttrs['repeating_skills_' + sidarray[i] + '_warning'] = warning;
                                 setAttrs(skillAttrs, { silent: true });
                                 
@@ -2291,7 +2294,7 @@ on('change:repeating_techs:tech_name change:repeating_techs:tech_core_level ' +
    'change:repeating_techs:tech_core change:repeating_techs:tech_stat ' +
    'change:repeating_techs:tech_mods change:repeating_techs:tech_targets change:repeating_techs:tech_bonus ' +
    'change:repeating_techs:tech_limits change:repeating_techs:tech_description ' +
-   'change:repeating_techs:tech_granted_skills change:repeating_techs:tech_inflicted_flaws remove:repeating_techs', function(eventInfo) {
+   'change:repeating_techs:tech_granted_skills change:repeating_techs:tech_inflicted_flaws', function(eventInfo) {
     var techId = eventInfo.sourceAttribute.substring(16, 36);
     calculateTech(techId);
 });
@@ -3300,7 +3303,7 @@ on('sheet:opened', function() {
                     <input type="checkbox" class="conditional-check" name="attr_tech_has_skills">
                     <div class="tech-block conditional-block">
                         <span class="label">Granted Skills</span>
-                        <input type="text tech-field" name="attr_tech_granted_skills" />
+                        <input type="text" class="tech-field" name="attr_tech_granted_skills" />
                     </div>
                 </div>
                 <div>
