@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v0.17.0
+ * v1.0.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -791,24 +791,12 @@ function getActor(msg) {
 // To use: Put a label on the turn tracker called 'Round' at the end of the
 // round. When you reach the end of the round, all characters with a red
 // bar max value will gain 1 Valor.
-function updateValor(obj) {
+function updateValor() {
     if(!state.valorUpdaterEnabled) {
         // Settings check
         return;
     }
     
-    var turnOrder = JSON.parse(obj.get('turnorder'));
-    if(!turnOrder || turnOrder.length === 0) {
-        // Do nothing if initiative tracker is empty
-        return;
-    }
-    
-    var lastChar = turnOrder[turnOrder.length - 1];
-    if(!lastChar || lastChar.custom.toLowerCase() != 'round') {
-        // Only continue if the 'Round' counter is at the bottom of the init order
-        return;
-    }
-
     if(!state.charData) {
         state.charData = {};
     }
@@ -1739,8 +1727,8 @@ on('chat:message', function(msg) {
         }
         
         // Check for Ultimate usage
-        if(tech.core == 'ultDamage' || tech.core == 'transform' ||
-            tech.core == 'ultMimic' || tech.core == 'domain') {
+        if((tech.core == 'ultDamage' || tech.core == 'transform' ||
+            tech.core == 'ultMimic' || tech.core == 'domain') && !overrideLimits) {
             var unerring = tech.mods.find(function(m) {
                 return m.toLowerCase().indexOf('unerring') == 0;
             });
@@ -1753,8 +1741,17 @@ on('chat:message', function(msg) {
         }
             
         if(blocked) {
-            var cleanButton = msg.content.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
-            errorMessage += '[Override](' + cleanButton + ' --override)';
+            // Make sure --override comes after --targets
+            var overrideButton = '';
+            var targetIndex = msg.content.indexOf('--targets');
+            if(targetIndex > -1) {
+                overrideButton = msg.content.substring(0, targetIndex) + '--override ' + 
+                    msg.content.substring(targetIndex, msg.content.length);
+            } else {
+                overrideButton = msg.content + ' --override';
+            }
+            var cleanButton = overrideButton.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
+            errorMessage += '[Override](' + cleanButton + ')';
             sendChat('Valor', '/w "' + actor.get('name') + '" ' + errorMessage);
             log('Tech failed on turn ' + round);
             endEvent('!tech');
@@ -2191,31 +2188,29 @@ on('chat:message', function(msg) {
             }
         }
         
-        var message = '<table>';
+        var message = '<div style="font-family: Segoe UI,Frutiger,Frutiger Linotype,Dejavu Sans,Helvetica Neue,Arial,sans-serif;color:#730A18;' +
+            'background-color:#FCECD8;margin-left:8px;padding-left:5px;padding-bottom:3px">';
         if(tech.persist) {
-            message += '<tr><td>Persisting Technique: **' + tech.name;
-            if(techQualifiers.length > 0) {
-                message += ' (' + techQualifiers.join(', ') + ')';
-            }
-            message += '**</td></tr>';
-        } else {
-            message += '<tr><td>Performing Technique: **' + tech.name;
-            if(techQualifiers.length > 0) {
-                message += ' (' + techQualifiers.join(', ') + ')';
-            }
-            message += '**</td></tr>';
+            techQualifiers.push('Persisting');
         }
         
+        message += '<div style="position:relative;border:3px solid #F2AC63;color:black;left:-11px;' +
+            'font-weight:bold;font-size:11pt;background-color:white;padding:3px;display:inline-block;border-radius:3px">' + tech.name;
+        if(techQualifiers.length > 0) {
+            message += ' (' + techQualifiers.join(', ') + ')';
+        }
+        message += '</div><br>';
+        
         if(rollText) {
-            message += '<tr><td>' + rollText + '</td></tr>';
+            message += '<div style="line-height:170%">' + rollText + '</div>';
         }
         
         var showSummary = tech.summary && (!state.hideNpcTechEffects || actor.get('controlledby'));
         
         if(showSummary) {
-            message += '<tr><td>' + tech.summary + '</td></tr>';
+            message += '<div>' + tech.summary + '</div>';
         }
-        message += '</table>';
+        message += '</div>';
         
         sendChat('character|' + actor.get('_id'), message);
         
@@ -4109,13 +4104,18 @@ on('change:campaign:turnorder', function(obj) {
             nextActor = topChar.id;
         }
         
+        // If Round moved from the top to the bottom - do valor updates
+        if(turnOrder[turnOrder.length - 1].custom && turnOrder[turnOrder.length - 1].custom.toLowerCase() == 'round' && 
+            state.lastActor.toLowerCase() == 'round') {
+            updateValor();
+            alertCooldowns();
+        }
+        
         // If the top actor changed, the turn order advanced - do stuff
         if(state.lastActor !== nextActor) {
             state.lastActor = nextActor;
-            updateValor(obj);
             processOngoingEffects(obj);
             trackStatuses(turnOrder);
-            alertCooldowns();
         }
     } else {
         if(topChar.custom) {
@@ -4391,4 +4391,9 @@ on('change:campaign:turnorder', function(obj) {
  * - New command !status to check usability of all techniques.
  * - Bugfix: 'Ignore limits for Flunkies/Soldiers' works now.
  * - Bugfix: Custom cores no longer try to roll if they have no stat specified.
+ * 
+ * v1.0.0:
+ * - Updated tech usage display.
+ * - Ultimate Techniques can now be re-used when overriding limits.
+ * - Fixeed some cases where Valor would update when it shouldn't.
  **/
