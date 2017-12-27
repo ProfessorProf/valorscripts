@@ -1,0 +1,169 @@
+v1.0: Initial release.
+
+v1.0.1:
+- Various typos.
+- Various skills missing from skill list.
+- Reorganized flaw library.
+- Custom Skill and Custom Flaw now cost/grant SP.
+
+v1.0.2:
+- Added extra skills, flaws, mods and limits from the GM Section.
+
+v1.0.3:
+- Added notes section for Skills/Flaws.
+
+v1.0.4:
+- Various bugfixes.
+- Give Barrier Core a free level of Line Attack or Blast Radius.
+- Added Initiative Bonus to sheet.
+- Add 2 free mod levels for ultimates.
+
+v1.0.5:
+- Various adjustments to the tech description system.
+
+v1.0.6:
+- Masters now have x2 to max Stamina.
+- Fix: Phasing missing from skill list.
+
+v1.0.7:
+- Save further data in techs for use by API.
+- Typo fixed in Valor Consumption Limit.
+ 
+v1.0.8:
+- Calculation errors: Damage Increment, Ammunition Limit.
+
+v1.0.9:
+- Color styling for !tech descriptions.
+
+v1.1.0:
+- Add button to auto-roll techniques.
+- Add buttons to auto-roll active attributes.
+
+v1.1.1:
+- Added initiative roller button.
+
+v1.2.0:
+- Added Granted Skills / Inflicted Flaws / Mimicked Tech fields.
+- Whirlwind now reduces cost for agility attacks.
+
+v1.2.1:
+- Added Flaws/Skills display for Debilitating Strike, Grant Flaw Limit, and Grant Skill Limit.
+
+v1.2.2: 
+- Bugfix: Custom Skill and Custom Flaw sometimes didn't cost/grant SP.
+- Removed unnecessary logging.
+
+v1.2.3:
+- Added a Roll Bonus button on the character sheet.
+- Initiative rolls are now automatically sent to the init tracker.
+
+v1.2.4:
+- Transformations now show skills in micro-summary.
+- Transformation HP now properly bolded.
+- Transformation HP doubled for Masters.
+- Transformation micro-summary had no linebreak before bonus HP.
+
+v1.2.5:
+- Split Move was weird in the skill dropdown.
+- Abundant Creation was missing in the skill dropdown.
+- Hopefully made mimic tech targetting more responsive.
+
+v1.3.0:
+- Added support for Dig Deep and Overload Limits usage in combat.
+
+v1.3.1:
+- Added the Level-up sheet buttons.
+
+v1.4.0:
+- Added skills, flaws, mods and cores from Villains, Creatures and Foes.
+- Removed a wayward debug label.
+
+v1.4.1:
+- Removed micro-summary logic.
+- Added checkbox for Empowered Attack.
+- Bugfixes.
+
+v0.4.2:
+- Version numbering update.
+- Cost adjustments.
+- Mod levels now calculated properly for Transformations.
+
+v0.4.3:
+- Ultimate Mimic Core properly recognized.
+- Health Transference shows correct cost.
+
+v0.4.4:
+- Damage Increment value updated.
+- Set-Up Limit was sometimes unrecognized.
+
+v0.4.5:
+- Rising Attack added to skill list.
+
+v0.4.6:
+- Adjusted formatting of tech descriptions.
+
+v0.5.0:
+- Support for Resolute Strike.
+- Revamped UI for attack/defense rolls.
+
+v0.5.1:
+- Fixed TP values for Flunkies, Soldiers and Swarms.
+- Fixed ATK values for Swarms.
+
+v0.5.2:
+- Various typos, Combat Toss was missing from skill list.
+- Fixed tech level warning regarding Summon Core.
+
+v0.5.3:
+- Fixed cost of Transform Ally.
+- Added attack bonus fields to character sheet.
+
+v0.5.4:
+- All rolls are now performed as the character the sheet belongs to (requires scripts v0.14.5).
+
+v0.5.5:
+- Incorporated new experimental errata for Healing Core and Drain.
+
+v0.6.0:
+- Use Technique button now prompts for targets.
+
+v0.7.0:
+- Refactor to reduce lag.
+- Added Defense and Resistance bonus fields.
+- Added warnings for skills and flaws over allowed level.
+
+v0.7.1:
+- Fixed fatal tech update bug.
+- "Targets" is now a dropdown.
+
+v0.7.2:
+- Growth rates for fast/slow skills were reversed.
+- Added Custom core.
+
+v0.7.3:
+- Added Persistent Reroll checkbox.
+- Made Use Techniques target count update faster.
+
+v0.7.4:
+- Fixed Int/Res values on Soldiers/Flunkies.
+- Custom mods/limits no longer accidentally trigger other mods/limits.
+- Tech descriptions update when changing granted skill/flaw lists.
+
+v0.7.5:
+- Fixed the issue where techs fail to execute.
+
+v1.0.0 (12/14/17):
+- Massive visual update.
+
+v1.0.1 (12/16/17):
+- Fixed bug that prevented deletion of techs.
+- Fixed issue with skill level warnings not being displayed.
+- Fixed a bug where Granted Skills weren't working.
+
+v1.0.2 (12/26/17):
+- Fixed a bunch of bugs with the Inflicted Flaws field.
+- Granted flaws/skills from mods/limits now appear in the tech description.
+
+v1.0.3 (12/27/17): 
+- Fixed a bunch of display issues with Domain Core.
+- Debilitating attacks now show their inflicted flaws in the tech description.
