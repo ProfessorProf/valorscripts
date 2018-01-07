@@ -167,3 +167,9 @@ v1.0.2 (12/26/17):
 v1.0.3 (12/27/17): 
 - Fixed a bunch of display issues with Domain Core.
 - Debilitating attacks now show their inflicted flaws in the tech description.
+
+v1.0.4 (1/6/18):
+- Slightly less masssive visual update.
+- Fixed a couple typos.
+- Domain Core should be treating mod levels correctly now.
+- Tech descriptions update when Attack values change.

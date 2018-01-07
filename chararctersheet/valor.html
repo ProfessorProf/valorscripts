@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.0.3
+ * v1.0.4
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -1231,7 +1231,8 @@ function calculateTech(techId) {
         }
         
         // Is this an ult?
-        if(techCore == 'ultDamage' || techCore == 'ultTransform') {
+        if(techCore == 'ultDamage' || techCore == 'ultTransform' ||
+           techCore == 'ultMimic' || techCore == 'domain') {
             summary += 'Ultimate Technique. ';
         }
         
@@ -1635,7 +1636,7 @@ function calculateTech(techId) {
                 totalModLevel += modLevel;
             } else if(mod.indexOf('intimidating transform') == 0) {
                 var targets = 1 + modLevel;
-                summary += 'When transformring, roll Resolve (1d10+' + techValues.res + ') or Aura (1d10+' + techValues.aur +
+                summary += 'When transforming, roll Resolve (1d10+' + techValues.res + ') or Aura (1d10+' + techValues.aur +
                 ') to leave up to ' + targets + ' targets within 5 spaces Shaken. ';
                 totalModLevel += 2 * modLevel;
             } else if(mod.indexOf('accurate') == 0) {
@@ -1814,7 +1815,7 @@ function calculateTech(techId) {
                 warnings += "WARNING: Unrecognized Modifier '" + mod + "'. ";
             }
         });
-        if(techCore == 'ultDamage') {
+        if(techCore == 'ultDamage' || techCore == 'domain') {
             totalModLevel -= 2;
             if(totalModLevel < 0) totalModLevel = 0;
             totalModLevel = Math.ceil(totalModLevel / 2);
@@ -1896,7 +1897,7 @@ function calculateTech(techId) {
                 limitSummary += 'Initiative reduced by ' + limitLevel + ' after using this Technique. ';
                 limitSt += 3 * limitLevel;
             } else if(limit.indexOf('immobile') == 0) {
-                limitSummary += "Can't be used if you've already moved this turn.";
+                limitSummary += "Can't be used if you've already moved this turn. ";
                 limitSt += 3;
             } else if(limit.indexOf('injury') == 0) {
                 var threshold = hp - Math.ceil(hp / 5) * limitLevel;
@@ -2106,6 +2107,15 @@ on('change:level change:str change:agi change:spr change:mnd change:gut ' +
     'change:type change:repeating_skills remove:repeating_skills', function() {
     calculateAttack();
     calculateActiveAttributes();
+    
+});
+
+on('change:stratk change:agiatk change:mndatk change:spratk', function() {
+    getSectionIDs('repeating_techs', function(tidarray) {
+        tidarray.forEach(function(techId) {
+            calculateTech(techId);
+        });
+    });
 });
 
 on('change:level change:str change:gut change:type ' + 
@@ -2475,7 +2485,7 @@ on('sheet:opened', function() {
 
 <!-- Main statblock -->
 <div class="stats">
-    <table class="stats-orange stats-float">
+    <table class="stats-1">
         <tr>
             <td class="label stats-header stats-text" colspan="2">
                 BASE
@@ -2513,7 +2523,7 @@ on('sheet:opened', function() {
         </tr>
     </table>
 
-    <table class="stats-green stats-float">
+    <table class="stats-2">
         <tr>
             <td class="label stats-header stats-text" colspan="2">
                 ACTIVE
@@ -2556,7 +2566,7 @@ on('sheet:opened', function() {
         </tr>
     </table>
 
-    <table class="stats-orange stats-float">
+    <table class="stats-3">
         <tr>
             <td class="label stats-header stats-text" colspan="2">
                 ATTACK
@@ -2591,7 +2601,7 @@ on('sheet:opened', function() {
         </tr>
     </table>
 
-    <table class="stats-green stats-float">
+    <table class="stats-4">
         <tr>
             <td class="label stats-header stats-text" colspan="2">
                 STATISTICS
@@ -2629,7 +2639,7 @@ on('sheet:opened', function() {
         </tr>
     </table>
 
-    <table class="stats-orange">
+    <table class="stats-5">
         <tr>
             <td class="label stats-header stats-text" colspan="2">
                 INCREMENTS
@@ -2667,76 +2677,84 @@ on('sheet:opened', function() {
             </td>
         </tr>
     </table>
+    
+    <div class="unspent-ap"><span name="attr_unspentAP"></span> AP UNSPENT</div>
+    <div class="section-header">BONUSES</div>
+    
+    <div class="bonuses-table">
+        <table class="stats-2">
+            <tr>
+                <td>All Rolls</td>
+                <td nowrap="nowrap" colspan="2">
+                    <input type="number" class="short-number" name="attr_rollbonus" value="0">
+                </td>
+            </tr>
+            <tr>
+                <td>Atk. Rolls</td>
+                <td nowrap="nowrap">
+                    <input type="number" class="short-number" name="attr_atkrollbonus" value="0">
+                </td>
+                <td class="derived-value">
+                    <span name="attr_iatkrollbonusdisp"></span>
+                </td>
+            </tr>
+            <tr>
+                <td nowrap="nowrap" class="stats-last-row">Def. Rolls</td>
+                <td nowrap="nowrap">
+                    <input type="number" class="short-number" name="attr_defrollbonus" value="0">
+                </td>
+                <td class="derived-value">
+                    <span name="attr_idefrollbonusdisp"></span>
+                </td>
+            </tr>
+        </table>
+        <table class="stats-3">
+            <tr>
+                <td>Phys. Attack</td>
+                <td nowrap="nowrap">
+                    <input type="number" class="short-number" name="attr_patkbonus" value="0">
+                </td>
+            </tr>
+            <tr>
+                <td>En. Attack</td>
+                <td nowrap="nowrap">
+                    <input type="number" class="short-number" name="attr_eatkbonus" value="0">
+                </td>
+            </tr>
+            <tr>
+                <td class="stats-last-row" colspan="2"></td> <!-- No Guts attack -->
+            </tr>
+        </table>
+        <table class="stats-4b">
+            <tr>
+                <td>Defense</td>
+                <td nowrap="nowrap">
+                    <input type="number" class="short-number" name="attr_defensebonus" value="0">
+                </td>
+            </tr>
+            <tr>
+                <td>Resistance</td>
+                <td nowrap="nowrap">
+                    <input type="number" class="short-number" name="attr_resistancebonus" value="0">
+                </td>
+            </tr>
+            <tr>
+                <td class="stats-last-row" colspan="2"></td> <!-- No Guts attack -->
+            </tr>
+        </table>
+    </div>
+    
+    <div class="section-header">ROLL DEFENSE</div>
+    <div class="defense-buttons">
+        <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{mus}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Muscle Defense"' name="roll_mus_def">Muscle</button>
+        <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{dex}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Dexterity Defense"' name="roll_dex_def">Dexterity</button>
+        <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{aur}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Aura Defense"' name="roll_aur_def">Aura</button>
+        <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{int}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Intuition Defense"' name="roll_int_def">Intuition</button>
+        <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{res}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Resolve Defense"' name="roll_res_def">Resolve</button>
+    </div>
 </div>
 
 <br />
-
-<div class="label">
-    Unspent Attribute Points: <span name="attr_unspentAP"></span>
-</div>
-
-<br />
-
-<table>
-    <tr>
-        <td class="label">
-            Bonuses
-        </td>
-    </tr>
-    <tr>
-        <td>All Rolls</td>
-        <td nowrap="nowrap" colspan="2">
-            <input type="number" class="short-number" name="attr_rollbonus" value="0">
-        </td>
-    </tr>
-    <tr>
-        <td>Atk. Rolls</td>
-        <td nowrap="nowrap">
-            <input type="number" class="short-number" name="attr_atkrollbonus" value="0">
-        </td>
-        <td>
-            <span class="derived-value" name="attr_iatkrollbonusdisp"></span>
-        </td>
-        <td>Phys. Attack</td>
-        <td nowrap="nowrap">
-            <input type="number" class="short-number" name="attr_patkbonus" value="0">
-        </td>
-        <td>Defense</td>
-        <td nowrap="nowrap">
-            <input type="number" class="short-number" name="attr_defensebonus" value="0">
-        </td>
-    </tr>
-    <tr>
-        <td>Def. Rolls</td>
-        <td nowrap="nowrap">
-            <input type="number" class="short-number" name="attr_defrollbonus" value="0">
-        </td>
-        <td>
-            <span class="derived-value" name="attr_idefrollbonusdisp"></span>
-        </td>
-        <td>En. Attack</td>
-        <td nowrap="nowrap">
-            <input type="number" class="short-number" name="attr_eatkbonus" value="0">
-        </td>
-        <td>Resistance</td>
-        <td nowrap="nowrap">
-            <input type="number" class="short-number" name="attr_resistancebonus" value="0">
-        </td>
-    </tr>
-</table>
-
-<br />
-
-<div class="label">Defense Rolls</div>
-<div>
-    <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{mus}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Muscle Defense"' name="roll_mus_def">Muscle</button>
-    <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{dex}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Dexterity Defense"' name="roll_dex_def">Dexterity</button>
-    <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{aur}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Aura Defense"' name="roll_aur_def">Aura</button>
-    <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{int}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Intuition Defense"' name="roll_int_def">Intuition</button>
-    <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{res}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Resolve Defense"' name="roll_res_def">Resolve</button>
-</div>
-
-<hr />
 
 <div class="flaws-header">FLAWS</div>
 <fieldset class="repeating_flaws">
@@ -3029,13 +3047,7 @@ on('sheet:opened', function() {
     </div>
 </fieldset>
 
-<br />
-
-<div class="label">
-    Unspent Skill Points: <span name="attr_unspentSP"></span>
-</div>
-
-<br />
+<div class="unspent-sp"><span name="attr_unspentSP"></span> SP UNSPENT</div>
 
 <div class="techs-header">TECHNIQUES</div>
 
@@ -3208,13 +3220,7 @@ on('sheet:opened', function() {
     </div>
 </fieldset>
 
-<br />
-
-<div class="label">
-    Unspent Tech Points: <span name="attr_unspentTP"></span>
-</div>
-
-<br />
+<div class="unspent-tp"><span name="attr_unspentTP"></span> TP UNSPENT</div>
 
 <div>
     <input type="checkbox" class="conditional-check" name="attr_is_duplicate">

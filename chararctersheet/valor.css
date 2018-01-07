@@ -6,6 +6,10 @@
     font-weight: bold;
 }
 
+.sheet-stats {
+    display: inline-block;
+}
+
 .sheet-derived-value {
     font-weight: bold;
     width: 3em;
@@ -66,14 +70,53 @@ select {
     padding-bottom: 8px;
 }
 
-.sheet-stats-orange {
+.sheet-stats-1 {
+    width: 125px;
     background-color: #FDF1E4;
     border: 2px solid #F5C691;
+    color: #730A18;
+    float: left;
+    margin-right: 1px;
 }
 
-.sheet-stats-green {
+.sheet-stats-2 {
+    width: 130px;
     background-color: #EBE9DA;
     border: 2px solid #AFAF6B;
+    float: left;
+    margin-right: 1px;
+}
+
+.sheet-stats-3 {
+    width: 130px;
+    background-color: #FDF1E4;
+    border: 2px solid #F5C691;
+    color: #730A18;
+    float: left;
+    margin-right: 1px;
+}
+
+.sheet-stats-4 {
+    width: 135px;
+    background-color: #EBE9DA;
+    border: 2px solid #AFAF6B;
+    color: #66652E;
+    float: left;
+    margin-right: 1px;
+}
+
+.sheet-stats-4b {
+    width: 135px;
+    background-color: #EBE9DA;
+    border: 2px solid #AFAF6B;
+}
+
+.sheet-stats-5 {
+    width: 144px;
+    background-color: #FDF1E4;
+    border: 2px solid #F5C691;
+    color: #66652E;
+    color: #730A18;
 }
 
 .sheet-stats-header {
@@ -81,24 +124,33 @@ select {
     height: 20px !important;
 }
 
-.sheet-stats-orange .sheet-stats-text {
-    color: #730A18;
+
+.sheet-unspent-ap {
+    width: 100%; 
+    color: #4E1319;
+    display: inline-block;
+    text-align: right;
+    font-size: 12pt;
+    font-weight: bold;
+    margin: 10px 0 20px;
 }
 
-.sheet-stats-green .sheet-stats-text {
-    color: #66652E;
+.sheet-unspent-sp {
+    width: 100%; 
+    color: #757437;
+    text-align: right;
+    font-size: 12pt;
+    font-weight: bold;
+    margin: 10px 0 20px; 
 }
 
-.sheet-stats-orange .sheet-derived-value {
-    color: #730A18;
-}
-
-.sheet-stats-green .sheet-derived-value {
-    color: #66652E;
-}
-
-td {
-    padding-right: 10px;
+.sheet-unspent-tp {
+    width: 100%; 
+    color: #4E1319;
+    text-align: right;
+    font-size: 12pt;
+    font-weight: bold;
+    margin: 10px 0 20px; 
 }
 
 hr {
@@ -108,6 +160,29 @@ hr {
     border-top: 3px solid #4E1319;
     margin: 1em 0;
     padding: 0; 
+    width: ;
+}
+
+.sheet-section-header {
+    text-align: center;
+    font-size: 16pt;
+    font-weight: bold;
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+
+.sheet-bonuses-table {
+    margin-left: 125px;
+}
+
+.sheet-bonuses-table td {
+    padding-top: 4px;
+    padding-right: 0px;
+}
+
+.sheet-defense-buttons {
+    text-align: center;
 }
 
 /* Flaws */
@@ -119,6 +194,7 @@ hr {
     font-weight: bold;
     letter-spacing: 10px;
     margin-bottom: 20px;
+    margin-top: 35px;
 }
 
 .sheet-flaw {
@@ -224,7 +300,7 @@ hr {
     font-weight: bold;
     letter-spacing: 10px;
     margin-bottom: 20px;
-    margin-top: 20px;
+    margin-top: 30px;
 }
 
 .sheet-tech {
