@@ -1,13 +1,13 @@
 # Valor Script Repository
 These files should help you run Valor games on Roll20 with a minimum of pain and a maximum of fun streamlining quality-of-life features.
 
-The files here are split into two sub-projects - API, and Character Sheet.
+The files here are split into two sub-projects - Scripts, and Character Sheet.
 
 ### Valor Character Sheet
-The files in this folder will give you a full functioning in-game character sheet template that you can use to quickly put together and update Valor characters on the fly. All derived values are calculated automatically, and techniques are given text descriptions based on their mechanics. Without the character sheet, several parts of the API won't work.
+The files in this folder will give you a full functioning in-game character sheet template that you can use to quickly put together and update Valor characters on the fly. All derived values are calculated automatically, and techniques are given text descriptions based on their mechanics. Without the character sheet, several parts of the Scripts won't work.
 
 ### Valor API Scripts
-This is a collection of scripts that will automate a lot of important Valor logic during battles, to keep the game flowing quickly. These can only be used by Pro level Roll20 subscribers. Without the API, several parts of the character sheet won't work.
+This is a collection of scripts that will automate a lot of important Valor logic during battles, to keep the game flowing quickly. These can only be used by Pro level Roll20 subscribers. Without the Scripts, several parts of the character sheet won't work.
 
 ## Installation
 1. From your campaign's main page, click Settings, then go to Game Settings.
