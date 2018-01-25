@@ -173,3 +173,6 @@ v1.0.4 (1/6/18):
 - Fixed a couple typos.
 - Domain Core should be treating mod levels correctly now.
 - Tech descriptions update when Attack values change.
+
+v1.0.5 (1/25/18):
+- Added support for Continuous Recovery.

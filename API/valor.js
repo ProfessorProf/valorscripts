@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.0.0
+ * v1.0.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -534,12 +534,21 @@ function getTechDescription(tech, charId, suppressDamageDisplay) {
         case 'healing':
             var healing;
             var power = getAttrByName(charId, tech.stat);
-            if(state.houseRulesEnabled) {
-                healing = (tech.coreLevel + 3) * 3 + Math.ceil(power / 2);
+
+            var regen = tech.mods && tech.mods.find(function(m) {
+                return m.toLowerCase().indexOf('continuous r') > -1
+            });
+            if(regen) {
+                healing = (tech.coreLevel + 3) * 2 + Math.ceil(power / 2);
+                summary = 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP per turn';
             } else {
-                healing = (tech.coreLevel + 3) * 4 + power;
+                if(state.houseRulesEnabled) {
+                    healing = (tech.coreLevel + 3) * 3 + Math.ceil(power / 2);
+                } else {
+                    healing = (tech.coreLevel + 3) * 4 + power;
+                }
+                summary = 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP';
             }
-            summary = 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP'
             break;
         case 'barrier':
             summary = 'Barrier power ' + tech.coreLevel;
@@ -1122,7 +1131,7 @@ on('chat:message', function(msg) {
         var actor = getActor(msg);
         if(!actor) {
             log('No usable character found for ' + msg.playerid);
-            endEvent('!tech');
+            endEvent('!status');
             return;
         }
     
@@ -2142,22 +2151,84 @@ on('chat:message', function(msg) {
                         hpGain *= 2;
                     }
                 } else {
+                    var regen = tech.mods.find(function(m) {
+                        return m.toLowerCase().indexOf('continuous r') > -1;
+                    });
                     var power = getAttrByName(actor.get('_id'), tech.stat);
-                    if(state.houseRulesEnabled) {
-                        hpGain = (tech.coreLevel + 3) * 3 + Math.ceil(power / 2);
+                    if(regen) {
+                        hpGain = (tech.coreLevel + 3) * 2 + Math.ceil(power / 2);
                     } else {
-                        hpGain = (tech.coreLevel + 3) * 4 + power;
+                        if(state.houseRulesEnabled) {
+                            hpGain = (tech.coreLevel + 3) * 3 + Math.ceil(power / 2);
+                        } else {
+                            hpGain = (tech.coreLevel + 3) * 4 + power;
+                        }
+                    }
+                    var healer = getSkill(actor.get('_id'), 'healer');
+                    if(healer && healer.level) {
+                        var healerLevel = parseInt(healer.level);
+                        if(healerLevel != healerLevel) {
+                            healerLevel = 1;
+                        }
+                        hpGain += (healerLevel + 1) * 2;
+                    }
+                    if(regen) {
+                        // Add regen effect to character
+                        charIds.forEach(function(charId) {
+                            var effectName = 'Regen ';
+                            var aggravatedWounds = getFlaw(charId, 'aggravatedWounds');
+                            if(aggravatedWounds && tech.core == 'healing') {
+                                effectName += Math.ceil(hpGain / 2);
+                            } else {
+                                effectName += hpGain;
+                            }
+                            
+                            // Do they already have this effect?
+                            var checkingEffects = false;
+                            var hasEffect = false;
+                            for(var turnId = 0; turnId < turnOrder.length; turnId++) {
+                                if(checkingEffects) {
+                                    log(turnOrder[turnId]);
+                                    if(turnOrder[turnId].id == '-1') {
+                                        if(turnOrder[turnId].custom == effectName) {
+                                            // They already have it, reset its duration
+                                            turnOrder[turnId].pr = 3;
+                                            hasEffect = true;
+                                            Campaign().set('turnorder', JSON.stringify(turnOrder));
+                                            break;
+                                        }
+                                    } else {
+                                        // That's the end of the effects
+                                        break;
+                                    }
+                                } else {
+                                    if(turnOrder[turnId].id != '-1') {
+                                        var token = getObj('graphic', turnOrder[turnId].id);
+                                        if(token && token.get('represents') == charId) {
+                                            // We found the user, continue reading to get their effect list
+                                            checkingEffects = true;
+                                        }
+                                    }
+                                }
+                            }
+                            if(!hasEffect) {
+                                // Add the regen effect and re-get the turn order object
+                                addEffect(turnOrder, charId, effectName, 3);
+                                turnOrder = JSON.parse(Campaign().get('turnorder'));
+                            }
+                        });
+                    } else {
+                        // Directly restore HP
+                        charIds.forEach(function(charId) {
+                            var aggravatedWounds = getFlaw(charId, 'aggravatedWounds');
+                            if(aggravatedWounds && tech.core == 'healing') {
+                                updateValueForCharacter(charId, 'hp', Math.ceil(hpGain));
+                            } else {
+                                updateValueForCharacter(charId, 'hp', hpGain);
+                            }
+                        });
                     }
                 }
-                
-                charIds.forEach(function(charId) {
-                    var aggravatedWounds = getFlaw(charId, 'aggravatedWounds');
-                    if(aggravatedWounds && tech.core == 'healing') {
-                        updateValueForCharacter(charId, 'hp', Math.ceil(hpGain / 2));
-                    } else {
-                        updateValueForCharacter(charId, 'hp', hpGain);
-                    }
-                });
                 
             }
         }
@@ -2177,7 +2248,7 @@ on('chat:message', function(msg) {
             hp = getAttrByName(actor.get('_id'), 'hp');
             hpMax = getAttrByName(actor.get('_id'), 'hp', 'max');
         }
-        if(hp / hpMax <= 0.4) {
+        if(hp / hpMax <= 0.4 && tech.core == 'damage' || tech.core == 'ultDamage') {
             var crisis = getSkill(actor.get('_id'), 'crisis');
             if(crisis && crisis.level) {
                 techQualifiers.push('Crisis');
@@ -2415,6 +2486,7 @@ on('chat:message', function(msg) {
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!e ') == 0 || 
     msg.type == 'api' && msg.content.indexOf('!effect') == 0) {
+        startEvent('!effect');
         // Get params
         var split = msg.content.match(/(".*?")|(\S+)/g);
         if(split.length < 2) {
@@ -2458,27 +2530,34 @@ on('chat:message', function(msg) {
             }
         }
         
-        // Add a new item to the turn log
-        for(i = 0; i < turnOrder.length; i++) {
-            if(turnOrder[i].id != '-1') {
-                var token = getObj('graphic', turnOrder[i].id);
-                if(token && actor && token.get('represents') == actor.get('_id')) {
-                    var effect = {
-                        id: '-1',
-                        custom: effectName,
-                        pr: duration,
-                        formula: '-1'
-                    };
-                    var newTurnOrder = turnOrder.slice(0, i + 1).concat([effect]).concat(turnOrder.slice(i + 1));
-                    Campaign().set('turnorder', JSON.stringify(newTurnOrder));
-                    log('Effect ' + effectName + ' added to Turn Tracker.');
-                    return;
-                }
-            }
-        }
-        log('Actor not found on Turn Tracker.');
+        addEffect(turnOrder, actor.get('_id'), effectName, duration);
+        endEvent('!effect');
     }
 });
+
+function addEffect(turnOrder, actorId, effectName, duration) {
+    log(effectName);
+    log(duration);
+    // Add a new item to the turn log
+    for(i = 0; i < turnOrder.length; i++) {
+        if(turnOrder[i].id != '-1') {
+            var token = getObj('graphic', turnOrder[i].id);
+            if(token && token.get('represents') == actorId) {
+                var effect = {
+                    id: '-1',
+                    custom: effectName,
+                    pr: duration,
+                    formula: '-1'
+                };
+                var newTurnOrder = turnOrder.slice(0, i + 1).concat([effect]).concat(turnOrder.slice(i + 1));
+                Campaign().set('turnorder', JSON.stringify(newTurnOrder));
+                log('Effect ' + effectName + ' added to Turn Tracker.');
+                return;
+            }
+        }
+    }
+    log('Actor not found on Turn Tracker.');
+}
 
 // !rest command
 // Enter !rest in the chat to recover an Increment of HP/ST for each character.
@@ -4125,275 +4204,3 @@ on('change:campaign:turnorder', function(obj) {
         }
     }
 });
-
-/**
- * Changelog
- * 
- * v1.0: Initial release.
- * 
- * v1.1:
- * - New feature: Auto-processing of ongoing damage and HP regeneration.
- * - Bugfix: Valor gains at end of round would sometimes be calculated multiple
- * times.
- * 
- * v1.2:
- * - New command: !set-vrate
- * 
- * v1.2.1:
- * - Bugfix: Script would crash if you used Valor auto-tracking before ever
- * using !set-bravado.
- * 
- * v1.2.2:
- * - Bugfix: Strange behavior from token sync when changing the names of tokens.
- * - Refactor: Added more code comments.
- * 
- * v1.3:
- * - Get Bravado and Fast Healing values from Valor Character Sheet.
- * 
- * v1.3.1:
- * - Get Weak Willed from the Valor Character Sheet.
- * - Update current HP when Max HP changes.
- * 
- * v1.3.2:
- * - Bugfix: Max sync and associating values with character sheets could crash
- * the script.
- * 
- * v1.3.3:
- * - Allowed !rest and !fullrest to heal characters who aren't on the same page
- * as the players, or who are on the GM layer.
- * - Bounce Back skill now honored by valor updater.
- * 
- * v1.4.0:
- * - Added the !tech command.
- * 
- * v1.4.1:
- * - Bugfixes on !t.
- * - Tweaked algorithm for identifying which technique you wanted to use.
- * 
- * v1.4.2:
- * - Added more lenient text parsing on !t command.
- * - Added !t-undo command.
- * 
- * v1.4.3:
- * - Bugfix: !t only worked a tiny amount of the time.
- * 
- * v1.4.4:
- * - Even more !t bugfixes.
- * 
- * v1.5.0:
- * - Replaced the old Status Tracker with a new one.
- * - Got rid of the need for the gmID field.
- * - Added the !effect command.
- * 
- * v1.5.1:
- * - Bugfix: Techs with no limits block could crash the !t parser.
- * 
- * v1.5.2:
- * - Small bugfix to support the new roll tech buttons
- * - Added --as parameter for tech roll
- * 
- * v1.5.3:
- * - Roll techs from character sheet buttons by ID instead of name
- * 
- * v1.5.4:
- * - Add support for mimic tech rolling
- * - Cleaning up of tech roll output for some cores
- * 
- * v1.5.5:
- * - !rest once again rounds to the nearest integer
- * - Fixed a bug where !rest sometimes crashed the API
- * 
- * v1.5.6:
- * - Bugfix: !t wasn't properly parsing tech cores other than Damage for some reason.
- * - Bugfix: Mimic logic would occasionally crash the API.
- * - Removed excess logging.
- * 
- * v1.5.7:
- * - Various bugfixes.
- * - Masters automatically get bonus Valor and +1 to attack rolls.
- * 
- * v1.5.8:
- * - Initiative Limit automatically applied.
- * - Cleaned up tech rendering.
- * 
- * v1.6.0:
- * - !t command now honors a few limits: Valor, Ultimate Valor, Initiative, Injury, Set-Up.
- * 
- * v1.6.1:
- * - Fixed bug regarding techniques with no names.
- * - !t command now honors Ammunition Limit, Cooldown Limit and Stamina cost.
- * 
- * v1.6.2:
- * - Don't enforce Stamina costs on minions by default.
- * - Bugfix: Don't use resources when failing to mimic a technique.
- * - !t now honors Accurate Strike.
- * - Whispered alerts on Cooldown/Ammo Limits.
- * 
- * v1.6.3:
- * - Various mimic-related bugfixes.
- * - Bugfix: Cooldowns no longer alert multiple times when coming off cooldown.
- * - Ammo Limit now always shows the remaining ammunition.
- * - Added option to hide tech effects for NPCs.
- * - Axed the Token Syncer.
- * 
- * v1.7.0:
- * - Various bugfixes.
- * - Added checkboxes for using Dig Deep and Overload Limits.
- * 
- * v1.8.0:
- * - Added support for level-up sheets.
- * - Added critical HP warning.
- * - Lots of bugfixes.
- * 
- * v1.9.0:
- * - Various bugfixes.
- * - Current HP and ST now go up when you level up via level-up sheet.
- * - Attack roll now factors in Increased Size.
- * - Attack roll now factors in Roll Bonus.
- * - Added support for mechanics from Villains, Creatures and Foes.
- * 
- * v1.9.1:
- * - !rest no longer heals up from zero all at once.
- * - Characters at 0 or less HP no longer gain Valor automatically.
- * - Hopefully stopped the multiple notifs for critical HP.
- * 
- * v1.9.2:
- * - Fixed the critical HP notifs again.
- * - Added support for Fixed Bravado house rules.
- * 
- * v1.10.0:
- * - Moved tech micro-summary logic into this file.
- * - Added support for Crisis in presented damage for techs.
- * - Added support for Berserker in presented damage for techs.
- * - Added support for Empower Attack in presented damage for techs.
- * - Bugfixes.
- * 
- * v1.10.1:
- * - Lots of bugfixes.
- * 
- * v1.10.2:
- * - More bugfixes.
- * - More debug logging added everywhere.
- * 
- * v1.10.3:
- * - Fixed the NaN Damage bug.
- * - Logging was causing the Create Level-up Sheet button to crash the API.
- * - Added more logging for the mimic core.
- * 
- * v0.11.0:
- * - Changed version numbering system.
- * - Bugfixes.
- * - New command: !init.
- * - !t without any parameters now lets you pick a tech from a list.
- * 
- * v0.11.1:
- * - !init wasn't setting up the round counter to increment properly. 
- * - Round now defaults to 1 instead of 0.
- * - Stat sub mods are now honored by the tech roller.
- * - Ultimate Mimic Core now honored by system.
- * - Ultimate Health Limit now honored by system.
- * - Mimic Core now refuses to mimic Ultimate Techniques.
- * 
- * v0.11.2:
- * - GM can now set enemy rolls to be hidden from the players.
- * - More logging to look into the bug where !init skips one character.
- * 
- * v0.11.3:
- * - All turn order effects now process after you move past the effect.
- * 
- * v0.12.0:
- * - Critical health warning now triggers on ongoing damage, regen, and health limits.
- * - Ongoing damage and regen are now reported in the chat.
- * - Intuitive Strike now works.
- * - !init finally works consistently.
- * 
- * v0.12.1:
- * - !reset command now resets character valor.
- * - !rest and !fullRest now use the same logic for resetting valor.
- * - !init command no longer messes up valor scores.
- * - API no longer crashes when there's an ongoing effect called "Ongoing X" where X isn't a number.
- * 
- * v0.13.0:
- * - Support for using Resolute Strike skill.
- * - Targets and Roll Bonus fields on techs now reset after use.
- * - Techs now display some info on important mods when used.
- * - !def command added.
- * - Refactored how attack/defense rolls are set up.
- * 
- * v0.13.1:
- * - Bugfix: Techs with no mods crashed the new mod display system.
- * - Added Mercy Limit to mod display.
- * 
- * v0.14.0:
- * - New command !mook generates basic stats for new soldier/flunky character sheets at random.
- * - Bugfix: Finalizing level-up sheets now deletes removed skills/flaws/techs.
- * - Bugfix: Empowered Attack, etc. now honored on mimic techs.
- * - Bugfix: Attacks would sometimes erroneously show skills/flaws after changing the Core type.
- * 
- * v0.14.1:
- * - Implemented attack bonuses.
- * - !reset, !rest and !fullrest now all reset the bonuses block.
- * 
- * v0.14.2:
- * - Massive refactor of all logic to increase/decrease HP/ST/Valor.
- * - !set-bravado no longer supported.
- * - !check debug command added.
- * - Various bugfixes.
- * 
- * v0.14.3:
- * - Added timing information to logs on various events.
- * - Non-alphanumeric technique names would confuse the !t command.
- * - Various bugfixes.
- * 
- * v0.14.4:
- * - Optimized !rest and !fullrest to make them run faster and prevent infinite-loop errors.
- * 
- * v0.14.5:
- * - Stat rolls and defense rolls are automatically rolled as the character the sheet belongs to.
- * 
- * v0.14.6:
- * - Updated for Healing test errata (gated behind enableHouseRules).
- * - Fixed the bonus reset on !reset, !rest, !fullrest and !init.
- * 
- * v0.15.0:
- * - Support for auto-targetting Use Tech button.
- * 
- * v0.15.1:
- * - Bugfix: Use Tech button now honors Piercing properly.
- * - Bugfix: Characters with no skills wouldn't gain house rule Valor bonuses.
- * - House rules Valor bonuses are now doubled for Masters.
- * 
- * v0.15.2:
- * - Healing now automatically processes its HP recovery.
- * 
- * v0.15.3:
- * - Displayed damage never goes below 0.
- * - Def/Res bonuses honored by damage calculations.
- * 
- * v0.15.4:
- * - Added Custom core support.
- * - Use Tech doesn't try to roll attacks if no stat is selected.
- * 
- * v0.15.5:
- * - Mimic Tech now uses right attack stat and targets right defense.
- * - Mimic-related bugs resolved.
- * - Valiant skill now honored.
- * - Scripts no longer crash when targeting a non-character token.
- * - Empowered, etc. now appear regardless of tech display mode.
- * 
- * v0.16.0:
- * - New command !di to display damage increments for all active characters.
- * - New command !crit to display crit damage for most recent tech.
- * 
- * v0.17.0:
- * - Vitality Limit now respected by Use Technique button.
- * - Ultimate Technique usage now tracked for Use Technique button.
- * - New command !status to check usability of all techniques.
- * - Bugfix: 'Ignore limits for Flunkies/Soldiers' works now.
- * - Bugfix: Custom cores no longer try to roll if they have no stat specified.
- * 
- * v1.0.0:
- * - Updated tech usage display.
- * - Ultimate Techniques can now be re-used when overriding limits.
- * - Fixeed some cases where Valor would update when it shouldn't.
- **/

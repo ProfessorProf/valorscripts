@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.0.4
+ * v1.0.5
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -1359,9 +1359,10 @@ function calculateTech(techId) {
                 }
                 break;
             case 'healing':
+                var healing = 0;
                 switch(techStat) {
                     case 'spr':
-                        healing = 9 + 3 * techCoreLevel + Math.ceil(spr / 2); // ERRATA - Reduced Healing power
+                        healing = Math.ceil(spr / 2); // ERRATA - Reduced Healing power
                         break;
                     case 'mnd':
                         healing = 9 + 3 * techCoreLevel + Math.ceil(mnd / 2);
@@ -1373,7 +1374,13 @@ function calculateTech(techId) {
                 if(techValues.healerLevel > 0) {
                     healing += 2 + 2 * techValues.healerLevel;
                 }
-                summary += 'Restore ' + healing + ' Health to the target. '
+                if(techMods.indexOf('continuous r') > -1) {
+                    healing += 6 + 2 * techCoreLevel;
+                    summary += 'Makes the target recover ' + healing + ' Health per turn for 3 turns. '
+                } else {
+                    healing += 9 + 3 * techCoreLevel;
+                    summary += 'Restore ' + healing + ' Health to the target. '
+                }
                 break;
             case 'barrier':
                 summary += 'Create a Barrier of power ' + techCoreLevel + '. ';
@@ -1811,6 +1818,8 @@ function calculateTech(techId) {
             } else if(mod.indexOf('touch of mal') == 0) {
                 summary += "Whenever you hit a target with a Damage or Weaken tech in this form, they gain 1 Malevolence. ";
                 totalModLevel += 6;
+            } else if(mod.indexOf('continuous r') == 0) {
+                // Add nothing, already explained in core description
             } else if(mod.length > 0) {
                 warnings += "WARNING: Unrecognized Modifier '" + mod + "'. ";
             }
