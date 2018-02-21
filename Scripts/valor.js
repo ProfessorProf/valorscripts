@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.0.1
+ * v1.0.2
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -1120,7 +1120,72 @@ on('chat:message', function(msg) {
             }
         }
     }
-    
+});
+
+// !sizeup command
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && (msg.content.indexOf('!sizeup') == 0
+        && playerIsGM(msg.playerid))) {
+        startEvent('!sizeup');
+        // Use selected token or first token on active page that represents character
+        var token;
+        if(msg.selected && msg.selected.length > 0) {
+            var selectedToken = getObj('graphic', msg.selected[0]._id);
+            if(selectedToken.get('represents')) {
+                token = selectedToken;
+            }
+        }
+        
+        if(!token) {
+            sendChat('Valor', '/w gm No selected token is linked to a character sheet.');
+        }
+        
+        var charId = selectedToken.get('represents');
+        
+        var name = token.get('name');
+        if(!name) {
+            var characters = filterObjs(function(obj) {
+                return obj.get('_type') === 'character' &&
+                       obj.get('_id') === charId;
+            });
+            
+            if(characters.length > 0) {
+                var actor = characters[0];
+                name = actor.get('name');
+            }
+        }
+        var attributes = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                   obj.get('_characterid') == charId;
+        });
+        
+        var summary = name + '<br/>';
+        var hp = token.get('')
+        summary += 'HP: ' + getAttrByName(charId, 'hp') + '/' + getAttrByName(charId, 'hp', 'max') + '<br/>';
+        summary += 'ST: ' + getAttrByName(charId, 'st') + '/' + getAttrByName(charId, 'st', 'max') + '<br/>';
+        
+        var mus = getAttrByName(charId, 'mus');
+        var dex = getAttrByName(charId, 'dex');
+        var aur = getAttrByName(charId, 'aur');
+        var int = getAttrByName(charId, 'int');
+        var res = getAttrByName(charId, 'res');
+        summary += 'Mus ' + mus + ', Dex ' + dex + ', Aur ' + aur + ', Int ' + int + ', Res ' + res + '<br/>';
+        
+        var flaws = getFlaws(charId);
+        if(flaws && flaws.length > 0) {
+            var flawNames = Array.from(flaws, function(f) {
+                var flawName = f.name.replace( /([A-Z])/g, " $1" );
+                return flawName.charAt(0).toUpperCase() + flawName.slice(1);
+            });
+            log(flawNames);
+            summary += 'Flaws: ' + flawNames.join(', ') + '<br/>';
+        } else {
+            summary += 'No Flaws<br/>';
+            
+        }
+        sendChat('Valor', '/w gm <div>' + summary + '</div>');
+        endEvent('!sizeup');
+    }
 });
 
 // !status command
@@ -1289,7 +1354,7 @@ on('chat:message', function(msg) {
                             hpMax = 0;
                         }
                         
-                        var hpTarget = Math.ceil(hpMax * 0.6);
+                        var hpTarget = Math.ceil(hpMax * 0.4);
                         
                         if(hp < hpTarget) {
                             techStatus.push('HP too low');
@@ -1359,7 +1424,11 @@ on('chat:message', function(msg) {
                 // Check for Ultimate usage
                 if(tech.core == 'ultDamage' || tech.core == 'transform' ||
                     tech.core == 'ultMimic' || tech.core == 'domain') {
-                    if(techData.timesUsed.length > 0) {
+                    var unerring = tech.mods && tech.mods.find(function(m) {
+                        return m.toLowerCase().indexOf('unerring') == 0;
+                    });
+                    
+                    if(!unerring && techData.timesUsed.length > 0) {
                         techStatus.push('Already used');
                     }
                 }
@@ -1663,7 +1732,7 @@ on('chat:message', function(msg) {
                     hpMax = 0;
                 }
                 
-                var hpTarget = Math.ceil(hpMax * 0.6);
+                var hpTarget = Math.ceil(hpMax * 0.4);
                 
                 if(hp < hpTarget) {
                     log('Tech blocked - Vitality Limit');
@@ -1738,7 +1807,7 @@ on('chat:message', function(msg) {
         // Check for Ultimate usage
         if((tech.core == 'ultDamage' || tech.core == 'transform' ||
             tech.core == 'ultMimic' || tech.core == 'domain') && !overrideLimits) {
-            var unerring = tech.mods.find(function(m) {
+            var unerring = tech.mods && tech.mods.find(function(m) {
                 return m.toLowerCase().indexOf('unerring') == 0;
             });
             
@@ -2478,7 +2547,22 @@ on('chat:message', function(msg) {
             state.techData[techDataId].timesUsed.length - 1);
         }
         
-        log('Reverted technique ' + techLog.techName + ' used by ' + token.get('name') + '. ' + state.techHistory.length + ' techs remaining in history log.');
+        var name = token.get('name');
+        if(!name) {
+            var characters = filterObjs(function(obj) {
+                return obj.get('_type') === 'character' &&
+                       obj.get('_id') === token.get('represents');
+            });
+            
+            if(characters.length > 0) {
+                var actor = characters[0];
+                name = actor.get('name');
+            }
+        }
+        var message = name ? 'Reverted use of technique ' + techLog.techName + ' used by ' + name + '. ' :
+            'Reverted use of technique' + techLog.techName + '. ';
+        sendChat('Valor', message);
+        log(message + state.techHistory.length + ' techs remaining in history log.');
     }
 });
 
@@ -2895,6 +2979,9 @@ on('chat:message', function(msg) {
         startEvent('!init');
         var split = msg.content.match(/(".*?")|(\S+)/g);
         var turnOrder = JSON.parse(Campaign().get('turnorder'));
+        if(!turnOrder) {
+            turnOrder = [];
+        }
         
         if((split.length < 2 || split[1] != '--confirm') && turnOrder && turnOrder.length > 0) {
             // No --confirm, ask for verification

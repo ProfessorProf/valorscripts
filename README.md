@@ -111,6 +111,11 @@ Has three parameters:
 * Type (`-t [type]`) sets the type. Accepted values are 'flunky' and 'soldier'. Defaults to Flunky.
 * Stats (`-s [stats separated by spaces]`) sets the high attributes for the character. Maximum three. Defaults to a random selection.
 
+### Size Up
+Syntax: `!sizeup`
+
+Sends a message to the GM displaying the selected token's HP, ST, secondary attributes and Flaws.
+
 ###
 
 ## Automatic Features

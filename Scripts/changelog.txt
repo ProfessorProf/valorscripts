@@ -1,156 +1,155 @@
-v1.0: Initial release.
+v0.0: Initial release.
 
-v1.1:
+v0.1:
 - New feature: Auto-processing of ongoing damage and HP regeneration.
 - Bugfix: Valor gains at end of round would sometimes be calculated multiple
 times.
 
-v1.2:
+v0.2:
 - New command: !set-vrate
 
-v1.2.1:
+v0.2.1:
 - Bugfix: Script would crash if you used Valor auto-tracking before ever
 using !set-bravado.
 
-v1.2.2:
+v0.2.2:
 - Bugfix: Strange behavior from token sync when changing the names of tokens.
 - Refactor: Added more code comments.
 
-v1.3:
+v0.3:
 - Get Bravado and Fast Healing values from Valor Character Sheet.
 
-v1.3.1:
+v0.3.1:
 - Get Weak Willed from the Valor Character Sheet.
 - Update current HP when Max HP changes.
 
-v1.3.2:
+v0.3.2:
 - Bugfix: Max sync and associating values with character sheets could crash
 the script.
 
-v1.3.3:
+v0.3.3:
 - Allowed !rest and !fullrest to heal characters who aren't on the same page
 as the players, or who are on the GM layer.
 - Bounce Back skill now honored by valor updater.
 
-v1.4.0:
+v0.4.0:
 - Added the !tech command.
 
-v1.4.1:
+v0.4.1:
 - Bugfixes on !t.
 - Tweaked algorithm for identifying which technique you wanted to use.
 
-v1.4.2:
+v0.4.2:
 - Added more lenient text parsing on !t command.
 - Added !t-undo command.
 
-v1.4.3:
+v0.4.3:
 - Bugfix: !t only worked a tiny amount of the time.
 
-v1.4.4:
+v0.4.4:
 - Even more !t bugfixes.
 
-v1.5.0:
+v0.5.0:
 - Replaced the old Status Tracker with a new one.
 - Got rid of the need for the gmID field.
 - Added the !effect command.
 
-v1.5.1:
+v0.5.1:
 - Bugfix: Techs with no limits block could crash the !t parser.
 
-v1.5.2:
+v0.5.2:
 - Small bugfix to support the new roll tech buttons
 - Added --as parameter for tech roll
 
-v1.5.3:
+v0.5.3:
 - Roll techs from character sheet buttons by ID instead of name
 
-v1.5.4:
+v0.5.4:
 - Add support for mimic tech rolling
 - Cleaning up of tech roll output for some cores
 
-v1.5.5:
+v0.5.5:
 - !rest once again rounds to the nearest integer
 - Fixed a bug where !rest sometimes crashed the API
 
-v1.5.6:
+v0.5.6:
 - Bugfix: !t wasn't properly parsing tech cores other than Damage for some reason.
 - Bugfix: Mimic logic would occasionally crash the API.
 - Removed excess logging.
 
-v1.5.7:
+v0.5.7:
 - Various bugfixes.
 - Masters automatically get bonus Valor and +1 to attack rolls.
 
-v1.5.8:
+v0.5.8:
 - Initiative Limit automatically applied.
 - Cleaned up tech rendering.
 
-v1.6.0:
+v0.6.0:
 - !t command now honors a few limits: Valor, Ultimate Valor, Initiative, Injury, Set-Up.
 
-v1.6.1:
+v0.6.1:
 - Fixed bug regarding techniques with no names.
 - !t command now honors Ammunition Limit, Cooldown Limit and Stamina cost.
 
-v1.6.2:
+v0.6.2:
 - Don't enforce Stamina costs on minions by default.
 - Bugfix: Don't use resources when failing to mimic a technique.
 - !t now honors Accurate Strike.
 - Whispered alerts on Cooldown/Ammo Limits.
 
-v1.6.3:
+v0.6.3:
 - Various mimic-related bugfixes.
 - Bugfix: Cooldowns no longer alert multiple times when coming off cooldown.
 - Ammo Limit now always shows the remaining ammunition.
 - Added option to hide tech effects for NPCs.
 - Axed the Token Syncer.
 
-v1.7.0:
+v0.7.0:
 - Various bugfixes.
 - Added checkboxes for using Dig Deep and Overload Limits.
 
-v1.8.0:
+v0.8.0:
 - Added support for level-up sheets.
 - Added critical HP warning.
 - Lots of bugfixes.
 
-v1.9.0:
+v0.9.0:
 - Various bugfixes.
 - Current HP and ST now go up when you level up via level-up sheet.
 - Attack roll now factors in Increased Size.
 - Attack roll now factors in Roll Bonus.
 - Added support for mechanics from Villains, Creatures and Foes.
 
-v1.9.1:
+v0.9.1:
 - !rest no longer heals up from zero all at once.
 - Characters at 0 or less HP no longer gain Valor automatically.
 - Hopefully stopped the multiple notifs for critical HP.
 
-v1.9.2:
+v0.9.2:
 - Fixed the critical HP notifs again.
 - Added support for Fixed Bravado house rules.
 
-v1.10.0:
+v0.10.0:
 - Moved tech micro-summary logic into this file.
 - Added support for Crisis in presented damage for techs.
 - Added support for Berserker in presented damage for techs.
 - Added support for Empower Attack in presented damage for techs.
 - Bugfixes.
 
-v1.10.1:
+v0.10.1:
 - Lots of bugfixes.
 
-v1.10.2:
+v0.10.2:
 - More bugfixes.
 - More debug logging added everywhere.
 
-v1.10.3:
+v0.10.3:
 - Fixed the NaN Damage bug.
 - Logging was causing the Create Level-up Sheet button to crash the API.
 - Added more logging for the mimic core.
 
 v0.11.0:
-- Changed version numbering system.
 - Bugfixes.
 - New command: !init.
 - !t without any parameters now lets you pick a tech from a list.
@@ -269,3 +268,10 @@ v1.0.0 (12/14/17):
 v1.0.1 (1/25/18):
 - Crisis and Berserker now only appear when using damage techs.
 - Added support for Continuous Recovery mod.
+
+v1.0.2 (2/21/18):
+- New command !sizeup displays information for when a player uses the Size Up skill.
+- Unerring ults no longer display as already used on !status command.
+- !t-undo now displays a message indicating that it was used.
+- Vitality Limit now blocks at 40% Health, not 60%.
+- Fixed a few bugs.
