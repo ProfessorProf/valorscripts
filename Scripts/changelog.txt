@@ -275,3 +275,8 @@ v1.0.2 (2/21/18):
 - !t-undo now displays a message indicating that it was used.
 - Vitality Limit now blocks at 40% Health, not 60%.
 - Fixed a few bugs.
+
+v1.0.3 (2/26/18):
+- Bugfix: Healing techs without mods were broken by the new regen logic
+- Bugfix: Transformations weren't counted as ultimates in a lot of ways.
+- Bugfix: Transformations restore HP again.

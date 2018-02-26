@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.0.6
+ * v1.0.7
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -543,7 +543,7 @@ function calculateResistance() {
 }
 
 function calculateSpeed() {
-    log('VALOR - Recalculating Speed');
+    log('VALOR - Recalculating Move');
     getAttrs(['agi', 'flawLibrary', 'skillLibrary'], function(values) {
         var agi = parseInt(values.agi);
         
@@ -2641,7 +2641,7 @@ on('sheet:opened', function() {
             </td>
         </tr>
         <tr>
-            <td class="stats-text stats-last-row">Speed:</td>
+            <td class="stats-text stats-last-row">Move:</td>
             <td class="derived-value">
                 <span name="attr_speed" />
             </td>

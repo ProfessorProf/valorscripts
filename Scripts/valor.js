@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.0.2
+ * v1.0.3
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -1422,7 +1422,8 @@ on('chat:message', function(msg) {
                 }
                 
                 // Check for Ultimate usage
-                if(tech.core == 'ultDamage' || tech.core == 'transform' ||
+                log(tech.core);
+                if(tech.core == 'ultDamage' || tech.core == 'ultTransform' ||
                     tech.core == 'ultMimic' || tech.core == 'domain') {
                     var unerring = tech.mods && tech.mods.find(function(m) {
                         return m.toLowerCase().indexOf('unerring') == 0;
@@ -1584,7 +1585,7 @@ on('chat:message', function(msg) {
         
         // Check if they're trying to mimic an ult with a non-ult mimic tech
         if(tech.oldCore == 'mimic' && (tech.core == 'ultDamage' || 
-            tech.core == 'transform' || tech.core == 'domain')) {
+            tech.core == 'ultTransform' || tech.core == 'domain')) {
             log('Mimic failed, target core type ' + tech.oldCore + '.');
             sendChat('Valor', '/w "' + actor.get('name') + '" ' + "You can't mimic an Ultimate Technique with a normal Mimic Core.");
             endEvent('!tech');
@@ -1805,7 +1806,7 @@ on('chat:message', function(msg) {
         }
         
         // Check for Ultimate usage
-        if((tech.core == 'ultDamage' || tech.core == 'transform' ||
+        if((tech.core == 'ultDamage' || tech.core == 'ultTransform' ||
             tech.core == 'ultMimic' || tech.core == 'domain') && !overrideLimits) {
             var unerring = tech.mods && tech.mods.find(function(m) {
                 return m.toLowerCase().indexOf('unerring') == 0;
@@ -2219,8 +2220,12 @@ on('chat:message', function(msg) {
                     if(getAttrByName(actor.get('_id'), 'type') == 'master') {
                         hpGain *= 2;
                     }
+                    // Directly restore HP
+                    charIds.forEach(function(charId) {
+                        updateValueForCharacter(charId, 'hp', hpGain);
+                    });
                 } else {
-                    var regen = tech.mods.find(function(m) {
+                    var regen = tech.mods && tech.mods.find(function(m) {
                         return m.toLowerCase().indexOf('continuous r') > -1;
                     });
                     var power = getAttrByName(actor.get('_id'), tech.stat);
