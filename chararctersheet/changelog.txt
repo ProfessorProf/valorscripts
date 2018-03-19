@@ -181,3 +181,7 @@ v1.0.6 (2/21/18):
 
 v1.0.7 (2/26/18):
 - Speed is finally correctly displayed as Move.
+
+v1.0.8 (3/19/18):
+- Healing values displayed correctly on mnd/guts healing techniques.
+- Bonuses are once again added to technique attack rolls.

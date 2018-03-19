@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.0.7
+ * v1.0.8
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -1365,10 +1365,10 @@ function calculateTech(techId) {
                         healing = Math.ceil(spr / 2); // ERRATA - Reduced Healing power
                         break;
                     case 'mnd':
-                        healing = 9 + 3 * techCoreLevel + Math.ceil(mnd / 2);
+                        healing = Math.ceil(mnd / 2);
                         break;
                     case 'gut':
-                        healing = 9 + 3 * techCoreLevel + Math.ceil(gut / 2);
+                        healing = Math.ceil(gut / 2);
                         break;
                 }
                 if(techValues.healerLevel > 0) {
@@ -2174,8 +2174,8 @@ on('change:repeating_techs:tech_name change:repeating_techs:tech_core_level ' +
     calculateTech(techId);
 });
 
-on('change:repeating_techs:tech_mods change:repeating_techs:tech_targets change:repeating_techs:tech_core ' +
-   'change:repeating_techs:tech_limits change:repeating_techs:tech_name', function(eventInfo) {
+on('change:repeating_techs:tech_mods change:repeating_techs:tech_targets change:repeating_techs:tech_bonus '+ 
+   'change:repeating_techs:tech_core change:repeating_techs:tech_limits change:repeating_techs:tech_name', function(eventInfo) {
     var techId = eventInfo.sourceAttribute.substring(16, 36);
     calculateTechCommand(techId);
 });
