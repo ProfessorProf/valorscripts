@@ -185,3 +185,7 @@ v1.0.7 (2/26/18):
 v1.0.8 (3/19/18):
 - Healing values displayed correctly on mnd/guts healing techniques.
 - Bonuses are once again added to technique attack rolls.
+
+v1.0.9 (5/21/18):
+- Fixed price on Unyielding Determination.
+- Skill/Flaw/Core libraries are no longer storied within the character sheet.

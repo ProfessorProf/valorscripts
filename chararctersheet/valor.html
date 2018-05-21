@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.0.8
+ * v1.0.9
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -20,6 +20,252 @@
  * 'Custom Flaw' and set the level to the amount of SP.
  * 
  **/
+
+var flawLibrary = [
+    { cost: 1, levelUp: 1, speed: 3, id: 'customFlaw' },
+    { cost: 2, levelUp: 0, speed: 0, id: 'aggravatedWounds' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'berserker' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'compulsion' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'despair' },
+    { cost: 2, levelUp: 1, speed: 2, id: 'energyVulnerability' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'feeble' },
+    { cost: 3, levelUp: 2, speed: 2, id: 'fragile' },
+    { cost: 2, levelUp: 1, speed: 2, id: 'lackOfControl' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'malevolentEntity' },
+    { cost: 1, levelUp: 0, speed: 0, id: 'nonProficient' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'oblivious' },
+    { cost: 2, levelUp: 1, speed: 1, id: 'slow' },
+    { cost: 2, levelUp: 0, speed: 0, id: 'slowHealing' },
+    { cost: 1, levelUp: 0, speed: 0, id: 'slowToAct' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'unthreatening' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'uncoordinated' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'violent' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'weakAura' },
+    { cost: 2, levelUp: 1, speed: 2, id: 'weakDefender' },
+    { cost: 4, levelUp: 3, speed: 1, id: 'weakWilled' },
+    { cost: 1, levelUp: 0, speed: 0, id: 'unprincipled' },
+    { cost: 2, levelUp: 1, speed: 1, id: 'elementalVulnerability' },
+    { cost: 2, levelUp: 1, speed: 1, id: 'armorReliant' },
+    { cost: 2, levelUp: 1, speed: 1, id: 'wardReliant' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'broadForm' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'fearTheDarkness' },
+    { cost: 7, levelUp: 0, speed: 0, id: 'immobile' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'insubstantial' },
+    { cost: 2, levelUp: 0, speed: 0, id: 'situationalCompulsion' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'sunlightWeakness' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'thresheld' },
+    { cost: 2, levelUp: 0, speed: 0, id: 'weakGuard' },
+    { cost: 10, levelUp: 0, speed: 0, id: 'malevolentPossession' }
+];
+var skillLibrary = [
+    { cost: 1, levelUp: 1, speed: 3, id: 'customSkill' },
+    { cost: 8, levelUp: 0, speed: 0, id: 'balancedFighter' },
+    { cost: 6, levelUp: 6, speed: 0, id: 'bravado' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'discreetAura' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'darksight' },
+    { cost: 6, levelUp: 3, speed: 1, id: 'energyAttacker' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'fastHealing' },
+    { cost: 4, levelUp: 2, speed: 1, id: 'improvedDamageIncrement' }, // ERRATA: Reduced cost for IDI
+    { cost: 2, levelUp: 2, speed: 2, id: 'increasedSize' },
+    { cost: 4, levelUp: 2, speed: 1, id: 'ironDefense' },
+    { cost: 6, levelUp: 3, speed: 1, id: 'physicalAttacker' },
+    { cost: 4, levelUp: 2, speed: 1, id: 'resistant' },
+    { cost: 4, levelUp: 2, speed: 1, id: 'sprinter' },
+    { cost: 5, levelUp: 2, speed: 2, id: 'tireless' },
+    { cost: 6, levelUp: 3, speed: 2, id: 'tough' },
+    { cost: 6, levelUp: 3, speed: 2, id: 'versatileFighter' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'skyAttack' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'breakValorLimit' },
+    { cost: 8, levelUp: 0, speed: 0, id: 'expandedReach' },
+    { cost: 12, levelUp: 0, speed: 0, id: 'extraAction' },
+    { cost: 6, levelUp: 4, speed: 1, id: 'regeneration' },
+    { cost: 4, levelUp: 2, speed: 1, id: 'staminaRecovery' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'teleportation' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'unyieldingDetermination' }, // ERRATA: Reduced cost, different effect
+    { cost: 4, levelUp: 0, speed: 0, id: 'violentAura' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'bounceBack' },
+    { cost: 4, levelUp: 2, speed: 2, id: 'crisis' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'dangerSense' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'desperation' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'digDeep' },
+    { cost: 2, levelUp: 0, speed: 0, id: 'discretion' },
+    { cost: 6, levelUp: 3, speed: 2, id: 'empowerAttack' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'improvedSwimming' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'nimbleMovement' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'overloadLimits' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'passiveHealing' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'protector' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'quickToAct' },
+    { cost: 5, levelUp: 3, speed: 1, id: 'recklessAttack' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'resoluteStrike' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'revenge' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'rollingRecovery' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'teamTactics' },
+    { cost: 6, levelUp: 2, speed: 1, id: 'unmovable' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'abundantCreation' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'cloneTactics' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'combatToss' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'daredevil' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'phasing' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'risingAttack' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'safeStride' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'splitMove' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'transposition' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'underhanded' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'wallWalk' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'waterAdaptation' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'waterWalk' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'xRayVision' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'unshakeable' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'unstoppable' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'extendedRange' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'freeFlight' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'freeSwiftStep' },
+    { cost: 5, levelUp: 2, speed: 1, id: 'attackNode' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'darkHealing' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'dirtyTrick' },
+    { cost: 2, levelUp: 0, speed: 0, id: 'duel' },
+    { cost: 4, levelUp: 3, speed: 1, id: 'effectTransfer' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'feint' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'inspire' }, // ERRATA: Fixed level on Inspire
+    { cost: 5, levelUp: 3, speed: 1, id: 'intimidate' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'jump' },
+    { cost: 5, levelUp: 2, speed: 1, id: 'nullify' },
+    { cost: 4, levelUp: 2, speed: 2, id: 'provoke' },
+    { cost: 5, levelUp: 3, speed: 1, id: 'recharge' },
+    { cost: 3, levelUp: 1, speed: 2, id: 'sizeUp' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'spiritSight' },
+    { cost: 5, levelUp: 2, speed: 1, id: 'toss' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'battleAnalysis' },
+    { cost: 6, levelUp: 0, speed: 1, id: 'clone' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'effectCapture' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'healthTransference' },
+    { cost: 6, levelUp: 3, speed: 2, id: 'portal' },
+    { cost: 4, levelUp: 2, speed: 2, id: 'refractionPoint' },
+    { cost: 6, levelUp: 3, speed: 1, id: 'seal' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'shadowMeld' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'staminaTransference' },
+    { cost: 5, levelUp: 2, speed: 1, id: 'swiftStep' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'attackNodeNetwork' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'exploitWeakness' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'flunkyDomination' },
+    { cost: 6, levelUp: 2, speed: 1, id: 'fly' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'refractionChain' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'swiftJump' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'combinationAttack' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'counterattack' },
+    { cost: 6, levelUp: 2, speed: 2, id: 'cover' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'ignoreEffect' },
+    { cost: 3, levelUp: 2, speed: 1, id: 'interruptAttack' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'afterimage' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'areaShield' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'clash' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'damageFeedback' },
+    { cost: 5, levelUp: 2, speed: 1, id: 'divingEscape' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'finalAttack' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'lineDeflect' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'mobileCover' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'mobileDodge' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'opportunisticDodge' },
+    { cost: 4, levelUp: 2, speed: 1, id: 'pushAway' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'rangedInterrupt' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'shrugOff' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'defensiveClash' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'deflectingShield' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'prepared' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'acceleration' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'analysis' },
+    { cost: 6, levelUp: 3, speed: 1, id: 'blazingMight' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'burningPassion' },
+    { cost: 6, levelUp: 3, speed: 1, id: 'fightingSpirit' },
+    { cost: 6, levelUp: 3, speed: 1, id: 'hardenedDefense' },
+    { cost: 6, levelUp: 3, speed: 1, id: 'hardenedResistance' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'resoluteAura' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'strengthOfWill' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'asset' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'challengeTechnique' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'favorableInsight' },
+    { cost: 2, levelUp: 0, speed: 0, id: 'proficiency' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'recovery' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'favorableSuccess' },
+    { cost: 6, levelUp: 4, speed: 1, id: 'companion' },
+    { cost: 2, levelUp: 1, speed: 2, id: 'fastCompanion' },
+    { cost: 4, levelUp: 2, speed: 1, id: 'hiddenCompanion' },
+    { cost: 3, levelUp: 1, speed: 1, id: 'mount' },
+    { cost: 2, levelUp: 0, speed: 0, id: 'senseMalice' },
+    { cost: 3, levelUp: 1, speed: 1, id: 'allyMount' },
+    { cost: 4, levelUp: 4, speed: 1, id: 'companionZoneOfControl' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'extendedRevival' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'flankAttack' },
+    { cost: 2, levelUp: 0, speed: 0, id: 'protectAlly' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'protectMaster' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'rangedRevival' },
+    { cost: 3, levelUp: 1, speed: 1, id: 'tossingCompanion' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'trustingCompanion' },
+    { cost: 2, levelUp: 0, speed: 0, id: 'companionSense' },
+    { cost: 3, levelUp: 3, speed: 1, id: 'flyingCompanion' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'instantMount' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'reactiveCompanion' },
+    { cost: 12, levelUp: 0, speed: 0, id: 'limitlessPower' },
+    { cost: 8, levelUp: 0, speed: 0, id: 'invisibility' },
+    { cost: 8, levelUp: 3, speed: 1, id: 'revive' },
+    { cost: 2, levelUp: 0, speed: 0, id: 'principled' },
+    { cost: 6, levelUp: 3, speed: 2, id: 'illusoryAssailant' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'illusoryDisguise' },
+    { cost: 4, levelUp: 2, speed: 2, id: 'illusoryTerrain' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'pierceIllusion' },
+    { cost: 4, levelUp: 2, speed: 1, id: 'elementalResistance' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'elementalAttunement' },
+    { cost: 5, levelUp: 0, speed: 0, id: 'polearmWielder' },
+    { cost: 4, levelUp: 2, speed: 1, id: 'rangedWeaponWielder' },
+    { cost: 4, levelUp: 2, speed: 0, id: 'aquatic' },
+    { cost: 4, levelUp: 2, speed: 0, id: 'construct' },
+    { cost: 4, levelUp: 2, speed: 0, id: 'elemental' },
+    { cost: 4, levelUp: 2, speed: 0, id: 'undead' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'diminuitive' },
+    { cost: 4, levelUp: 2, speed: 0, id: 'healer' },
+    { cost: 1, levelUp: 1, speed: 0, id: 'increasedLength' },
+    { cost: 1, levelUp: 0, speed: 0, id: 'largeHead' },
+    { cost: 4, levelUp: 3, speed: 0, id: 'limitedRegeneration' },
+    { cost: 1, levelUp: 0, speed: 0, id: 'longTail' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'morale' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'hardenedResolve' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'standTall' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'terrainAdaptation' },
+    { cost: 12, levelUp: 0, speed: 0, id: 'ultimateAttack' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'unscrupulous' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'alteredDurability' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'amphibious' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'destructiveBurrow' },
+    { cost: 6, levelUp: 3, speed: 0, id: 'durableFlunky' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'freeBurrow' },
+    { cost: 4, levelUp: 0, speed: 0, id: 'landAdaptation' },
+    { cost: 8, levelUp: 0, speed: 0, id: 'resurrectingFlunky' },
+    { cost: 8, levelUp: 0, speed: 0, id: 'trample' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'toweringPresence' },
+    { cost: 2, levelUp: 2, speed: 0, id: 'burrow' },
+    { cost: 3, levelUp: 0, speed: 0, id: 'humanshape' },
+    { cost: 4, levelUp: 2, speed: 0, id: 'limitedFlight' },
+    { cost: 6, levelUp: 0, speed: 0, id: 'pressingSwarm' },
+    { cost: 12, levelUp: 0, speed: 0, id: 'shapeshifter' },
+    { cost: 1, levelUp: 1, speed: 0, id: 'skillCopy' },
+    { cost: 3, levelUp: 1, speed: 0, id: 'swiftStance' },
+    { cost: 8, levelUp: 0, speed: 0, id: 'victorAtAnyCost' },
+    { cost: 1, levelUp: 1, speed: 0, id: 'increasedCompanionSize' }
+];
+var coreLibrary = [
+    { cost: 2, levelUp: 1, id: 'damage' },
+    { cost: 1, levelUp: 1, id: 'barrier' },
+    { cost: 0, levelUp: 2, id: 'boost' },
+    { cost: 1, levelUp: 1, id: 'healing' },
+    { cost: 0, levelUp: 0, id: 'mimic' },
+    { cost: 3, levelUp: 2, id: 'summoning' },
+    { cost: 1, levelUp: 1, id: 'weaken' },
+    { cost: 4, levelUp: 2, id: 'ultDamage' },
+    { cost: 0, levelUp: 3, id: 'ultTransform' },
+    { cost: 0, levelUp: 3, id: 'ultMimic' },
+    { cost: 3, levelUp: 3, id: 'domain' }
+];
 
 function calculateBaseAttributes() {
     log('VALOR - Recalculating Base Attributes');
@@ -79,7 +325,7 @@ function calculateBaseAttributes() {
 
 function calculateActiveAttributes() {
     log('VALOR - Recalculating Active Attributes');
-    getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type', 'skillLibrary'], function(values) {
+    getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type'], function(values) {
         var level = parseInt(values.level);
         var str = parseInt(values.str);
         var agi = parseInt(values.agi);
@@ -156,7 +402,7 @@ function calculateActiveAttributes() {
 
 function calculateAttack() {
     log('VALOR - Recalculating Attack');
-    getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type', 'skillLibrary'], function(values) {
+    getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type'], function(values) {
         var level = parseInt(values.level);
         var str = parseInt(values.str);
         var agi = parseInt(values.agi);
@@ -230,7 +476,7 @@ function calculateAttack() {
 
 function calculateHealth() {
     log('VALOR - Recalculating Max Health');
-    getAttrs(['level', 'str', 'gut', 'type', 'flawLibrary', 'skillLibrary'], function(values) {
+    getAttrs(['level', 'str', 'gut', 'type'], function(values) {
         var level = parseInt(values.level);
         var str = parseInt(values.str);
         var gut = parseInt(values.gut);
@@ -318,7 +564,7 @@ function calculateHealth() {
 
 function calculateStamina() {
     log('VALOR - Recalculating Max Stamina');
-    getAttrs(['level', 'mnd', 'spr', 'type', 'flawLibrary', 'skillLibrary'], function(values) {
+    getAttrs(['level', 'mnd', 'spr', 'type'], function(values) {
         var level = parseInt(values.level);
         var mnd = parseInt(values.mnd);
         var spr = parseInt(values.spr);
@@ -396,7 +642,7 @@ function calculateStamina() {
 
 function calculateDefense() {
     log('VALOR - Recalculating Defense');
-    getAttrs(['level', 'str', 'gut', 'type', 'flawLibrary', 'skillLibrary'], function(values) {
+    getAttrs(['level', 'str', 'gut', 'type'], function(values) {
         var level = parseInt(values.level);
         var str = parseInt(values.str);
         var gut = parseInt(values.gut);
@@ -470,7 +716,7 @@ function calculateDefense() {
 
 function calculateResistance() {
     log('VALOR - Recalculating Resistance');
-    getAttrs(['level', 'spr', 'mnd', 'type', 'flawLibrary', 'skillLibrary'], function(values) {
+    getAttrs(['level', 'spr', 'mnd', 'type'], function(values) {
         var level = parseInt(values.level);
         var spr = parseInt(values.spr);
         var mnd = parseInt(values.mnd);
@@ -544,7 +790,7 @@ function calculateResistance() {
 
 function calculateSpeed() {
     log('VALOR - Recalculating Move');
-    getAttrs(['agi', 'flawLibrary', 'skillLibrary'], function(values) {
+    getAttrs(['agi'], function(values) {
         var agi = parseInt(values.agi);
         
         var speed = Math.ceil(agi / 4) + 2;
@@ -616,7 +862,7 @@ function calculateSpeed() {
 
 function calculateDamageIncrement() {
     log('VALOR - Recalculating Damage Increment');
-    getAttrs(['level', 'type', 'skillLibrary'], function(values) {
+    getAttrs(['level', 'type'], function(values) {
         var level = parseInt(values.level);
         
         var di = level + 5;
@@ -664,7 +910,7 @@ function calculateDamageIncrement() {
 
 function calculateInitiative() {
     log('VALOR - Recalculating Initiative');
-    getAttrs(['dex', 'flawLibrary', 'skillLibrary'], function(values) {
+    getAttrs(['dex'], function(values) {
         var init = parseInt(values.dex);
         
         // Apply Flaws
@@ -723,7 +969,7 @@ function calculateInitiative() {
 
 function calculateBonuses() {
     log('VALOR - Recalculating Attack/Defense Bonuses');
-    getAttrs(['type', 'skillLibrary'], function(values) {
+    getAttrs(['type'], function(values) {
         
         var atkBonus = 0;
         var defBonus = 0;
@@ -790,7 +1036,7 @@ function getDisplayName(name) {
 
 function calculateFlawsAndSkills() {
     log('VALOR - Recalculating Flaws & Skills');
-    getAttrs(['level', 'type', 'flawLibrary', 'skillLibrary'], function(values) {
+    getAttrs(['level', 'type'], function(values) {
         var level = parseInt(values.level);
         var unspentSP = 14 + 6 * level;
         
@@ -833,7 +1079,7 @@ function calculateFlawsAndSkills() {
                         flawLevel = parseInt(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']);
                     }
                     
-                    var flaw = values.flawLibrary.find(function(f) {
+                    var flaw = flawLibrary.find(function(f) {
                         return f.id == flawName;
                     });
                     
@@ -907,7 +1153,7 @@ function calculateFlawsAndSkills() {
                                     break;
                             }
                             
-                            var skill = values.skillLibrary.find(function(s) {
+                            var skill = skillLibrary.find(function(s) {
                                 return s.id == skillName;
                             });
                             
@@ -955,7 +1201,7 @@ function calculateFlawsAndSkills() {
 
 function calculateTP() {
     log('VALOR - Recalculating Unspent TP');
-    getAttrs(['level', 'type', 'skillLibrary'], function(values) {
+    getAttrs(['level', 'type'], function(values) {
         var level = parseInt(values.level);
         
         var unspentTP = 8 + 4 * level;
@@ -1100,6 +1346,7 @@ function calculateTechCommand(techId) {
     techFieldNames.push('repeating_techs_' + techId + '_tech_bonus');
     
     getAttrs(techFieldNames, function(techValues) {
+        log(techValues);
         var techName = techValues['repeating_techs_' + techId + '_tech_name'];
         var techCore = 'damage';
         if(techValues['repeating_techs_' + techId + '_tech_core']) {
@@ -1161,7 +1408,7 @@ function calculateTechCommand(techId) {
 function calculateTech(techId) {
     log('VALOR - Recalculating Technique ID ' + techId);
     
-    var techFieldNames = ['coreLibrary', 'str', 'agi', 'spr', 'mnd', 'gut', 
+    var techFieldNames = ['str', 'agi', 'spr', 'mnd', 'gut', 
                           'mus', 'dex', 'aur', 'int', 'res', 
                           'strAtk', 'agiAtk', 'sprAtk', 'mndAtk',
                           'level', 'hp_max', 'di', 'type',
@@ -1837,7 +2084,7 @@ function calculateTech(techId) {
         
         summary += '\n';
         // Display the technique cost and limits
-        var core = techValues.coreLibrary.find(function(c) {
+        var core = coreLibrary.find(function(c) {
             return c.id == techCore;
         });
         
@@ -2181,255 +2428,6 @@ on('change:repeating_techs:tech_mods change:repeating_techs:tech_targets change:
 });
 
 on('sheet:opened', function() {
-    log('Initializing libraries...');
-    setAttrs({
-        flawLibrary: [
-            { cost: 1, levelUp: 1, speed: 3, id: 'customFlaw' },
-            { cost: 2, levelUp: 0, speed: 0, id: 'aggravatedWounds' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'berserker' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'compulsion' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'despair' },
-            { cost: 2, levelUp: 1, speed: 2, id: 'energyVulnerability' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'feeble' },
-            { cost: 3, levelUp: 2, speed: 2, id: 'fragile' },
-            { cost: 2, levelUp: 1, speed: 2, id: 'lackOfControl' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'malevolentEntity' },
-            { cost: 1, levelUp: 0, speed: 0, id: 'nonProficient' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'oblivious' },
-            { cost: 2, levelUp: 1, speed: 1, id: 'slow' },
-            { cost: 2, levelUp: 0, speed: 0, id: 'slowHealing' },
-            { cost: 1, levelUp: 0, speed: 0, id: 'slowToAct' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'unthreatening' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'uncoordinated' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'violent' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'weakAura' },
-            { cost: 2, levelUp: 1, speed: 2, id: 'weakDefender' },
-            { cost: 4, levelUp: 3, speed: 1, id: 'weakWilled' },
-            { cost: 1, levelUp: 0, speed: 0, id: 'unprincipled' },
-            { cost: 2, levelUp: 1, speed: 1, id: 'elementalVulnerability' },
-            { cost: 2, levelUp: 1, speed: 1, id: 'armorReliant' },
-            { cost: 2, levelUp: 1, speed: 1, id: 'wardReliant' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'broadForm' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'fearTheDarkness' },
-            { cost: 7, levelUp: 0, speed: 0, id: 'immobile' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'insubstantial' },
-            { cost: 2, levelUp: 0, speed: 0, id: 'situationalCompulsion' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'sunlightWeakness' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'thresheld' },
-            { cost: 2, levelUp: 0, speed: 0, id: 'weakGuard' },
-            { cost: 10, levelUp: 0, speed: 0, id: 'malevolentPossession' }
-        ],
-        skillLibrary: [
-            { cost: 1, levelUp: 1, speed: 3, id: 'customSkill' },
-            { cost: 8, levelUp: 0, speed: 0, id: 'balancedFighter' },
-            { cost: 6, levelUp: 6, speed: 0, id: 'bravado' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'discreetAura' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'darksight' },
-            { cost: 6, levelUp: 3, speed: 1, id: 'energyAttacker' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'fastHealing' },
-            { cost: 4, levelUp: 2, speed: 1, id: 'improvedDamageIncrement' }, // ERRATA: Reduced cost for IDI
-            { cost: 2, levelUp: 2, speed: 2, id: 'increasedSize' },
-            { cost: 4, levelUp: 2, speed: 1, id: 'ironDefense' },
-            { cost: 6, levelUp: 3, speed: 1, id: 'physicalAttacker' },
-            { cost: 4, levelUp: 2, speed: 1, id: 'resistant' },
-            { cost: 4, levelUp: 2, speed: 1, id: 'sprinter' },
-            { cost: 5, levelUp: 2, speed: 2, id: 'tireless' },
-            { cost: 6, levelUp: 3, speed: 2, id: 'tough' },
-            { cost: 6, levelUp: 3, speed: 2, id: 'versatileFighter' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'skyAttack' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'breakValorLimit' },
-            { cost: 8, levelUp: 0, speed: 0, id: 'expandedReach' },
-            { cost: 12, levelUp: 0, speed: 0, id: 'extraAction' },
-            { cost: 6, levelUp: 4, speed: 1, id: 'regeneration' },
-            { cost: 4, levelUp: 2, speed: 1, id: 'staminaRecovery' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'teleportation' },
-            { cost: 8, levelUp: 0, speed: 0, id: 'unyieldingDetermination' }, // ERRATA: Reduced cost, different effect
-            { cost: 4, levelUp: 0, speed: 0, id: 'violentAura' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'bounceBack' },
-            { cost: 4, levelUp: 2, speed: 2, id: 'crisis' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'dangerSense' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'desperation' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'digDeep' },
-            { cost: 2, levelUp: 0, speed: 0, id: 'discretion' },
-            { cost: 6, levelUp: 3, speed: 2, id: 'empowerAttack' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'improvedSwimming' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'nimbleMovement' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'overloadLimits' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'passiveHealing' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'protector' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'quickToAct' },
-            { cost: 5, levelUp: 3, speed: 1, id: 'recklessAttack' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'resoluteStrike' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'revenge' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'rollingRecovery' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'teamTactics' },
-            { cost: 6, levelUp: 2, speed: 1, id: 'unmovable' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'abundantCreation' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'cloneTactics' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'combatToss' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'daredevil' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'phasing' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'risingAttack' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'safeStride' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'splitMove' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'transposition' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'underhanded' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'wallWalk' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'waterAdaptation' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'waterWalk' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'xRayVision' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'unshakeable' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'unstoppable' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'extendedRange' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'freeFlight' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'freeSwiftStep' },
-            { cost: 5, levelUp: 2, speed: 1, id: 'attackNode' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'darkHealing' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'dirtyTrick' },
-            { cost: 2, levelUp: 0, speed: 0, id: 'duel' },
-            { cost: 4, levelUp: 3, speed: 1, id: 'effectTransfer' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'feint' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'inspire' }, // ERRATA: Fixed level on Inspire
-            { cost: 5, levelUp: 3, speed: 1, id: 'intimidate' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'jump' },
-            { cost: 5, levelUp: 2, speed: 1, id: 'nullify' },
-            { cost: 4, levelUp: 2, speed: 2, id: 'provoke' },
-            { cost: 5, levelUp: 3, speed: 1, id: 'recharge' },
-            { cost: 3, levelUp: 1, speed: 2, id: 'sizeUp' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'spiritSight' },
-            { cost: 5, levelUp: 2, speed: 1, id: 'toss' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'battleAnalysis' },
-            { cost: 6, levelUp: 0, speed: 1, id: 'clone' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'effectCapture' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'healthTransference' },
-            { cost: 6, levelUp: 3, speed: 2, id: 'portal' },
-            { cost: 4, levelUp: 2, speed: 2, id: 'refractionPoint' },
-            { cost: 6, levelUp: 3, speed: 1, id: 'seal' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'shadowMeld' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'staminaTransference' },
-            { cost: 5, levelUp: 2, speed: 1, id: 'swiftStep' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'attackNodeNetwork' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'exploitWeakness' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'flunkyDomination' },
-            { cost: 6, levelUp: 2, speed: 1, id: 'fly' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'refractionChain' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'swiftJump' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'combinationAttack' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'counterattack' },
-            { cost: 6, levelUp: 2, speed: 2, id: 'cover' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'ignoreEffect' },
-            { cost: 3, levelUp: 2, speed: 1, id: 'interruptAttack' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'afterimage' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'areaShield' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'clash' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'damageFeedback' },
-            { cost: 5, levelUp: 2, speed: 1, id: 'divingEscape' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'finalAttack' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'lineDeflect' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'mobileCover' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'mobileDodge' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'opportunisticDodge' },
-            { cost: 4, levelUp: 2, speed: 1, id: 'pushAway' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'rangedInterrupt' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'shrugOff' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'defensiveClash' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'deflectingShield' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'prepared' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'acceleration' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'analysis' },
-            { cost: 6, levelUp: 3, speed: 1, id: 'blazingMight' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'burningPassion' },
-            { cost: 6, levelUp: 3, speed: 1, id: 'fightingSpirit' },
-            { cost: 6, levelUp: 3, speed: 1, id: 'hardenedDefense' },
-            { cost: 6, levelUp: 3, speed: 1, id: 'hardenedResistance' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'resoluteAura' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'strengthOfWill' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'asset' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'challengeTechnique' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'favorableInsight' },
-            { cost: 2, levelUp: 0, speed: 0, id: 'proficiency' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'recovery' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'favorableSuccess' },
-            { cost: 6, levelUp: 4, speed: 1, id: 'companion' },
-            { cost: 2, levelUp: 1, speed: 2, id: 'fastCompanion' },
-            { cost: 4, levelUp: 2, speed: 1, id: 'hiddenCompanion' },
-            { cost: 3, levelUp: 1, speed: 1, id: 'mount' },
-            { cost: 2, levelUp: 0, speed: 0, id: 'senseMalice' },
-            { cost: 3, levelUp: 1, speed: 1, id: 'allyMount' },
-            { cost: 4, levelUp: 4, speed: 1, id: 'companionZoneOfControl' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'extendedRevival' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'flankAttack' },
-            { cost: 2, levelUp: 0, speed: 0, id: 'protectAlly' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'protectMaster' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'rangedRevival' },
-            { cost: 3, levelUp: 1, speed: 1, id: 'tossingCompanion' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'trustingCompanion' },
-            { cost: 2, levelUp: 0, speed: 0, id: 'companionSense' },
-            { cost: 3, levelUp: 3, speed: 1, id: 'flyingCompanion' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'instantMount' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'reactiveCompanion' },
-            { cost: 12, levelUp: 0, speed: 0, id: 'limitlessPower' },
-            { cost: 8, levelUp: 0, speed: 0, id: 'invisibility' },
-            { cost: 8, levelUp: 3, speed: 1, id: 'revive' },
-            { cost: 2, levelUp: 0, speed: 0, id: 'principled' },
-            { cost: 6, levelUp: 3, speed: 2, id: 'illusoryAssailant' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'illusoryDisguise' },
-            { cost: 4, levelUp: 2, speed: 2, id: 'illusoryTerrain' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'pierceIllusion' },
-            { cost: 4, levelUp: 2, speed: 1, id: 'elementalResistance' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'elementalAttunement' },
-            { cost: 5, levelUp: 0, speed: 0, id: 'polearmWielder' },
-            { cost: 4, levelUp: 2, speed: 1, id: 'rangedWeaponWielder' },
-            { cost: 4, levelUp: 2, speed: 0, id: 'aquatic' },
-            { cost: 4, levelUp: 2, speed: 0, id: 'construct' },
-            { cost: 4, levelUp: 2, speed: 0, id: 'elemental' },
-            { cost: 4, levelUp: 2, speed: 0, id: 'undead' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'diminuitive' },
-            { cost: 4, levelUp: 2, speed: 0, id: 'healer' },
-            { cost: 1, levelUp: 1, speed: 0, id: 'increasedLength' },
-            { cost: 1, levelUp: 0, speed: 0, id: 'largeHead' },
-            { cost: 4, levelUp: 3, speed: 0, id: 'limitedRegeneration' },
-            { cost: 1, levelUp: 0, speed: 0, id: 'longTail' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'morale' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'hardenedResolve' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'standTall' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'terrainAdaptation' },
-            { cost: 12, levelUp: 0, speed: 0, id: 'ultimateAttack' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'unscrupulous' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'alteredDurability' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'amphibious' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'destructiveBurrow' },
-            { cost: 6, levelUp: 3, speed: 0, id: 'durableFlunky' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'freeBurrow' },
-            { cost: 4, levelUp: 0, speed: 0, id: 'landAdaptation' },
-            { cost: 8, levelUp: 0, speed: 0, id: 'resurrectingFlunky' },
-            { cost: 8, levelUp: 0, speed: 0, id: 'trample' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'toweringPresence' },
-            { cost: 2, levelUp: 2, speed: 0, id: 'burrow' },
-            { cost: 3, levelUp: 0, speed: 0, id: 'humanshape' },
-            { cost: 4, levelUp: 2, speed: 0, id: 'limitedFlight' },
-            { cost: 6, levelUp: 0, speed: 0, id: 'pressingSwarm' },
-            { cost: 12, levelUp: 0, speed: 0, id: 'shapeshifter' },
-            { cost: 1, levelUp: 1, speed: 0, id: 'skillCopy' },
-            { cost: 3, levelUp: 1, speed: 0, id: 'swiftStance' },
-            { cost: 8, levelUp: 0, speed: 0, id: 'victorAtAnyCost' },
-            { cost: 1, levelUp: 1, speed: 0, id: 'increasedCompanionSize' }
-        ],
-        coreLibrary: [
-            { cost: 2, levelUp: 1, id: 'damage' },
-            { cost: 1, levelUp: 1, id: 'barrier' },
-            { cost: 0, levelUp: 2, id: 'boost' },
-            { cost: 1, levelUp: 1, id: 'healing' },
-            { cost: 0, levelUp: 0, id: 'mimic' },
-            { cost: 3, levelUp: 2, id: 'summoning' },
-            { cost: 1, levelUp: 1, id: 'weaken' },
-            { cost: 4, levelUp: 2, id: 'ultDamage' },
-            { cost: 0, levelUp: 3, id: 'ultTransform' },
-            { cost: 0, levelUp: 3, id: 'ultMimic' },
-            { cost: 3, levelUp: 3, id: 'domain' }
-        ]
-    });
-    
     // Update attributes
     calculateBaseAttributes();
     calculateAttack();
