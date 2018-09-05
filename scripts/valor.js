@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.2.0
+ * v1.2.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -608,7 +608,7 @@ function getTechDescription(tech, charId, suppressDamageDisplay) {
             break;
         case 'healing':
             let healing;
-            let power = getAttrByName(charId, tech.stat);
+            let power = tech.stat ? getAttrByName(charId, tech.stat) : 0;
 
             let regen = tech.mods && tech.mods.find(function(m) {
                 return m.toLowerCase().indexOf('continuous r') > -1
@@ -2122,7 +2122,7 @@ on('chat:message', function(msg) {
                             }
                             let unmovable = getSkill(targetCharId, 'unmovable');
                             if(unmovable) {
-                                distance = Math.min(0, distance - unmovable.level * 2);
+                                distance = Math.max(0, distance - unmovable.level * 2);
                             }
                             
                             rollText += ', Reposition ' + distance;

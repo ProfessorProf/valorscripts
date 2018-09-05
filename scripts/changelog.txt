@@ -297,3 +297,7 @@ v1.2.0 (9/5/18):
 - Bugfix: Displayed healing values didn't factor in the Healer skill.
 - New: Finalizing a level up sheet now indicates how many levels you gained.
 - New: Commands !addhp, !addst, !subhp, and !subst to grant or take away an increment of HP or ST for all selected tokens.
+
+v1.2.1 (9/5/18):
+- Bugfix: Using a healing tech with no associated stat caused a crash.
+- Bugfix: Repositions were all displaying 0.
