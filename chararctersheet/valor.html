@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.0.9
+ * v1.1.0
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -66,7 +66,7 @@ var skillLibrary = [
     { cost: 6, levelUp: 3, speed: 1, id: 'energyAttacker' },
     { cost: 4, levelUp: 0, speed: 0, id: 'fastHealing' },
     { cost: 4, levelUp: 2, speed: 1, id: 'improvedDamageIncrement' }, // ERRATA: Reduced cost for IDI
-    { cost: 2, levelUp: 2, speed: 2, id: 'increasedSize' },
+    { cost: 2, levelUp: 1, speed: 2, id: 'increasedSize' },
     { cost: 4, levelUp: 2, speed: 1, id: 'ironDefense' },
     { cost: 6, levelUp: 3, speed: 1, id: 'physicalAttacker' },
     { cost: 4, levelUp: 2, speed: 1, id: 'resistant' },
@@ -101,7 +101,7 @@ var skillLibrary = [
     { cost: 5, levelUp: 0, speed: 0, id: 'revenge' },
     { cost: 4, levelUp: 0, speed: 0, id: 'rollingRecovery' },
     { cost: 5, levelUp: 0, speed: 0, id: 'teamTactics' },
-    { cost: 6, levelUp: 2, speed: 1, id: 'unmovable' },
+    { cost: 4, levelUp: 2, speed: 1, id: 'unmovable' },
     { cost: 5, levelUp: 0, speed: 0, id: 'abundantCreation' },
     { cost: 5, levelUp: 0, speed: 0, id: 'cloneTactics' },
     { cost: 4, levelUp: 0, speed: 0, id: 'combatToss' },
@@ -121,7 +121,7 @@ var skillLibrary = [
     { cost: 4, levelUp: 0, speed: 0, id: 'extendedRange' },
     { cost: 3, levelUp: 0, speed: 0, id: 'freeFlight' },
     { cost: 5, levelUp: 0, speed: 0, id: 'freeSwiftStep' },
-    { cost: 5, levelUp: 2, speed: 1, id: 'attackNode' },
+    { cost: 5, levelUp: 2, speed: 2, id: 'attackNode' },
     { cost: 5, levelUp: 0, speed: 0, id: 'darkHealing' },
     { cost: 5, levelUp: 0, speed: 0, id: 'dirtyTrick' },
     { cost: 2, levelUp: 0, speed: 0, id: 'duel' },
@@ -223,7 +223,7 @@ var skillLibrary = [
     { cost: 4, levelUp: 2, speed: 0, id: 'elemental' },
     { cost: 4, levelUp: 2, speed: 0, id: 'undead' },
     { cost: 6, levelUp: 0, speed: 0, id: 'diminuitive' },
-    { cost: 4, levelUp: 2, speed: 0, id: 'healer' },
+    { cost: 4, levelUp: 2, speed: 1, id: 'healer' },
     { cost: 1, levelUp: 1, speed: 0, id: 'increasedLength' },
     { cost: 1, levelUp: 0, speed: 0, id: 'largeHead' },
     { cost: 4, levelUp: 3, speed: 0, id: 'limitedRegeneration' },
@@ -1474,7 +1474,7 @@ function calculateTech(techId) {
         var isPersistent = false;
         
         if(techCoreLevel < 1) {
-            warnings += 'WARNING: Core Level cannot be less than 1. ';
+            warnings += 'WARNING: Core Power cannot be less than 1. ';
         }
         
         // Is this an ult?
@@ -1889,10 +1889,9 @@ function calculateTech(techId) {
                 summary += 'Can stack with another Transformation. ';
                 totalModLevel += modLevel;
             } else if(mod.indexOf('intimidating transform') == 0) {
-                var targets = 1 + modLevel;
-                summary += 'When transforming, roll Resolve (1d10+' + techValues.res + ') or Aura (1d10+' + techValues.aur +
-                ') to leave up to ' + targets + ' targets within 5 spaces Shaken. ';
-                totalModLevel += 2 * modLevel;
+                summary += `When transforming and at the start of each turn, roll Resolve (1d10+${techValues.res}) or Aura (1d10+${techValues.aur})` +
+                ` to intimidate everyone within ${modLevel} spaces.`;
+                totalModLevel += modLevel;
             } else if(mod.indexOf('accurate') == 0) {
                 if(techStat == 'agi') {
                     totalModLevel += 3;
@@ -1939,13 +1938,15 @@ function calculateTech(techId) {
             } else if(mod.indexOf('drop') == 0) {
                 summary += 'If target is flying, they fall and take ' + di + ' damage. ';
                 totalModLevel++;
-            } else if(mod.indexOf('grant flaw') == 0) {
+            } else if(mod.indexOf('grant flaw') == 0 ||
+                      mod.indexOf('grants flaw') == 0) {
                 if(techInflictedFlaws) {
                     summary += 'Inflicts Flaws: ' + techInflictedFlaws + '. ';
                 }
                 totalModLevel += modLevel;
 				hasFlaws = true;
-            } else if(mod.indexOf('grant skill') == 0) {
+            } else if(mod.indexOf('grant skill') == 0 ||
+                      mod.indexOf('grants skill') == 0) {
                 if(techGrantedSkills) {
                     summary += 'Grants Skills: ' + techGrantedSkills + '. ';
                 }
@@ -2106,6 +2107,9 @@ function calculateTech(techId) {
                 var healthLost = 5 * limitLevel;
                 limitSummary += 'Costs ' + healthLost + ' Health. ';
                 limitSt += 2 * limitLevel;
+                if(limitLevel > 5) {
+                    warnings += "WARNING: Health Limit can't be taken above level 5. ";
+                }
             } else if(limit.indexOf('ally') == 0) {
                 limitSummary += 'Cannot target yourself. ';
                 limitSt++;
@@ -2864,7 +2868,7 @@ on('sheet:opened', function() {
                     <option value="ignoreEffect">Ignore Effect (5)</option>
                     <option value="improvedDamageIncrement">Improved Damage Inc. (4/2)</option>
                     <option value="improvedSwimming">Improved Swimming (4)</option>
-                    <option value="increasedSize">Increased Size (2/2)</option>
+                    <option value="increasedSize">Increased Size (2/1)</option>
                     <option value="inspire">Inspire (5)</option>
                     <option value="interruptAttack">Interrupt Attack (3/2)</option>
                     <option value="intimidate">Intimidate (5/3)</option>
@@ -2897,7 +2901,8 @@ on('sheet:opened', function() {
                     <option value="tireless">Tireless (5/2)</option>
                     <option value="tough">Tough (6/3)</option>
                     <option value="toss">Toss (5/2)</option>
-                    <option value="unmovable">Unmovable (6/2)</option>
+                    <option value="underhanded">Underhanded (5)</option>
+                    <option value="unmovable">Unmovable (4/2)</option>
                     <option value="versatileFighter">Versatile Fighter (6/3)</option>
                 </optgroup>
                 <optgroup label="Season 2 Skills">
@@ -2942,7 +2947,6 @@ on('sheet:opened', function() {
                     <option value="tossingCompanion">Tossing Companion (3/1)</option>
                     <option value="transposition">Transposition (4)</option>
                     <option value="trustingCompanion">Trusting Companion (4)</option>
-                    <option value="underhanded">Underhanded (5)</option>
                     <option value="wallWalk">Wall Walk (4)</option>
                     <option value="waterAdaptation">Water Adaptation (6)</option>
                     <option value="waterWalk">Water Walk (4)</option>
@@ -3089,7 +3093,7 @@ on('sheet:opened', function() {
                                 <option value="custom">Custom Core</option>
                             </select>
                         </td>
-                        <td><span class="label">Core Level</span></td>
+                        <td><span class="label">Core Power</span></td>
                         <td>
                             <input class="tech-field" type="number" name="attr_tech_core_level" value="1" />
                         </td>

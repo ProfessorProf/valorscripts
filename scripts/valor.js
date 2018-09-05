@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.1.0
+ * v1.2.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -31,13 +31,13 @@ function trackStatuses(turnOrder) {
         return;
     }
     
-    var newTurnOrder = turnOrder;
+    let newTurnOrder = turnOrder;
     if(!newTurnOrder || newTurnOrder.length === 0) {
         // Do nothing if the init tracker is empty
         return;
     }
     
-    var lastChar = newTurnOrder[newTurnOrder.length - 1];
+    let lastChar = newTurnOrder[newTurnOrder.length - 1];
     if(lastChar.id != '-1') {
         // Do nothing if the last actor was a character
         return;
@@ -57,10 +57,86 @@ function trackStatuses(turnOrder) {
     }
 }
 
+// Internal function - get the current and max health for a character
+// If a token ID is provided, it prioritizes the values on the token; otherwise,
+// it uses the charId to get the attribute
+function getHp(tokenId, charId) {
+    let hp = null;
+    let hpMax = null;
+    let token = tokenId ? getObj('graphic', tokenId) : null;
+    
+    if(token) {
+        // Get HP by token
+        hp = parseInt(token.get('bar1_value'));
+        hpMax = parseInt(token.get('bar1_max'));
+        if(hp != hp || hpMax != hpMax) {
+            hp = null;
+            hpMax = null;
+        }
+    }
+    
+    if(!hp || !hpMax) {
+        // Get HP by character
+        hp = parseInt(getAttrByName(charId, 'hp'));
+        hpMax = parseInt(getAttrByName(charId, 'hp', 'max'));
+        if(hp != hp || hpMax != hpMax) {
+            hp = null;
+            hpMax = null;
+        }
+    }
+    
+    if(hp != null && hpMax != null) {
+        return { val: hp, max: hpMax };
+    } else {
+        return { val: 1, max: 1 };
+    }
+}
+
+// Internal function - get the current and max stamina for a character
+// If a token ID is provided, it prioritizes the values on the token; otherwise,
+// it uses the charId to get the attribute
+function getSt(tokenId, charId) {
+    let st = null;
+    let stMax = null;
+    let token = tokenId ? getObj('graphic', tokenId) : null;
+    
+    if(token) {
+        // Get HP by token
+        st = parseInt(token.get('bar2_value'));
+        stMax = parseInt(token.get('bar2_max'));
+        log('A');
+        log(st);
+        log(stMax);
+        if(st != st || stMax != stMax) {
+            st = null;
+            stMax = null;
+        }
+    }
+    
+    if(!st || !stMax) {
+        // Get HP by character
+        st = parseInt(getAttrByName(charId, 'hp'));
+        stMax = parseInt(getAttrByName(charId, 'hp', 'max'));
+        log('B');
+        log(st);
+        log(stMax);
+        if(st != st || stMax != stMax) {
+            st = null;
+            stMax = null;
+        }
+    }
+    
+    if(st && stMax) {
+        return { val: st, max: stMax };
+    } else {
+        return { val: 1, max: 1 };
+    }
+}
+
 // Internal function - gets a list of skills and their levels for a character ID.
 // Uses the Valor Character Sheet structure.
 function getSkills(charId) {
-    var rawSkills = filterObjs(function(obj) {
+    let rawSkills = filterObjs(function(obj) {
         if(obj.get('_type') == 'attribute' &&
            obj.get('_characterid') == charId &&
            obj.get('name').indexOf('repeating_skills') > -1) {
@@ -69,13 +145,13 @@ function getSkills(charId) {
         return false;
     });
     
-    var skills = [];
+    let skills = [];
     
     rawSkills.forEach(function(rawSkill) {
-        var skillName = rawSkill.get('name');
-        var skillId = skillName.split('_')[2];
+        let skillName = rawSkill.get('name');
+        let skillId = skillName.split('_')[2];
         
-        var oldSkill = skills.find(function(s) {
+        let oldSkill = skills.find(function(s) {
             return s.id == skillId
         });
         
@@ -86,7 +162,7 @@ function getSkills(charId) {
                 skills.push({ id: skillId, name: rawSkill.get('current'), level: 1 });
             }
         } else if(skillName.indexOf('skilllevel') > -1) {
-            var level = parseInt(rawSkill.get('current'));
+            let level = parseInt(rawSkill.get('current'));
             if(level == level) {
                 // It's not NaN, so assign skill level
                 if(oldSkill) {
@@ -102,7 +178,7 @@ function getSkills(charId) {
 }
 
 function getSkill(charId, skillName) {
-    var skills = getSkills(charId);
+    let skills = getSkills(charId);
     
     if(skills && skills.length > 0) {
         return skills.find(s => s.name && s.name.toLowerCase() == skillName.toLowerCase());
@@ -112,7 +188,7 @@ function getSkill(charId, skillName) {
 }
 
 function getFlaw(charId, flawName) {
-    var flaws = getFlaws(charId);
+    let flaws = getFlaws(charId);
     
     if(flaws && flaws.length > 0) {
         return flaws.find(f => f.name && f.name.toLowerCase() == flawName.toLowerCase());
@@ -124,7 +200,7 @@ function getFlaw(charId, flawName) {
 // Internal function - gets a list of flaws and their levels for a character ID.
 // Uses the Valor Character Sheet structure.
 function getFlaws(charId) {
-    var rawFlaws = filterObjs(function(obj) {
+    let rawFlaws = filterObjs(function(obj) {
         if(obj.get('_type') == 'attribute' &&
            obj.get('_characterid') == charId &&
            obj.get('name').indexOf('repeating_flaws') > -1) {
@@ -133,13 +209,13 @@ function getFlaws(charId) {
         return false;
     });
     
-    var flaws = [];
+    let flaws = [];
     
     rawFlaws.forEach(function(rawFlaw) {
-        var flawName = rawFlaw.get('name');
-        var flawId = flawName.split('_')[2];
+        let flawName = rawFlaw.get('name');
+        let flawId = flawName.split('_')[2];
         
-        var oldFlaw = flaws.find(function(s) {
+        let oldFlaw = flaws.find(function(s) {
             return s.id == flawId
         });
         
@@ -150,7 +226,7 @@ function getFlaws(charId) {
                 flaws.push({ id: flawId, name: rawFlaw.get('current'), level: 1 });
             }
         } else if(flawName.indexOf('flawlevel') > -1) {
-            var level = parseInt(rawFlaw.get('current'));
+            let level = parseInt(rawFlaw.get('current'));
             if(level == level) {
                 // It's not NaN, so assign flaw level
                 if(oldFlaw) {
@@ -168,7 +244,7 @@ function getFlaws(charId) {
 // Internal function - gets a list of techs and their levels for a character ID.
 // Uses the Valor Character Sheet structure.
 function getTechs(charId) {
-    var rawTechs = filterObjs(function(obj) {
+    let rawTechs = filterObjs(function(obj) {
         if(obj.get('_type') == 'attribute' &&
            (!charId || obj.get('_characterid') == charId) &&
            obj.get('name').indexOf('repeating_techs') > -1) {
@@ -177,12 +253,12 @@ function getTechs(charId) {
         return false;
     });
     
-    var techs = [];
+    let techs = [];
     rawTechs.forEach(function(rawTech) {
-        var techName = rawTech.get('name');
-        var techId = techName.split('_')[2];
+        let techName = rawTech.get('name');
+        let techId = techName.split('_')[2];
         
-        var oldTech = techs.find(function(s) {
+        let oldTech = techs.find(function(s) {
             return s.id == techId
         });
         
@@ -206,7 +282,7 @@ function getTechs(charId) {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), stat: rawTech.get('current')});
             }
         } else if(techName.indexOf('tech_cost') > -1) {
-            var cost = parseInt(rawTech.get('current'));
+            let cost = parseInt(rawTech.get('current'));
             if(cost != cost) {
                 cost = 0;
             }
@@ -217,7 +293,7 @@ function getTechs(charId) {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), cost: cost});
             }
         } else if(techName.indexOf('tech_limit_st') > -1) {
-            var limitSt = parseInt(rawTech.get('current'));
+            let limitSt = parseInt(rawTech.get('current'));
             if(limitSt != limitSt) {
                 limitSt = 0;
             }
@@ -228,7 +304,7 @@ function getTechs(charId) {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), limitSt: limitSt});
             }
         } else if(techName.indexOf('tech_limits') > -1) {
-            var limits = rawTech.get('current').split('\n');
+            let limits = rawTech.get('current').split('\n');
             
             if(oldTech) {
                 oldTech.limits = limits;
@@ -236,7 +312,7 @@ function getTechs(charId) {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), limits: limits});
             }
         } else if(techName.indexOf('tech_mods') > -1) {
-            var mods = rawTech.get('current').split('\n');
+            let mods = rawTech.get('current').split('\n');
             
             if(oldTech) {
                 oldTech.mods = mods;
@@ -262,7 +338,7 @@ function getTechs(charId) {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), mimicTarget: rawTech.get('current')});
             }
         } else if(techName.indexOf('tech_core_level') > -1) {
-            var coreLevel = parseInt(rawTech.get('current'));
+            let coreLevel = parseInt(rawTech.get('current'));
             if(coreLevel != coreLevel) {
                 coreLevel = 0;
             }
@@ -272,7 +348,7 @@ function getTechs(charId) {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), coreLevel: coreLevel});
             }
         } else if(techName.indexOf('tech_level') > -1) {
-            var techLevel = parseInt(rawTech.get('current'));
+            let techLevel = parseInt(rawTech.get('current'));
             if(techLevel != techLevel) {
                 techLevel = 0;
             }
@@ -294,7 +370,7 @@ function getTechs(charId) {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), grantedSkills: rawTech.get('current')});
             }
         } else if(techName.indexOf('tech_has_skills') > -1) {
-            var hasSkills = rawTech.get('current') == 'on';
+            let hasSkills = rawTech.get('current') == 'on';
             if(oldTech) {
                 oldTech.hasSkills = hasSkills;
             } else {
@@ -307,42 +383,42 @@ function getTechs(charId) {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), inflictedFlaws: rawTech.get('current')});
             }
         } else if(techName.indexOf('tech_has_flaws') > -1) {
-            var hasFlaws = rawTech.get('current') == 'on';
+            let hasFlaws = rawTech.get('current') == 'on';
             if(oldTech) {
                 oldTech.hasFlaws = hasFlaws;
             } else {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), hasFlaws: hasFlaws});
             }
         } else if(techName.indexOf('tech_digDeep') > -1) {
-            var digDeep = rawTech.get('current') == 'on';
+            let digDeep = rawTech.get('current') == 'on';
             if(oldTech) {
                 oldTech.digDeep = digDeep;
             } else {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), digDeep: digDeep});
             }
         } else if(techName.indexOf('tech_overloadLimits') > -1) {
-            var overloadLimits = rawTech.get('current') == 'on';
+            let overloadLimits = rawTech.get('current') == 'on';
             if(oldTech) {
                 oldTech.overloadLimits = overloadLimits;
             } else {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), overloadLimits: overloadLimits});
             }
         } else if(techName.indexOf('tech_empowerAttack') > -1) {
-            var empowerAttack = rawTech.get('current') == 'on';
+            let empowerAttack = rawTech.get('current') == 'on';
             if(oldTech) {
                 oldTech.empowerAttack = empowerAttack;
             } else {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), empowerAttack: empowerAttack});
             }
         } else if(techName.indexOf('tech_resoluteStrike') > -1) {
-            var resoluteStrike = rawTech.get('current') == 'on';
+            let resoluteStrike = rawTech.get('current') == 'on';
             if(oldTech) {
                 oldTech.resoluteStrike = resoluteStrike;
             } else {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), resoluteStrike: resoluteStrike});
             }
         } else if(techName.indexOf('tech_persist') > -1) {
-            var persist = rawTech.get('current') == 'on';
+            let persist = rawTech.get('current') == 'on';
             if(oldTech) {
                 oldTech.persist = persist;
             } else {
@@ -367,9 +443,9 @@ function resetValor(charId, skills, flaws) {
         flaws = getFlaws(charId);
     }
     
-    var startingValor = 0;
+    let startingValor = 0;
     if(skills && skills.length > 0) {
-        var bravado = skills.find(function(s) {
+        let bravado = skills.find(function(s) {
             return s.name == 'bravado';
         });
         if(bravado && bravado.level) {
@@ -377,7 +453,7 @@ function resetValor(charId, skills, flaws) {
         }
         
         if(flaws) {
-            var weakWilled = flaws.find(function(f) {
+            let weakWilled = flaws.find(function(f) {
                 return f.name == 'weakWilled';
             });
             if(weakWilled && weakWilled.level) {
@@ -393,8 +469,8 @@ function resetValor(charId, skills, flaws) {
         }
     }
     
-    var level = getAttrByName(charId, 'level');
-    var valorBySeason = Math.ceil(level / 5) - 1;
+    let level = getAttrByName(charId, 'level');
+    let valorBySeason = Math.ceil(level / 5) - 1;
     if(getAttrByName(charId, 'type') == 'master') {
         valorBySeason *= 2;
     }
@@ -407,10 +483,10 @@ function resetValor(charId, skills, flaws) {
 
 // Resets all bonus fields for all characterse
 function resetBonuses() {
-    var bonusList = ['rollbonus', 'atkrollbonus', 'defrollbonus',
+    let bonusList = ['rollbonus', 'atkrollbonus', 'defrollbonus',
                      'patkbonus', 'eatkbonus', 'defensebonus', 'resistancebonus'];
     bonusList.forEach(function(b) {
-        var bonuses = filterObjs(function(obj) {
+        let bonuses = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                    obj.get('name') == b;
         });
@@ -427,7 +503,7 @@ function getTechDamage(tech, charId, crit) {
         return 0;
     }
     
-    var special = tech.mods && tech.mods.find(function(m) {
+    let special = tech.mods && tech.mods.find(function(m) {
         return m.toLowerCase().indexOf('piercing') > -1 ||
                m.toLowerCase().indexOf('sapping') > -1 ||
                m.toLowerCase().indexOf('persistent') > -1 ||
@@ -436,15 +512,15 @@ function getTechDamage(tech, charId, crit) {
                m.toLowerCase().indexOf('boosting') > -1;
     });
     
-    var stat = tech.newStat ? tech.newStat : tech.stat;
-    var atk = getAttrByName(charId, stat + 'Atk');
+    let stat = tech.newStat ? tech.newStat : tech.stat;
+    let atk = getAttrByName(charId, stat + 'Atk');
     
     if(!atk || atk != atk) {
         atk = 0;
     }
     
-    var baseAtk = atk;
-    var damage = 0;
+    let baseAtk = atk;
+    let damage = 0;
     if(tech.core == 'damage' && special) {
         damage = (tech.coreLevel + 3) * 4;
         atk = Math.ceil(atk / 2);
@@ -460,28 +536,27 @@ function getTechDamage(tech, charId, crit) {
         damage += baseAtk;
     }
     
-    var hp = getAttrByName(charId, 'hp');
-    var hpMax = getAttrByName(charId, 'hp', 'max');
-    if(hp / hpMax <= 0.4) {
+    const hp = getHp(null, charId);
+    if(hp.val / hp.max <= 0.4) {
         // HP is critical!
-        var crisis = getSkill(charId, 'crisis');
+        let crisis = getSkill(charId, 'crisis');
         if(crisis && crisis.level) {
-            var crisisLevel = parseInt(crisis.level);
+            let crisisLevel = parseInt(crisis.level);
             if(crisisLevel != crisisLevel) {
                 crisisLevel = 1;
             }
             damage += 3 + crisisLevel * 3;
         }
-        var berserker = getFlaw(charId, 'berserker')
+        let berserker = getFlaw(charId, 'berserker')
         if(berserker) {
             damage += 10;
         }
     }
     
     if(tech.empowerAttack) {
-        var empowerAttack = getSkill(charId, 'empowerAttack');
+        let empowerAttack = getSkill(charId, 'empowerAttack');
         if(empowerAttack && empowerAttack.level) {
-            var empowerAttackLevel = parseInt(empowerAttack.level);
+            let empowerAttackLevel = parseInt(empowerAttack.level);
             if(empowerAttackLevel != empowerAttackLevel) {
                 empowerAttackLevel = 1;
             }
@@ -490,12 +565,12 @@ function getTechDamage(tech, charId, crit) {
     }
     
     if(tech.stat == 'agi' || tech.stat == 'str') {
-        var patk = parseInt(getAttrByName(charId, 'patkbonus'));
+        let patk = parseInt(getAttrByName(charId, 'patkbonus'));
         if(patk == patk) {
             damage += patk;
         }
     } else {
-        var eatk = parseInt(getAttrByName(charId, 'eatkbonus'));
+        let eatk = parseInt(getAttrByName(charId, 'eatkbonus'));
         if(eatk == eatk) {
             damage += eatk;
         }
@@ -508,7 +583,7 @@ function getTechDescription(tech, charId, suppressDamageDisplay) {
     if(!tech) {
         return '';
     }
-    var summary = '';
+    let summary = '';
     switch(tech.core) {
         case 'damage':
         case 'ultDamage':
@@ -517,11 +592,11 @@ function getTechDescription(tech, charId, suppressDamageDisplay) {
                                getTechDamage(tech, charId) +
                                '**</span>';
                                
-                var piercing = tech.mods && tech.mods.find(function(m) {
+                let piercing = tech.mods && tech.mods.find(function(m) {
                     return m.toLowerCase().indexOf('piercing') > -1
                 });
                 if(!piercing) {
-                    var physical = tech.stat == 'str' || tech.stat == 'agi';
+                    let physical = tech.stat == 'str' || tech.stat == 'agi';
                     if(tech.mods && tech.mods.find(function(m) {
                         return m.toLowerCase().indexOf('shift') > -1
                     })) {
@@ -532,21 +607,29 @@ function getTechDescription(tech, charId, suppressDamageDisplay) {
             }
             break;
         case 'healing':
-            var healing;
-            var power = getAttrByName(charId, tech.stat);
+            let healing;
+            let power = getAttrByName(charId, tech.stat);
 
-            var regen = tech.mods && tech.mods.find(function(m) {
+            let regen = tech.mods && tech.mods.find(function(m) {
                 return m.toLowerCase().indexOf('continuous r') > -1
             });
+            
+            const healer = getSkill(charId, 'healer');
+            let healerLevel = 0;
+            if(healer && healer.level) {
+                healerLevel = parseInt(healer.level);
+                if(healerLevel != healerLevel) {
+                    healerLevel = 1;
+                }
+            }
+            
             if(regen) {
                 healing = (tech.coreLevel + 3) * 2 + Math.ceil(power / 2);
+                if(healerLevel) healing += (healerLevel + 1) * 2;
                 summary = 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP per turn';
             } else {
-                if(state.houseRulesEnabled) {
-                    healing = (tech.coreLevel + 3) * 3 + Math.ceil(power / 2);
-                } else {
-                    healing = (tech.coreLevel + 3) * 4 + power;
-                }
+                healing = (tech.coreLevel + 3) * 3 + Math.ceil(power / 2);
+                if(healerLevel) healing += (healerLevel + 1) * 2;
                 summary = 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP';
             }
             break;
@@ -556,12 +639,12 @@ function getTechDescription(tech, charId, suppressDamageDisplay) {
     }
     
     // Add certain mods to output
-    var mods = [];
+    let mods = [];
     if(tech.mods) {
         tech.mods.forEach(m => {
-            var mod = m.toLowerCase();
-            var split = mod.split(' ');
-            var modLevel = parseInt(split[split.length - 1]);
+            let mod = m.toLowerCase();
+            let split = mod.split(' ');
+            let modLevel = parseInt(split[split.length - 1]);
             if(modLevel != modLevel) {
                 // NaN, so there's no level listed - assume 1
                 modLevel = 1;
@@ -597,9 +680,9 @@ function getTechDescription(tech, charId, suppressDamageDisplay) {
     }
     if(tech.limits) {
         tech.limits.forEach(l => {
-            var limit = l.toLowerCase();
-            var split = limit.split(' ');
-            var limitLevel = parseInt(split[split.length - 1]);
+            let limit = l.toLowerCase();
+            let split = limit.split(' ');
+            let limitLevel = parseInt(split[split.length - 1]);
             if(limitLevel != limitLevel) {
                 // NaN, so there's no level listed - assume 1
                 limitLevel = 1;
@@ -631,11 +714,11 @@ function getTechDescription(tech, charId, suppressDamageDisplay) {
     }
     
     if(tech.core == 'ultTransform') {
-        var level = parseInt(getAttrByName(charId, 'level'));
+        let level = parseInt(getAttrByName(charId, 'level'));
         if(!level || level != level) {
             level = 0;
         }
-        var bonusHp = level * 10;
+        let bonusHp = level * 10;
         if(getAttrByName(charId, 'type') == 'master') {
             bonusHp *= 2;
         }
@@ -658,10 +741,10 @@ function getTechByName(techId, charId, suppressDamageDisplay) {
         techId = techId.substring(1, techId.length - 1);
     }
     
-    var techs = getTechs(charId);
-    var tech;
+    let techs = getTechs(charId);
+    let tech;
     // They put a string, pull up tech by name
-    var matchingTech = techs.find(function(t) {
+    let matchingTech = techs.find(function(t) {
         return t && t.name && 
         t.name.toLowerCase().indexOf(techId.toLowerCase()) == 0;
     });
@@ -677,7 +760,7 @@ function getTechByName(techId, charId, suppressDamageDisplay) {
             tech = matchingTech;
         } else {
             // Drop all non-alphanumeric characters and try again
-            var alphaTechId = techId.replace(/\W/g, '');
+            let alphaTechId = techId.replace(/\W/g, '');
             if(alphaTechId && alphaTechId.length > 0) {
                 matchingTech = techs.find(function(t) {
                     return t && t.name &&
@@ -709,12 +792,12 @@ function getTechByName(techId, charId, suppressDamageDisplay) {
             log('Mimic target: ' + tech.mimicTarget);
             
             // Re-get the mimicked technique
-            var oldCore = tech.core;
-            var empowerAttack = tech.empowerAttack;
-            var overloadLimits = tech.overloadLimits;
-            var resoluteStrike = tech.resoluteStrike;
-            var oldId = tech.id;
-            var mimicTech = tech;
+            let oldCore = tech.core;
+            let empowerAttack = tech.empowerAttack;
+            let overloadLimits = tech.overloadLimits;
+            let resoluteStrike = tech.resoluteStrike;
+            let oldId = tech.id;
+            let mimicTech = tech;
             tech = getTechByName(tech.mimicTarget, null, suppressDamageDisplay);
             if(tech) {
                 tech.name = mimicTech.name + ' [' + tech.name + ']';
@@ -759,14 +842,14 @@ function getTechByName(techId, charId, suppressDamageDisplay) {
 // Priority 2: 'As:' field.
 // Priority 3: Any character controlled by the player.
 function getActor(msg) {
-    var actor;
+    let actor;
     if(msg.selected && msg.selected.length > 0) {
         // The first selected character is the actor
-        var token = getObj('graphic', msg.selected[0]._id);
+        let token = getObj('graphic', msg.selected[0]._id);
         actor = getObj('character', token.get('represents'));
     } else {
         // Try to find a character who matches the "Who" block for the speaker
-        var characters = filterObjs(function(obj) {
+        let characters = filterObjs(function(obj) {
             return obj.get('_type') === 'character' &&
                    obj.get('name') === msg.who;
         });
@@ -804,31 +887,32 @@ function updateValor() {
         state.charData = {};
     }
     
-    var page = Campaign().get('playerpageid');
-    var tokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
+    let page = Campaign().get('playerpageid');
+    let tokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
     tokens.forEach(function(token) {
-        var charId = token.get('represents');
-        var maxValor = parseInt(token.get('bar3_max'));
+        let charId = token.get('represents');
+        let maxValor = parseInt(token.get('bar3_max'));
         if(maxValor) {
-            var hp = parseInt(token.get('bar1_value'));
-            if(hp == hp && hp <= 0) {
+            const hp = getHp(token.get('_id'), charId);
+            log(hp)
+            if(!hp.val || hp.val <= 0) {
                 // They're KO'd - don't add Valor
                 return;
             }
             
             // If it has a max Valor, it's tracking Valor - raise it
-            var valor = parseInt(token.get('bar3_value'));
+            let valor = parseInt(token.get('bar3_value'));
             if(valor != valor) {
                 valor = 0;
             }
-            var valorRate = 1;
+            let valorRate = 1;
             
             if(state.charData[charId] &&
                 state.charData[charId].valorRate &&
                 parseInt(state.charData[charId].valorRate) != 1) {
                 valorRate = parseInt(state.charData[charId].valorRate);
             } else {
-                var charClass = getAttrByName(charId, 'type');
+                let charClass = getAttrByName(charId, 'type');
                 if(getSkill(charId, 'limitlessPower')) {
                     // +1 valor rate for Valiant skill
                     valorRate++;
@@ -858,20 +942,20 @@ function alertCooldowns() {
         return;
     }
     
-    var turnOrder;
+    let turnOrder;
     if(Campaign().get('turnorder') == '') {
         turnOrder = [];
     } else {
         turnOrder = JSON.parse(Campaign().get('turnorder'));
     }
     
-    var lastChar = turnOrder[turnOrder.length - 1];
+    let lastChar = turnOrder[turnOrder.length - 1];
     if(!lastChar || lastChar.custom.toLowerCase() != 'round') {
         // Only continue if the 'Round' counter is at the bottom of the init order
         return;
     }
 
-    var round = lastChar.pr;
+    let round = lastChar.pr;
     if(!round) {
         return;
     }
@@ -880,26 +964,26 @@ function alertCooldowns() {
         state.techData = {};
     }
     
-    for(var key in state.techData) {
+    for(let key in state.techData) {
         if(state.techData.hasOwnProperty(key)) {
-            var techData = state.techData[key];
-            var tech = getTechByName(techData.techName, techData.userId);
+            let techData = state.techData[key];
+            let tech = getTechByName(techData.techName, techData.userId);
             
             // Look for cooldown limit
             if(tech && tech.limits) {
-                var cooldownLimit = tech.limits.find(function(l) {
+                let cooldownLimit = tech.limits.find(function(l) {
                     return l.toLowerCase().indexOf('cooldown') == 0;
                 });
                 
                 if(cooldownLimit) {
-                    var cooldownLimitSplit = cooldownLimit.split(' ');
-                    var cooldownLimitLevel = parseInt(cooldownLimitSplit[cooldownLimitSplit.length - 1]);
+                    let cooldownLimitSplit = cooldownLimit.split(' ');
+                    let cooldownLimitLevel = parseInt(cooldownLimitSplit[cooldownLimitSplit.length - 1]);
                     if(cooldownLimitLevel != cooldownLimitLevel) {
                         cooldownLimitLevel = 1;
                     }
                     
                     if(techData.timesUsed.length > 0) {
-                        var lastTurnUsed = techData.timesUsed[techData.timesUsed.length - 1];
+                        let lastTurnUsed = techData.timesUsed[techData.timesUsed.length - 1];
                         if(round == lastTurnUsed + cooldownLimitLevel + 1) {
                             sendChat('Valor', '/w "' + techData.userName + '" Technique "' + techData.techName + '" is no longer on cooldown.');
                             log('Technique ' + techData.techName + ' left cooldown on turn ' + round);
@@ -912,8 +996,8 @@ function alertCooldowns() {
 }
 
 function updateValue(tokenId, attribute, amount, ratio, absolute) {
-    var token = getObj('graphic', tokenId);
-    var bar = '1';
+    let token = getObj('graphic', tokenId);
+    let bar = '1';
     switch(attribute) {
         case 'st':
             bar = '2';
@@ -927,10 +1011,10 @@ function updateValue(tokenId, attribute, amount, ratio, absolute) {
         return;
     }
     
-    var attr = getObj('attribute', token.get('bar' + bar + '_link'));
+    let attr = getObj('attribute', token.get(`bar${bar}_link`));
     if(attr) {
-        var oldValue = parseInt(attr.get('current'));
-        var maxValue = parseInt(attr.get('max'));
+        let oldValue = parseInt(attr.get('current'));
+        let maxValue = parseInt(attr.get('max'));
         if(oldValue != oldValue) {
             oldValue = 0;
         }
@@ -938,8 +1022,8 @@ function updateValue(tokenId, attribute, amount, ratio, absolute) {
             maxValue = 0;
         }
         
-        var valueChange = ratio ? Math.ceil(amount * maxValue) : amount;
-        var newValue = absolute ? valueChange : oldValue + valueChange;
+        let valueChange = ratio ? Math.ceil(amount * maxValue) : amount;
+        let newValue = absolute ? valueChange : oldValue + valueChange;
         
         if(newValue > maxValue) {
             newValue = maxValue;
@@ -950,8 +1034,8 @@ function updateValue(tokenId, attribute, amount, ratio, absolute) {
             criticalHealthWarning(token, oldValue);
         }
     } else {
-        var oldValue = parseInt(token.get('bar' + bar + '_value'));
-        var maxValue = parseInt(token.get('bar' + bar + '_max'));
+        let oldValue = parseInt(token.get(`bar${bar}_value`));
+        let maxValue = parseInt(token.get(`bar${bar}_max`));
         if(oldValue != oldValue) {
             oldValue = 0;
         }
@@ -959,14 +1043,14 @@ function updateValue(tokenId, attribute, amount, ratio, absolute) {
             maxValue = 0;
         }
         
-        var valueChange = ratio ? Math.ceil(amount * maxValue) : amount;
-        var newValue = absolute ? valueChange : oldValue + valueChange;
+        let valueChange = ratio ? Math.ceil(amount * maxValue) : amount;
+        let newValue = absolute ? valueChange : oldValue + valueChange;
         
         if(newValue > maxValue) {
             newValue = maxValue;
         }
         
-        token.set('bar' + bar + '_value', newValue);
+        token.set(`bar${bar}_value`, newValue);
         if(attribute == 'hp') {
             criticalHealthWarning(token, oldValue);
         }
@@ -974,23 +1058,23 @@ function updateValue(tokenId, attribute, amount, ratio, absolute) {
 }
 
 function updateValueForCharacter(characterId, attribute, amount, ratio, absolute) {
-    var actor = getObj('character', characterId);
+    let actor = getObj('character', characterId);
     
     if(!actor) {
         log("Couldn't find character for ID " + characterId);
         return;
     }
     
-    var attrs = filterObjs(function(obj) {
+    let attrs = filterObjs(function(obj) {
         return obj.get('_type') == 'attribute' &&
             obj.get('characterid') == characterId &&
             obj.get('name') == attribute;
     });
     
     if(attrs && attrs.length > 0) {
-        var attr = attrs[0];
-        var oldValue = parseInt(attr.get('current'));
-        var maxValue = parseInt(attr.get('max'));
+        let attr = attrs[0];
+        let oldValue = parseInt(attr.get('current'));
+        let maxValue = parseInt(attr.get('max'));
         if(oldValue != oldValue) {
             oldValue = 0;
         }
@@ -998,8 +1082,8 @@ function updateValueForCharacter(characterId, attribute, amount, ratio, absolute
             maxValue = 0;
         }
         
-        var valueChange = ratio ? Math.ceil(amount * maxValue) : amount;
-        var newValue = absolute ? valueChange : oldValue + valueChange;
+        let valueChange = ratio ? Math.ceil(amount * maxValue) : amount;
+        let newValue = absolute ? valueChange : oldValue + valueChange;
         
         if(newValue > maxValue) {
             newValue = maxValue;
@@ -1024,8 +1108,8 @@ function checkEvent(eventName) {
     }
     
     if(state.timer[eventName]) {
-        var date = new Date();
-        var time = (date.getTime() - state.timer[eventName].getTime()) / 1000;
+        let date = new Date();
+        let time = (date.getTime() - state.timer[eventName].getTime()) / 1000;
         log("Event '" + eventName + "' ongoing for " + time + ' seconds.');
     } else {
         log("Event '" + eventName + "' not found.");
@@ -1038,8 +1122,8 @@ function endEvent(eventName) {
     }
     
     if(state.timer[eventName]) {
-        var date = new Date();
-        var time = (date.getTime() - state.timer[eventName].getTime()) / 1000;
+        let date = new Date();
+        let time = (date.getTime() - state.timer[eventName].getTime()) / 1000;
         log("Event '" + eventName + "' took " + time + ' seconds.');
         state.timer[eventName] = null;
     } else {
@@ -1053,7 +1137,7 @@ on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!reset') == 0
         && playerIsGM(msg.playerid)) {
             
-        var tokens = filterObjs(function(obj) {
+        let tokens = filterObjs(function(obj) {
             return obj.get('_type') == 'graphic' &&
                    obj.get('represents');
         });
@@ -1081,28 +1165,28 @@ on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!check') == 0
         && playerIsGM(msg.playerid)) {
         // Get params
-        var split = msg.content.match(/(".*?")|(\S+)/g);
+        let split = msg.content.match(/(".*?")|(\S+)/g);
         if(split.length == 1) {
             log('Please specify a token ID.');
         } else {
-            var tokenId = split[1];
-            var tokens = findObjs({                         
+            let tokenId = split[1];
+            let tokens = findObjs({                         
                 _type: "graphic",
                 _id: tokenId
             });
             if(tokens.length > 0) {
                 token = tokens[0];
-                var name = token.get('name');
+                let name = token.get('name');
                 if(name) {
                     log('Token ID ' + tokenId + ' is ' + name + '.');
                 } else {
-                    var characters = filterObjs(function(obj) {
+                    let characters = filterObjs(function(obj) {
                         return obj.get('_type') === 'character' &&
                                obj.get('_id') === token.get('represents');
                     });
                     
                     if(characters.length > 0) {
-                        var actor = characters[0];
+                        let actor = characters[0];
                         name = actor.get('name');
                         log('Token ID ' + tokenId + ' is ' + name + '.');
                     } else {
@@ -1122,9 +1206,9 @@ on('chat:message', function(msg) {
         && playerIsGM(msg.playerid))) {
         startEvent('!sizeup');
         // Use selected token or first token on active page that represents character
-        var token;
+        let token;
         if(msg.selected && msg.selected.length > 0) {
-            var selectedToken = getObj('graphic', msg.selected[0]._id);
+            let selectedToken = getObj('graphic', msg.selected[0]._id);
             if(selectedToken.get('represents')) {
                 token = selectedToken;
             }
@@ -1134,41 +1218,42 @@ on('chat:message', function(msg) {
             sendChat('Valor', '/w gm No selected token is linked to a character sheet.');
         }
         
-        var charId = token.get('represents');
+        let charId = token.get('represents');
         
-        var name = token.get('name');
+        let name = token.get('name');
         if(!name) {
-            var characters = filterObjs(function(obj) {
+            let characters = filterObjs(function(obj) {
                 return obj.get('_type') === 'character' &&
                        obj.get('_id') === charId;
             });
             
             if(characters.length > 0) {
-                var actor = characters[0];
+                let actor = characters[0];
                 name = actor.get('name');
             }
         }
-        var attributes = filterObjs(function(obj) {
+        let attributes = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                    obj.get('_characterid') == charId;
         });
         
-        var summary = name + '<br/>';
-        var hp = token.get('')
-        summary += 'HP: ' + getAttrByName(charId, 'hp') + '/' + getAttrByName(charId, 'hp', 'max') + '<br/>';
-        summary += 'ST: ' + getAttrByName(charId, 'st') + '/' + getAttrByName(charId, 'st', 'max') + '<br/>';
+        let summary = name + '<br/>';
+        let hp = getHp(token.get('_id'), charId);
+        let st = getSt(token.get('_id'), charId);
+        summary += `HP: ${hp.val}/${hp.max}<br/>`;
+        summary += `ST: ${st.val}/${st.max}<br/>`;
         
-        var mus = getAttrByName(charId, 'mus');
-        var dex = getAttrByName(charId, 'dex');
-        var aur = getAttrByName(charId, 'aur');
-        var int = getAttrByName(charId, 'int');
-        var res = getAttrByName(charId, 'res');
+        let mus = getAttrByName(charId, 'mus');
+        let dex = getAttrByName(charId, 'dex');
+        let aur = getAttrByName(charId, 'aur');
+        let int = getAttrByName(charId, 'int');
+        let res = getAttrByName(charId, 'res');
         summary += 'Mus ' + mus + ', Dex ' + dex + ', Aur ' + aur + ', Int ' + int + ', Res ' + res + '<br/>';
         
-        var flaws = getFlaws(charId);
+        let flaws = getFlaws(charId);
         if(flaws && flaws.length > 0) {
-            var flawNames = Array.from(flaws, function(f) {
-                var flawName = f.name.replace( /([A-Z])/g, " $1" );
+            let flawNames = Array.from(flaws, function(f) {
+                let flawName = f.name.replace( /([A-Z])/g, " $1" );
                 return flawName.charAt(0).toUpperCase() + flawName.slice(1);
             });
             summary += 'Flaws: ' + flawNames.join(', ') + '<br/>';
@@ -1181,12 +1266,41 @@ on('chat:message', function(msg) {
     }
 });
 
+// !addhp/addst/subhp/subst commands
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && ((msg.content.indexOf('!addhp') == 0 ||
+            msg.content.indexOf('!addst') == 0 ||
+            msg.content.indexOf('!subhp') == 0 ||
+            msg.content.indexOf('!subst') == 0)
+            && playerIsGM(msg.playerid))) {
+        startEvent(msg.content.substring(0, 6));
+        
+        const direction = msg.content.startsWith('!add') ? 1 : -1;
+        const stat = msg.content.indexOf('st') > -1 ? 'st' : 'hp';
+        let tokens = [];
+        if(msg.selected) {
+            log(msg.selected);
+            for(const s of msg.selected) {
+                const selectedToken = getObj('graphic', s._id);
+                if(selectedToken.get('represents')) {
+                    tokens.push(selectedToken);
+                }
+            }
+            for(const token of tokens) {
+                updateValue(token.get('_id'), stat, 0.2 * direction, true);
+            }
+        }
+        
+        endEvent(msg.content.substring(0, 6));
+    }
+});
+
 // !status command
 on('chat:message', function(msg) {
     if(msg.type == 'api' && (msg.content.indexOf('!status') == 0)) {
         startEvent('!status');
         // Figure out who's using a tech
-        var actor = getActor(msg);
+        let actor = getActor(msg);
         if(!actor) {
             log('No usable character found for ' + msg.playerid);
             endEvent('!status');
@@ -1194,16 +1308,16 @@ on('chat:message', function(msg) {
         }
     
         // Use selected token or first token on active page that represents character
-        var token;
+        let token;
         if(msg.selected && msg.selected.length > 0) {
-            var selectedToken = getObj('graphic', msg.selected[0]._id);
+            let selectedToken = getObj('graphic', msg.selected[0]._id);
             if(selectedToken.get('represents') == actor.get('_id')) {
                 token = selectedToken;
             }
         }
         
         if(!token) {
-            var tokens = findObjs({
+            let tokens = findObjs({
                 _pageid: Campaign().get("playerpageid"),                 
                 _type: "graphic",
                 represents: actor.get('_id')
@@ -1214,28 +1328,28 @@ on('chat:message', function(msg) {
         }
         
         // Get the initiative tracker, we may need it later
-        var turnOrder;
+        let turnOrder;
         if(Campaign().get('turnorder') == '') {
             turnOrder = [];
         } else {
             turnOrder = JSON.parse(Campaign().get('turnorder'));
         }
         
-        var roundItem = turnOrder.find(function(t) {
+        let roundItem = turnOrder.find(function(t) {
             return t && t.custom && 
             t.custom.toLowerCase() == 'round';
         });
-        var round = roundItem ? roundItem.pr : 1;
+        let round = roundItem ? roundItem.pr : 1;
 
         // Show a list of techs for this character
         if(actor) {
-            var techs = getTechs(actor.get('_id'));
-            var message = '<table>';
+            let techs = getTechs(actor.get('_id'));
+            let message = '<table>';
             techs.forEach(function(tech) {
                 message += '<tr><td>**' + tech.name + '**: ';
                 
                 // Pull tech usage data from the state
-                var techDataId = actor.get('_id') + '.' + tech.name;
+                let techDataId = actor.get('_id') + '.' + tech.name;
                 if(!state.techData) {
                     state.techData = {};
                 }
@@ -1247,28 +1361,28 @@ on('chat:message', function(msg) {
                         userName: actor.get('name')
                     };
                 }
-                var techData = state.techData[techDataId];
+                let techData = state.techData[techDataId];
                 
                 // Check for blocking limits
-                var techStatus = [];
+                let techStatus = [];
                 if(tech.limits) {
                     
                     if(token) {
                         // Check stamina
-                        var st = parseInt(token.get('bar2_value'));
+                        let st = getSt(token.get('_id'), actor.get('_id'));
                         
-                        if(st == st && st < tech.cost && !tech.digDeep) {
+                        if(st && st.val < tech.cost && !tech.digDeep) {
                             techStatus.push("Not enough ST");
                         }
                         
                         // Check Initiative Limit
-                        var initiativeLimit = tech.limits.find(function(l) {
+                        let initiativeLimit = tech.limits.find(function(l) {
                             return l.toLowerCase().indexOf('init') == 0;
                         });
                         
                         if(initiativeLimit) {
-                            var initiativeLimitSplit = initiativeLimit.split(' ');
-                            var initiativeLimitLevel = parseInt(initiativeLimitSplit[initiativeLimitSplit.length - 1]);
+                            let initiativeLimitSplit = initiativeLimit.split(' ');
+                            let initiativeLimitLevel = parseInt(initiativeLimitSplit[initiativeLimitSplit.length - 1]);
                             if(initiativeLimitLevel != initiativeLimitLevel) {
                                 initiativeLimitLevel = 1;
                             }
@@ -1284,85 +1398,71 @@ on('chat:message', function(msg) {
                     }
                     
                     // Check valor limit
-                    var valorLimit = tech.limits.find(function(l) {
-                        var name = l.toLowerCase();
+                    let valorLimit = tech.limits.find(function(l) {
+                        let name = l.toLowerCase();
                         return ((name.indexOf('valor') == 0 &&
                                  name.indexOf('valor c') != 0) ||
                                  name.indexOf('ultimate v') == 0);
                     });
                     
                     if(valorLimit) {
-                        var valorLimitSplit = valorLimit.split(' ');
-                        var valorLimitLevel = parseInt(valorLimitSplit[valorLimitSplit.length - 1]);
+                        let valorLimitSplit = valorLimit.split(' ');
+                        let valorLimitLevel = parseInt(valorLimitSplit[valorLimitSplit.length - 1]);
                         if(valorLimitLevel != valorLimitLevel) {
                             valorLimitLevel = 1;
                         }
                         
-                        var currentValor = getAttrByName(actor.get('_id'), 'valor');
+                        let currentValor = getAttrByName(actor.get('_id'), 'valor');
                         if(currentValor < valorLimitLevel) {
                             techStatus.push('Not enough Valor');
                         }
                     }
                     
                     // Check Injury Limit
-                    var injuryLimit = tech.limits.find(function(l) {
+                    let injuryLimit = tech.limits.find(function(l) {
                         return l.toLowerCase().indexOf('injury') == 0;
                     });
                     
                     if(injuryLimit && token) {
-                        var injuryLimitSplit = injuryLimit.split(' ');
-                        var injuryLimitLevel = parseInt(injuryLimitSplit[injuryLimitSplit.length - 1]);
+                        let injuryLimitSplit = injuryLimit.split(' ');
+                        let injuryLimitLevel = parseInt(injuryLimitSplit[injuryLimitSplit.length - 1]);
                         if(injuryLimitLevel != injuryLimitLevel) {
                             injuryLimitLevel = 1;
                         }
                         
-                        var hp = parseInt(token.get('bar1_value'));
-                        var hpMax = parseInt(token.get('bar1_max'));
-                        if(hp != hp) {
-                            hp = 0;
-                        }
-                        if(hpMax != hpMax) {
-                            hpMax = 0;
-                        }
+                        const hp = getHp(token.get('_id'), actor.get('_id'));
                         
-                        var hpTarget = Math.ceil(hpMax / 5 * (5 - injuryLimitLevel));
+                        const hpTarget = Math.ceil(hp.max / 5 * (5 - injuryLimitLevel));
                         
-                        if(hp > hpTarget) {
+                        if(hp.val > hpTarget) {
                             techStatus.push('HP too high');
                         }
                     }
                     
                     // Check Vitality Limit
-                    var vitalityLimit = tech.limits.find(function(l) {
+                    let vitalityLimit = tech.limits.find(function(l) {
                         return l.toLowerCase().indexOf('vitality') == 0;
                     });
                     
                     if(vitalityLimit && token) {
-                        var hp = parseInt(token.get('bar1_value'));
-                        var hpMax = parseInt(token.get('bar1_max'));
-                        if(hp != hp) {
-                            hp = 0;
-                        }
-                        if(hpMax != hpMax) {
-                            hpMax = 0;
-                        }
+                        const hp = getHp(token.get('_id'), actor.get('_id'));
                         
-                        var hpTarget = Math.ceil(hpMax * 0.4);
+                        const hpTarget = Math.ceil(hp.max * 0.4);
                         
-                        if(hp < hpTarget) {
+                        if(hp.val < hpTarget) {
                             techStatus.push('HP too low');
                         }
                     }
                     
                     // Check Set-Up Limit
-                    var setUpLimit = tech.limits.find(function(l) {
+                    let setUpLimit = tech.limits.find(function(l) {
                         return l.toLowerCase().indexOf('set') == 0;
                     });
                     
                     if(setUpLimit) {
                         if(round) {
-                            var setUpLimitSplit = setUpLimit.split(' ');
-                            var setUpLimitLevel = parseInt(setUpLimitSplit[setUpLimitSplit.length - 1]);
+                            let setUpLimitSplit = setUpLimit.split(' ');
+                            let setUpLimitLevel = parseInt(setUpLimitSplit[setUpLimitSplit.length - 1]);
                             if(setUpLimitLevel != setUpLimitLevel) {
                                 setUpLimitLevel = 1;
                             }
@@ -1374,13 +1474,13 @@ on('chat:message', function(msg) {
                     }
                     
                     // Check Ammunition Limit
-                    var ammoLimit = tech.limits.find(function(l) {
+                    let ammoLimit = tech.limits.find(function(l) {
                         return l.toLowerCase().indexOf('amm') == 0;
                     });
                     
                     if(ammoLimit) {
-                        var ammoLimitSplit = ammoLimit.split(' ');
-                        var ammoLimitLevel = parseInt(ammoLimitSplit[ammoLimitSplit.length - 1]);
+                        let ammoLimitSplit = ammoLimit.split(' ');
+                        let ammoLimitLevel = parseInt(ammoLimitSplit[ammoLimitSplit.length - 1]);
                         if(ammoLimitLevel != ammoLimitLevel) {
                             ammoLimitLevel = 1;
                         }
@@ -1388,25 +1488,25 @@ on('chat:message', function(msg) {
                         if(techData.timesUsed.length > 3 - ammoLimitLevel) {
                             techStatus.push('Out of ammo');
                         } else {
-                            var ammoLeft = 4 - ammoLimitLevel - techData.timesUsed.length;
+                            let ammoLeft = 4 - ammoLimitLevel - techData.timesUsed.length;
                             techStatus.push(ammoLeft + ' ammo left');
                         }
                     }
                     
                     // Check Cooldown Limit
-                    var cooldownLimit = tech.limits.find(function(l) {
+                    let cooldownLimit = tech.limits.find(function(l) {
                         return l.toLowerCase().indexOf('cooldown') == 0;
                     });
                     
                     if(cooldownLimit && round) {
-                        var cooldownLimitSplit = cooldownLimit.split(' ');
-                        var cooldownLimitLevel = parseInt(cooldownLimitSplit[cooldownLimitSplit.length - 1]);
+                        let cooldownLimitSplit = cooldownLimit.split(' ');
+                        let cooldownLimitLevel = parseInt(cooldownLimitSplit[cooldownLimitSplit.length - 1]);
                         if(cooldownLimitLevel != cooldownLimitLevel) {
                             cooldownLimitLevel = 1;
                         }
                         
                         if(techData.timesUsed.length > 0) {
-                            var lastTurnUsed = parseInt(techData.timesUsed[techData.timesUsed.length - 1]);
+                            let lastTurnUsed = parseInt(techData.timesUsed[techData.timesUsed.length - 1]);
                             if(round <= lastTurnUsed + cooldownLimitLevel) {
                                 techStatus.push('On cooldown');
                             }
@@ -1417,7 +1517,7 @@ on('chat:message', function(msg) {
                 // Check for Ultimate usage
                 if(tech.core == 'ultDamage' || tech.core == 'ultTransform' ||
                     tech.core == 'ultMimic' || tech.core == 'domain') {
-                    var unerring = tech.mods && tech.mods.find(function(m) {
+                    let unerring = tech.mods && tech.mods.find(function(m) {
                         return m.toLowerCase().indexOf('unerring') == 0;
                     });
                     
@@ -1435,7 +1535,7 @@ on('chat:message', function(msg) {
                 message +='</td></tr>';
             });
             message += '</table>';
-            var cleanMessage = message.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
+            let cleanMessage = message.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
             sendChat('Valor', '/w "' + msg.who + '" ' + cleanMessage);
         }
         endEvent('!status');
@@ -1449,20 +1549,20 @@ on('chat:message', function(msg) {
     msg.content == '!t')) {
         startEvent('!tech');
         // Get params
-        var split = msg.content.match(/(".*?")|(\S+)/g);
+        let split = msg.content.match(/(".*?")|(\S+)/g);
         // Figure out who's using a tech
-        var actor;
+        let actor;
         
         // Check for --as parameter
-        var asParam = split.indexOf('--as');
+        let asParam = split.indexOf('--as');
         if(asParam > -1 && split.length > asParam + 1) {
-            var asInput = split[asParam + 1];
+            let asInput = split[asParam + 1];
             if(asInput[0] == '"') {
                 asInput = asInput.substring(1, asInput.length - 1);
             }
             
             // Find a character with this name          
-            var characters = filterObjs(function(obj) {
+            let characters = filterObjs(function(obj) {
                 return obj.get('_type') === 'character' &&
                        obj.get('_id') === asInput;
             });
@@ -1483,14 +1583,14 @@ on('chat:message', function(msg) {
             endEvent('!tech');
             return;
         }
-        var actorClass = getAttrByName(actor.get('_id'), 'type');
+        let actorClass = getAttrByName(actor.get('_id'), 'type');
         
         // Check for --targets list
-        var targetsList = [];
-        var targetsParam = split.indexOf('--targets');
+        let targetsList = [];
+        let targetsParam = split.indexOf('--targets');
         if(targetsParam > -1) {
-            for(var targetParam = targetsParam + 1; targetParam < split.length; targetParam++) {
-                var target = getObj('graphic', split[targetParam]);
+            for(let targetParam = targetsParam + 1; targetParam < split.length; targetParam++) {
+                let target = getObj('graphic', split[targetParam]);
                 if(target) {
                     targetsList.push(target);
                 }
@@ -1500,47 +1600,45 @@ on('chat:message', function(msg) {
         
         if(split.length < 2) {
             // Show a list of techs for this character
-            if(actor) {
-                var techs = getTechs(actor.get('_id'));
-                var message = '<table><tr><td>Pick a Technique to use:</td></tr>';
-                techs.forEach(function(tech) {
-                    message += '<tr><td>[' + tech.name + '](!t "' + tech.name + '")</td></tr>';
-                });
-                message += '</table>';
-                var cleanMessage = message.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
-                sendChat('Valor', '/w "' + msg.who + '" ' + cleanMessage);
-            }
+            let techs = getTechs(actor.get('_id'));
+            let message = '<table><tr><td>Pick a Technique to use:</td></tr>';
+            techs.forEach(function(tech) {
+                message += '<tr><td>[' + tech.name + '](!t "' + tech.name + '")</td></tr>';
+            });
+            message += '</table>';
+            let cleanMessage = message.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
+            sendChat('Valor', '/w "' + msg.who + '" ' + cleanMessage);
             endEvent('!tech');
             return;
         }
         
         // Check for --override parameter
-        var overrideLimits = split.indexOf('--override') > -1;
+        let overrideLimits = split.indexOf('--override') > -1;
         if(overrideLimits) {
             split.splice(split.indexOf('--override'), 1);
             log('Performing tech without Limits.');
         }
         
         // Get the initiative tracker, we may need it later
-        var turnOrder;
+        let turnOrder;
         if(Campaign().get('turnorder') == '') {
             turnOrder = [];
         } else {
             turnOrder = JSON.parse(Campaign().get('turnorder'));
         }
         
-        var roundItem = turnOrder.find(function(t) {
+        let roundItem = turnOrder.find(function(t) {
             return t && t.custom && 
             t.custom.toLowerCase() == 'round';
         });
-        var round = roundItem ? roundItem.pr : 1;
+        let round = roundItem ? roundItem.pr : 1;
 
         // Use selected token or first token on active page that represents character
-        var token;
+        let token;
         if(msg.selected && msg.selected.length > 0) {
             token = getObj('graphic', msg.selected[0]._id);
         } else {
-            var tokens = findObjs({
+            let tokens = findObjs({
                 _pageid: Campaign().get("playerpageid"),                              
                 _type: "graphic",
                 represents: actor.get('_id')
@@ -1551,14 +1649,14 @@ on('chat:message', function(msg) {
         }
         
         // Identify the technique
-        var techId = split[1];
-        var nextParam = 2;
+        let techId = split[1];
+        let nextParam = 2;
         while(nextParam < split.length && parseInt(split[nextParam]) != parseInt(split[nextParam])) {
             techId += ' ' + split[nextParam];
             nextParam++;
         }
         
-        var tech = getTechByName(techId, actor.get('_id'), targetsList.length > 0);
+        let tech = getTechByName(techId, actor.get('_id'), targetsList.length > 0);
         
         if(!tech) {
             log('Tech does not exist.');
@@ -1590,17 +1688,17 @@ on('chat:message', function(msg) {
             log('Overloading limits.');
         }
         
-        // Check for Overload Limits
+        // Check for Persist
         if(tech.persist) {
             overrideLimits = true;
             log('Rerolling persistent tech.');
         }
         
         // Pull Skill list
-        var skills = getSkills(actor.get('_id'));
+        let skills = getSkills(actor.get('_id'));
         
         // Pull tech usage data from the state
-        var techDataId = actor.get('_id') + '.' + tech.name;
+        let techDataId = actor.get('_id') + '.' + tech.name;
         if(!state.techData) {
             state.techData = {};
         }
@@ -1612,35 +1710,35 @@ on('chat:message', function(msg) {
                 userName: actor.get('name')
             };
         }
-        var techData = state.techData[techDataId];
+        let techData = state.techData[techDataId];
         if(techData.timesUsed && techData.timesUsed.length > 0) {
             log('Technique used previously on turns: ' + techData.timesUsed);
         }
         
         // Check for blocking limits
-        var blocked = false;
-        var errorMessage = '';
+        let blocked = false;
+        let errorMessage = '';
         if(tech.limits && !overrideLimits && 
                 (!state.ignoreLimitsOnMinions || 
                 (actorClass != 'flunky' && actorClass != 'soldier'))) {
             if(token) {
                 // Check stamina
-                var st = parseInt(token.get('bar2_value'));
+                let st = getSt(token.get('_id'), actor.get('_id'));
                 
-                if(st == st && st < tech.cost && !tech.digDeep) {
+                if(st && st.val < tech.cost && !tech.digDeep) {
                     log('Tech blocked - insufficient Stamina');
                     errorMessage += "You don't have enough Stamina to use this Technique.<br>";
                     blocked = true;
                 }
                 
                 // Check Initiative Limit
-                var initiativeLimit = tech.limits.find(function(l) {
+                let initiativeLimit = tech.limits.find(function(l) {
                     return l.toLowerCase().indexOf('init') == 0;
                 });
                 
                 if(initiativeLimit) {
-                    var initiativeLimitSplit = initiativeLimit.split(' ');
-                    var initiativeLimitLevel = parseInt(initiativeLimitSplit[initiativeLimitSplit.length - 1]);
+                    let initiativeLimitSplit = initiativeLimit.split(' ');
+                    let initiativeLimitLevel = parseInt(initiativeLimitSplit[initiativeLimitSplit.length - 1]);
                     if(initiativeLimitLevel != initiativeLimitLevel) {
                         initiativeLimitLevel = 1;
                     }
@@ -1658,21 +1756,21 @@ on('chat:message', function(msg) {
             }
             
             // Check valor limit
-            var valorLimit = tech.limits.find(function(l) {
-                var name = l.toLowerCase();
+            let valorLimit = tech.limits.find(function(l) {
+                let name = l.toLowerCase();
                 return ((name.indexOf('valor') == 0 &&
                          name.indexOf('valor c') != 0) ||
                          name.indexOf('ultimate v') == 0);
             });
             
             if(valorLimit) {
-                var valorLimitSplit = valorLimit.split(' ');
-                var valorLimitLevel = parseInt(valorLimitSplit[valorLimitSplit.length - 1]);
+                let valorLimitSplit = valorLimit.split(' ');
+                let valorLimitLevel = parseInt(valorLimitSplit[valorLimitSplit.length - 1]);
                 if(valorLimitLevel != valorLimitLevel) {
                     valorLimitLevel = 1;
                 }
                 
-                var currentValor = getAttrByName(actor.get('_id'), 'valor');
+                let currentValor = getAttrByName(actor.get('_id'), 'valor');
                 if(currentValor < valorLimitLevel) {
                     log('Tech blocked - Valor Limit');
                     errorMessage += 'You need at least ' + valorLimitLevel + ' Valor to use this Technique.<br>';
@@ -1681,68 +1779,55 @@ on('chat:message', function(msg) {
             }
             
             // Check Injury Limit
-            var injuryLimit = tech.limits.find(function(l) {
+            let injuryLimit = tech.limits.find(function(l) {
                 return l.toLowerCase().indexOf('injury') == 0;
             });
             
-            if(injuryLimit && token) {
-                var injuryLimitSplit = injuryLimit.split(' ');
-                var injuryLimitLevel = parseInt(injuryLimitSplit[injuryLimitSplit.length - 1]);
-                if(injuryLimitLevel != injuryLimitLevel) {
-                    injuryLimitLevel = 1;
-                }
-                
-                var hp = parseInt(token.get('bar1_value'));
-                var hpMax = parseInt(token.get('bar1_max'));
-                if(hp != hp) {
-                    hp = 0;
-                }
-                if(hpMax != hpMax) {
-                    hpMax = 0;
-                }
-                
-                var hpTarget = Math.ceil(hpMax / 5 * (5 - injuryLimitLevel));
-                
-                if(hp > hpTarget) {
-                    log('Tech blocked - Injury Limit');
-                    errorMessage += 'Your Health must be ' + hpTarget + ' or lower to use this Technique.<br>';
-                    blocked = true;
-                }
-            }
-            
             // Check Vitality Limit
-            var vitalityLimit = tech.limits.find(function(l) {
+            let vitalityLimit = tech.limits.find(function(l) {
                 return l.toLowerCase().indexOf('vitality') == 0;
             });
             
-            if(vitalityLimit && token) {
-                var hp = parseInt(token.get('bar1_value'));
-                var hpMax = parseInt(token.get('bar1_max'));
-                if(hp != hp) {
-                    hp = 0;
-                }
-                if(hpMax != hpMax) {
-                    hpMax = 0;
+            if((injuryLimit || vitalityLimit) && token) {
+                const hp = getHp(token.get('_id'), actor.get('_id'));
+                if(injuryLimit) {
+                    let injuryLimitSplit = injuryLimit.split(' ');
+                    let injuryLimitLevel = parseInt(injuryLimitSplit[injuryLimitSplit.length - 1]);
+                    if(injuryLimitLevel != injuryLimitLevel) {
+                        injuryLimitLevel = 1;
+                    }
+                    
+                    
+                    const hpTarget = Math.ceil(hp.max / 5 * (5 - injuryLimitLevel));
+                    
+                    if(hp.val > hpTarget) {
+                        log('Tech blocked - Injury Limit');
+                        errorMessage += `Your Health must be ${hpTarget} or lower to use this Technique.<br>`;
+                        blocked = true;
+                    }
                 }
                 
-                var hpTarget = Math.ceil(hpMax * 0.4);
-                
-                if(hp < hpTarget) {
-                    log('Tech blocked - Vitality Limit');
-                    errorMessage += 'Your Health must be ' + hpTarget + ' or lower to use this Technique.<br>';
-                    blocked = true;
+                if(vitalityLimit) {
+                    let hpTarget = Math.ceil(hp.max * 0.4);
+                    
+                    if(hp.val < hpTarget) {
+                        log('Tech blocked - Vitality Limit');
+                        errorMessage += 'Your Health must be ' + hpTarget + ' or lower to use this Technique.<br>';
+                        blocked = true;
+                    }
                 }
+                
             }
             
             // Check Set-Up Limit
-            var setUpLimit = tech.limits.find(function(l) {
+            let setUpLimit = tech.limits.find(function(l) {
                 return l.toLowerCase().indexOf('set') == 0;
             });
             
             if(setUpLimit) {
                 if(round) {
-                    var setUpLimitSplit = setUpLimit.split(' ');
-                    var setUpLimitLevel = parseInt(setUpLimitSplit[setUpLimitSplit.length - 1]);
+                    let setUpLimitSplit = setUpLimit.split(' ');
+                    let setUpLimitLevel = parseInt(setUpLimitSplit[setUpLimitSplit.length - 1]);
                     if(setUpLimitLevel != setUpLimitLevel) {
                         setUpLimitLevel = 1;
                     }
@@ -1756,13 +1841,13 @@ on('chat:message', function(msg) {
             }
             
             // Check Ammunition Limit
-            var ammoLimit = tech.limits.find(function(l) {
+            let ammoLimit = tech.limits.find(function(l) {
                 return l.toLowerCase().indexOf('amm') == 0;
             });
             
             if(ammoLimit) {
-                var ammoLimitSplit = ammoLimit.split(' ');
-                var ammoLimitLevel = parseInt(ammoLimitSplit[ammoLimitSplit.length - 1]);
+                let ammoLimitSplit = ammoLimit.split(' ');
+                let ammoLimitLevel = parseInt(ammoLimitSplit[ammoLimitSplit.length - 1]);
                 if(ammoLimitLevel != ammoLimitLevel) {
                     ammoLimitLevel = 1;
                 }
@@ -1775,19 +1860,19 @@ on('chat:message', function(msg) {
             }
             
             // Check Cooldown Limit
-            var cooldownLimit = tech.limits.find(function(l) {
+            let cooldownLimit = tech.limits.find(function(l) {
                 return l.toLowerCase().indexOf('cooldown') == 0;
             });
             
             if(cooldownLimit && round) {
-                var cooldownLimitSplit = cooldownLimit.split(' ');
-                var cooldownLimitLevel = parseInt(cooldownLimitSplit[cooldownLimitSplit.length - 1]);
+                let cooldownLimitSplit = cooldownLimit.split(' ');
+                let cooldownLimitLevel = parseInt(cooldownLimitSplit[cooldownLimitSplit.length - 1]);
                 if(cooldownLimitLevel != cooldownLimitLevel) {
                     cooldownLimitLevel = 1;
                 }
                 
                 if(techData.timesUsed.length > 0) {
-                    var lastTurnUsed = parseInt(techData.timesUsed[techData.timesUsed.length - 1]);
+                    let lastTurnUsed = parseInt(techData.timesUsed[techData.timesUsed.length - 1]);
                     if(round <= lastTurnUsed + cooldownLimitLevel) {
                         log('Tech blocked - Cooldown Limit');
                         errorMessage += 'This Technique is still on cooldown.<br>'
@@ -1800,7 +1885,7 @@ on('chat:message', function(msg) {
         // Check for Ultimate usage
         if((tech.core == 'ultDamage' || tech.core == 'ultTransform' ||
             tech.core == 'ultMimic' || tech.core == 'domain') && !overrideLimits) {
-            var unerring = tech.mods && tech.mods.find(function(m) {
+            let unerring = tech.mods && tech.mods.find(function(m) {
                 return m.toLowerCase().indexOf('unerring') == 0;
             });
             
@@ -1813,15 +1898,15 @@ on('chat:message', function(msg) {
             
         if(blocked) {
             // Make sure --override comes after --targets
-            var overrideButton = '';
-            var targetIndex = msg.content.indexOf('--targets');
+            let overrideButton = '';
+            let targetIndex = msg.content.indexOf('--targets');
             if(targetIndex > -1) {
                 overrideButton = msg.content.substring(0, targetIndex) + '--override ' + 
                     msg.content.substring(targetIndex, msg.content.length);
             } else {
                 overrideButton = msg.content + ' --override';
             }
-            var cleanButton = overrideButton.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
+            let cleanButton = overrideButton.replace(/\"/g, '&#' + '34;'); // Concatenated to keep the editor from freaking out
             errorMessage += '[Override](' + cleanButton + ')';
             sendChat('Valor', '/w "' + actor.get('name') + '" ' + errorMessage);
             log('Tech failed on turn ' + round);
@@ -1829,18 +1914,20 @@ on('chat:message', function(msg) {
             return;
         }
         
-        var rollText = '';
-        var hiddenRollText = '';
+        let roll = 0;
+        let rollBonus = 0;
+        let rollStat = tech.stat;
+        let rollText = '';
+        let hiddenRollText = '';
+        let targets = 1;
         
         if(tech.core == 'damage' ||
            tech.core == 'ultDamage' ||
            tech.core == 'weaken' ||
            tech.core == 'custom') {
-            var targets = 1;
-            var rollBonus = 0;
             while(split.length > nextParam) {
                 if(split[nextParam].indexOf('+') == -1 && split[nextParam].indexOf('-') == -1) {
-                    var inputTargets = parseInt(split[nextParam]);
+                    let inputTargets = parseInt(split[nextParam]);
                     if(inputTargets == inputTargets) {
                         targets = inputTargets;
                     }
@@ -1849,7 +1936,7 @@ on('chat:message', function(msg) {
                         targets = 20;
                     }
                 } else {
-                    var inputRollBonus = split[nextParam];
+                    let inputRollBonus = split[nextParam];
                     if(inputRollBonus.indexOf('+') == 0) {
                         inputRollBonus = inputRollBonus.substring(1);
                         // Roll button can potentially add a second +, so check again
@@ -1857,7 +1944,7 @@ on('chat:message', function(msg) {
                             inputRollBonus = inputRollBonus.substring(1);
                         }
                     }
-                    var parsedBonus = parseInt(inputRollBonus);
+                    let parsedBonus = parseInt(inputRollBonus);
                     if(parsedBonus == parsedBonus) {
                         rollBonus = parsedBonus;
                     }
@@ -1865,7 +1952,7 @@ on('chat:message', function(msg) {
                 nextParam++;
             }
             
-            var accurate = tech.mods && tech.mods.find(function(m) {
+            let accurate = tech.mods && tech.mods.find(function(m) {
                 return m.toLowerCase().indexOf('accurate') > -1;
             });
             
@@ -1873,24 +1960,21 @@ on('chat:message', function(msg) {
                 rollBonus += 2;
             }
             
-            var universalBonus = parseInt(getAttrByName(actor.get('_id'), 'rollbonus'));
+            let universalBonus = parseInt(getAttrByName(actor.get('_id'), 'rollbonus'));
             if(universalBonus == universalBonus) {
                 rollBonus += universalBonus;
             }
             
-            var atkBonus = parseInt(getAttrByName(actor.get('_id'), 'atkrollbonus'));
+            let atkBonus = parseInt(getAttrByName(actor.get('_id'), 'atkrollbonus'));
             if(atkBonus == atkBonus) {
                 rollBonus += atkBonus;
             }
             
-            var iatkBonus = parseInt(getAttrByName(actor.get('_id'), 'iatkrollbonus'));
+            let iatkBonus = parseInt(getAttrByName(actor.get('_id'), 'iatkrollbonus'));
             if(iatkBonus == iatkBonus) {
                 rollBonus += iatkBonus;
             }
             
-            var roll = 0;
-            
-            var rollStat = tech.stat;
             if(tech.mods) {
                 if(tech.mods.find(function(m) {
                     return m.toLowerCase().indexOf('musc') > -1;
@@ -1951,9 +2035,9 @@ on('chat:message', function(msg) {
         }
         
         if(targetsList.length > 0) {
-            var fullList = (!state.hideNpcTechEffects || !state.rollBehindScreen || actor.get('controlledby')) &&
+            let fullList = (!state.hideNpcTechEffects || !state.rollBehindScreen || actor.get('controlledby')) &&
                 (tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken' || tech.core == 'custom') && rollStat != 'none';
-            var hiddenFullList = ((state.hideNpcTechEffects || state.rollBehindScreen) && !actor.get('controlledby')) &&
+            let hiddenFullList = ((state.hideNpcTechEffects || state.rollBehindScreen) && !actor.get('controlledby')) &&
                 (tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken' || tech.core == 'custom') && rollStat != 'none';
             
             if(fullList) {
@@ -1966,12 +2050,12 @@ on('chat:message', function(msg) {
                 }
             }
             
-            var firstTarget = true;
+            let firstTarget = true;
             
             targetsList.forEach(function(target) {
-                var targetCharId = target.get('represents');
-                var targetChar = getObj('character', targetCharId);
-                var targetName = target.get('name');
+                let targetCharId = target.get('represents');
+                let targetChar = getObj('character', targetCharId);
+                let targetName = target.get('name');
                 if(!targetName && targetChar) {
                     targetName = targetChar.get('name');
                 }
@@ -1980,16 +2064,16 @@ on('chat:message', function(msg) {
                 }
                 
                 // Get damage
-                var damage = getTechDamage(tech, actor.get('_id'));
+                let damage = getTechDamage(tech, actor.get('_id'));
                 
                 // Get def/res
-                var defRes = 0;
-                var defResStat = tech.newStat ? tech.newStat : tech.stat;
+                let defRes = 0;
+                let defResStat = tech.newStat ? tech.newStat : tech.stat;
                 
                 if(targetChar && (!tech.mods || !tech.mods.find(function(m) {
                     return m.toLowerCase().indexOf('piercing') > -1
                 }))) {
-                    var physical = defResStat == 'str' || defResStat == 'agi';
+                    let physical = defResStat == 'str' || defResStat == 'agi';
                     if(tech.mods && tech.mods.find(function(m) {
                         return m.toLowerCase().indexOf('shift') > -1
                     })) {
@@ -1997,13 +2081,13 @@ on('chat:message', function(msg) {
                     }
                     if(physical) {
                         defRes = getAttrByName(targetCharId, 'defense');
-                        var bonus = parseInt(getAttrByName(targetCharId, 'defensebonus'));
+                        let bonus = parseInt(getAttrByName(targetCharId, 'defensebonus'));
                         if(bonus == bonus) {
                             defRes += bonus;
                         }
                     } else {
                         defRes = getAttrByName(targetCharId, 'resistance');
-                        var bonus = parseInt(getAttrByName(targetCharId, 'resistancebonus'));
+                        let bonus = parseInt(getAttrByName(targetCharId, 'resistancebonus'));
                         if(bonus == bonus) {
                             defRes += bonus;
                         }
@@ -2024,21 +2108,21 @@ on('chat:message', function(msg) {
                         rollText += 'Damage [[{' + damage + ' - ' + defRes + ', 0}kh1]]';
                         
                         // Display reposition distance
-                        var reposition = tech.mods && tech.mods.find(function(m) {
+                        let reposition = tech.mods && tech.mods.find(function(m) {
                             return m.toLowerCase().indexOf('repo') > -1;
                         });
                         if(reposition) {
-                            var repositionSplit = reposition.split(' ');
-                            var repositionLevel = parseInt(repositionSplit[repositionSplit.length - 1]);
+                            let repositionSplit = reposition.split(' ');
+                            let repositionLevel = parseInt(repositionSplit[repositionSplit.length - 1]);
                             if(repositionLevel != repositionLevel) repositionLevel = 1;
                             
-                            var distance = repositionLevel + 1;
+                            let distance = repositionLevel + 1;
                             if(tech.stat == 'str') {
                                 distance++;
                             }
-                            var unmovable = getSkill(targetCharId, 'unmovable');
+                            let unmovable = getSkill(targetCharId, 'unmovable');
                             if(unmovable) {
-                                distance = Math.min(distance, distance - unmovable.level * 2);
+                                distance = Math.min(0, distance - unmovable.level * 2);
                             }
                             
                             rollText += ', Reposition ' + distance;
@@ -2096,23 +2180,11 @@ on('chat:message', function(msg) {
         }
         
         // Pay costs
-        var hpCost = 0;
-        var stCost = tech.cost;
-        var valorCost = 0;
-        var initCost = 0;
+        let hpCost = 0;
+        let stCost = tech.cost;
+        let valorCost = 0;
+        let initCost = 0;
         if(token && !tech.persist) {
-            
-            var hp = parseInt(token.get('bar1_value'));
-            var hpMax = parseInt(token.get('bar1_max'));
-            var st = parseInt(token.get('bar2_value'));
-            if(hp != hp) {
-                hp = 0;
-            }
-            
-            if(st != st) {
-                st = 0;
-            }
-            
             if(tech.overloadLimits && tech.limitSt) {
                 stCost += tech.limitSt;
             }
@@ -2127,12 +2199,12 @@ on('chat:message', function(msg) {
             }
             
             if(tech.limits) {
-                var healthLimit = tech.limits.find(function(l) {
+                let healthLimit = tech.limits.find(function(l) {
                     return l.toLowerCase().indexOf('health') == 0;
                 });
                 if(healthLimit) {
-                    var healthLimitSplit = healthLimit.split(' ');
-                    var healthLimitLevel = parseInt(healthLimitSplit[healthLimitSplit.length - 1]);
+                    let healthLimitSplit = healthLimit.split(' ');
+                    let healthLimitLevel = parseInt(healthLimitSplit[healthLimitSplit.length - 1]);
                     if(healthLimitLevel != healthLimitLevel) {
                         healthLimitLevel = 1;
                     }
@@ -2140,12 +2212,12 @@ on('chat:message', function(msg) {
                     hpCost += healthLimitLevel * 5;
                 }
                 
-                var ultimateHealthLimit = tech.limits.find(function(l) {
+                let ultimateHealthLimit = tech.limits.find(function(l) {
                     return l.toLowerCase().indexOf('ultimate health') == 0;
                 });
                 if(ultimateHealthLimit) {
-                    var ultimateHealthLimitSplit = ultimateHealthLimit.split(' ');
-                    var ultimateHealthLimitLevel = parseInt(ultimateHealthLimitSplit[ultimateHealthLimitSplit.length - 1]);
+                    let ultimateHealthLimitSplit = ultimateHealthLimit.split(' ');
+                    let ultimateHealthLimitLevel = parseInt(ultimateHealthLimitSplit[ultimateHealthLimitSplit.length - 1]);
                     if(ultimateHealthLimitLevel != ultimateHealthLimitLevel) {
                         ultimateHealthLimitLevel = 1;
                     }
@@ -2153,20 +2225,20 @@ on('chat:message', function(msg) {
                     hpCost += Math.ceil(hpMax / 5);
                 }
                 
-                var valorLimit = tech.limits.find(function(l) {
+                let valorLimit = tech.limits.find(function(l) {
                     return l.toLowerCase().indexOf('valor c') == 0 ||
                     l.toLowerCase().indexOf('ult valor') == 0 ||
                     l.toLowerCase().indexOf('ultimate valor') == 0;
                 });
                 
                 if(valorLimit) {
-                    var valorLimitSplit = valorLimit.split(' ');
-                    var valorLimitLevel = parseInt(valorLimitSplit[valorLimitSplit.length - 1]);
+                    let valorLimitSplit = valorLimit.split(' ');
+                    let valorLimitLevel = parseInt(valorLimitSplit[valorLimitSplit.length - 1]);
                     if(valorLimitLevel != valorLimitLevel) {
                         valorLimitLevel = 1;
                     }
                     
-                    var valor = parseInt(token.get('bar3_value'));
+                    let valor = parseInt(token.get('bar3_value'));
                     if(valor != valor) {
                         valor = 0;
                     }
@@ -2176,13 +2248,13 @@ on('chat:message', function(msg) {
                     log('Consumed ' + valorCost + ' Valor');
                 }
                 
-                var initLimit = tech.limits.find(function(l) {
+                let initLimit = tech.limits.find(function(l) {
                     return l.toLowerCase().indexOf('init') == 0;
                 });
                 
                 if(initLimit) {
-                    var initLimitSplit = initLimit.split(' ');
-                    var initLimitLevel = parseInt(initLimitSplit[initLimitSplit.length - 1]);
+                    let initLimitSplit = initLimit.split(' ');
+                    let initLimitLevel = parseInt(initLimitSplit[initLimitSplit.length - 1]);
                     if(initLimitLevel != initLimitLevel) {
                         initLimitLevel = 1;
                     }
@@ -2208,7 +2280,7 @@ on('chat:message', function(msg) {
         // Update HP and bonuses for Transformations and Heals
         if(state.autoResolveTechBenefits) {
             if(tech.core == 'ultTransform' || tech.core == 'healing') {
-                var charIds = [];
+                let charIds = [];
                 
                 if(targetsList.length > 0) {
                     targetsList.forEach(function(target) {
@@ -2218,9 +2290,9 @@ on('chat:message', function(msg) {
                     charIds.push(actor.get('_id'));
                 }
                 
-                var hpGain = 0;
+                let hpGain = 0;
                 if(tech.core == 'ultTransform') {
-                    var level = parseInt(getAttrByName(actor.get('_id'), 'level'));
+                    let level = parseInt(getAttrByName(actor.get('_id'), 'level'));
                     if(level != level) {
                         level = 1;
                     }
@@ -2234,30 +2306,30 @@ on('chat:message', function(msg) {
                         updateValueForCharacter(charId, 'hp', hpGain);
                     });
                     // Also raise the roll bonus
-                    var rollBonus = parseInt(getAttrByName(actor.get('_id'), 'rollbonus'));
+                    let rollBonus = parseInt(getAttrByName(actor.get('_id'), 'rollbonus'));
                     if(rollBonus != rollBonus) {
                         rollBonus = 0;
                     }
-                    var rollBonusAttrs = filterObjs(function(obj) {
+                    let rollBonusAttrs = filterObjs(function(obj) {
                         return obj.get('_type') == 'attribute' &&
                             obj.get('characterid') == actor.get('_id') &&
                             obj.get('name') == 'rollbonus';
                     });
                     
                     if(rollBonusAttrs && rollBonusAttrs.length > 0) {
-                        var rollBonus = rollBonusAttrs[0];
-                        var oldValue = parseInt(rollBonus.get('current'));
+                        let rollBonus = rollBonusAttrs[0];
+                        let oldValue = parseInt(rollBonus.get('current'));
                         if(oldValue != oldValue) {
                             oldValue = 0;
                         }
-                		var newValue = oldValue + 1;
+                		let newValue = oldValue + 1;
                 		rollBonus.set('current', newValue);
                 	}
                 } else {
-                    var regen = tech.mods && tech.mods.find(function(m) {
+                    let regen = tech.mods && tech.mods.find(function(m) {
                         return m.toLowerCase().indexOf('continuous r') > -1;
                     });
-                    var power = getAttrByName(actor.get('_id'), tech.stat);
+                    let power = getAttrByName(actor.get('_id'), tech.stat);
                     if(regen) {
                         hpGain = (tech.coreLevel + 3) * 2 + Math.ceil(power / 2);
                     } else {
@@ -2267,9 +2339,9 @@ on('chat:message', function(msg) {
                             hpGain = (tech.coreLevel + 3) * 4 + power;
                         }
                     }
-                    var healer = getSkill(actor.get('_id'), 'healer');
+                    let healer = getSkill(actor.get('_id'), 'healer');
                     if(healer && healer.level) {
-                        var healerLevel = parseInt(healer.level);
+                        let healerLevel = parseInt(healer.level);
                         if(healerLevel != healerLevel) {
                             healerLevel = 1;
                         }
@@ -2278,8 +2350,8 @@ on('chat:message', function(msg) {
                     if(regen) {
                         // Add regen effect to character
                         charIds.forEach(function(charId) {
-                            var effectName = 'Regen ';
-                            var aggravatedWounds = getFlaw(charId, 'aggravatedWounds');
+                            let effectName = 'Regen ';
+                            let aggravatedWounds = getFlaw(charId, 'aggravatedWounds');
                             if(aggravatedWounds && tech.core == 'healing') {
                                 effectName += Math.ceil(hpGain / 2);
                             } else {
@@ -2287,9 +2359,9 @@ on('chat:message', function(msg) {
                             }
                             
                             // Do they already have this effect?
-                            var checkingEffects = false;
-                            var hasEffect = false;
-                            for(var turnId = 0; turnId < turnOrder.length; turnId++) {
+                            let checkingEffects = false;
+                            let hasEffect = false;
+                            for(let turnId = 0; turnId < turnOrder.length; turnId++) {
                                 if(checkingEffects) {
                                     if(turnOrder[turnId].id == '-1') {
                                         if(turnOrder[turnId].custom == effectName) {
@@ -2305,7 +2377,7 @@ on('chat:message', function(msg) {
                                     }
                                 } else {
                                     if(turnOrder[turnId].id != '-1') {
-                                        var token = getObj('graphic', turnOrder[turnId].id);
+                                        let token = getObj('graphic', turnOrder[turnId].id);
                                         if(token && token.get('represents') == charId) {
                                             // We found the user, continue reading to get their effect list
                                             checkingEffects = true;
@@ -2322,7 +2394,7 @@ on('chat:message', function(msg) {
                     } else {
                         // Directly restore HP
                         charIds.forEach(function(charId) {
-                            var aggravatedWounds = getFlaw(charId, 'aggravatedWounds');
+                            let aggravatedWounds = getFlaw(charId, 'aggravatedWounds');
                             if(aggravatedWounds && tech.core == 'healing') {
                                 updateValueForCharacter(charId, 'hp', Math.ceil(hpGain));
                             } else {
@@ -2335,33 +2407,25 @@ on('chat:message', function(msg) {
             }
         }
         
-        var techQualifiers = [];
+        let techQualifiers = [];
         if(tech.empowerAttack) {
             techQualifiers.push('Empowered');
         }
         
-        var hp = 1;
-        var hpMax = 1;
+        let hp = getHp(token.get('_id'), actor.get('_id'));
         
-        if(token) {
-            hp = parseInt(token.get('bar1_value'));
-            hpMax = parseInt(token.get('bar1_max'));
-        } else {
-            hp = getAttrByName(actor.get('_id'), 'hp');
-            hpMax = getAttrByName(actor.get('_id'), 'hp', 'max');
-        }
-        if(hp / hpMax <= 0.4 && tech.core == 'damage' || tech.core == 'ultDamage') {
-            var crisis = getSkill(actor.get('_id'), 'crisis');
+        if(hp.val / hp.max <= 0.4 && tech.core == 'damage' || tech.core == 'ultDamage') {
+            let crisis = getSkill(actor.get('_id'), 'crisis');
             if(crisis && crisis.level) {
                 techQualifiers.push('Crisis');
             }
-            var berserker = getFlaw(actor.get('_id'), 'berserker')
+            let berserker = getFlaw(actor.get('_id'), 'berserker')
             if(berserker) {
                 techQualifiers.push('Berserker');
             }
         }
         
-        var message = '<div style="font-family: Segoe UI,Frutiger,Frutiger Linotype,Dejavu Sans,Helvetica Neue,Arial,sans-serif;color:#730A18;' +
+        let message = '<div style="font-family: Segoe UI,Frutiger,Frutiger Linotype,Dejavu Sans,Helvetica Neue,Arial,sans-serif;color:#730A18;' +
             'background-color:#FCECD8;margin-left:8px;padding-left:5px;padding-bottom:3px">';
         if(tech.persist) {
             techQualifiers.push('Persisting');
@@ -2378,7 +2442,7 @@ on('chat:message', function(msg) {
             message += '<div style="line-height:170%">' + rollText + '</div>';
         }
         
-        var showSummary = tech.summary && (!state.hideNpcTechEffects || actor.get('controlledby'));
+        let showSummary = tech.summary && (!state.hideNpcTechEffects || actor.get('controlledby'));
         
         if(showSummary) {
             message += '<div>' + tech.summary + '</div>';
@@ -2411,17 +2475,17 @@ on('chat:message', function(msg) {
         
         // Alert with remaining ammo
         if(tech.limits) {
-            var ammoLimit = tech.limits.find(function(l) {
+            let ammoLimit = tech.limits.find(function(l) {
                 return l.toLowerCase().indexOf('amm') == 0;
             });
             
             if(ammoLimit) {
-                var ammoLimitSplit = ammoLimit.split(' ');
-                var ammoLimitLevel = parseInt(ammoLimitSplit[ammoLimitSplit.length - 1]);
+                let ammoLimitSplit = ammoLimit.split(' ');
+                let ammoLimitLevel = parseInt(ammoLimitSplit[ammoLimitSplit.length - 1]);
                 if(ammoLimitLevel != ammoLimitLevel) {
                     ammoLimitLevel = 1;
                 }
-                var ammo = 4 - ammoLimitLevel - state.techData[techDataId].timesUsed.length;
+                let ammo = 4 - ammoLimitLevel - state.techData[techDataId].timesUsed.length;
                 sendChat('Valor', '/w "' + actor.get('name') + '" Ammunition remaining: ' + ammo);
             }
         }
@@ -2437,7 +2501,7 @@ on('chat:message', function(msg) {
         // Disable temporary switches on this tech
         if(tech.digDeep) {
             log('Dig Deep was enabled.');
-            var techAttrs = filterObjs(function(obj) {
+            let techAttrs = filterObjs(function(obj) {
                 if(obj.get('_type') == 'attribute' &&
                    obj.get('name').indexOf(tech.id) > -1 &&
                    obj.get('name').indexOf('digDeep') > -1) {
@@ -2446,14 +2510,14 @@ on('chat:message', function(msg) {
                 return false;
             });
             if(techAttrs && techAttrs.length > 0) {
-                var digDeep = techAttrs[0];
+                let digDeep = techAttrs[0];
                 digDeep.set('current', '0');
             }
         }
         
         if(!tech.overloadLimits) {
             log('Overload Limits was enabled.');
-            var techAttrs = filterObjs(function(obj) {
+            let techAttrs = filterObjs(function(obj) {
                 if(obj.get('_type') == 'attribute' &&
                    obj.get('name').indexOf(tech.id) > -1 &&
                    obj.get('name').indexOf('overloadLimits') > -1) {
@@ -2462,14 +2526,14 @@ on('chat:message', function(msg) {
                 return false;
             });
             if(techAttrs && techAttrs.length > 0) {
-                var digDeep = techAttrs[0];
+                let digDeep = techAttrs[0];
                 digDeep.set('current', '0');
             }
         }
         
         if(tech.empowerAttack) {
             log('Empower Attack was enabled.');
-            var techAttrs = filterObjs(function(obj) {
+            let techAttrs = filterObjs(function(obj) {
                 if(obj.get('_type') == 'attribute' &&
                    obj.get('name').indexOf(tech.id) > -1 &&
                    obj.get('name').indexOf('empowerAttack') > -1) {
@@ -2478,14 +2542,14 @@ on('chat:message', function(msg) {
                 return false;
             });
             if(techAttrs && techAttrs.length > 0) {
-                var empowerAttack = techAttrs[0];
+                let empowerAttack = techAttrs[0];
                 empowerAttack.set('current', '0');
             }
         }
         
         if(tech.resoluteStrike) {
             log('Resolute Strike was enabled.');
-            var techAttrs = filterObjs(function(obj) {
+            let techAttrs = filterObjs(function(obj) {
                 if(obj.get('_type') == 'attribute' &&
                    obj.get('name').indexOf(tech.id) > -1 &&
                    obj.get('name').indexOf('resoluteStrike') > -1) {
@@ -2494,14 +2558,14 @@ on('chat:message', function(msg) {
                 return false;
             });
             if(techAttrs && techAttrs.length > 0) {
-                var resoluteStrike = techAttrs[0];
+                let resoluteStrike = techAttrs[0];
                 resoluteStrike.set('current', '0');
             }
         }
         
         if(tech.persist) {
             log('Persistent Reroll was enabled.');
-            var techAttrs = filterObjs(function(obj) {
+            let techAttrs = filterObjs(function(obj) {
                 if(obj.get('_type') == 'attribute' &&
                    obj.get('name').indexOf(tech.id) > -1 &&
                    obj.get('name').indexOf('persist') > -1 &&
@@ -2511,13 +2575,13 @@ on('chat:message', function(msg) {
                 return false;
             });
             if(techAttrs && techAttrs.length > 0) {
-                var persist = techAttrs[0];
+                let persist = techAttrs[0];
                 persist.set('current', '0');
             }
         }
         
         // Reset number of targets and roll modifier on tech
-        var techTargetAttrs = filterObjs(function(obj) {
+        let techTargetAttrs = filterObjs(function(obj) {
             if(obj.get('_type') == 'attribute' &&
                obj.get('name').indexOf(tech.id) > -1 &&
                obj.get('name').indexOf('targets') > -1) {
@@ -2526,11 +2590,11 @@ on('chat:message', function(msg) {
             return false;
         });
         if(techTargetAttrs && techTargetAttrs.length > 0) {
-            var targets = techTargetAttrs[0];
+            let targets = techTargetAttrs[0];
             targets.setWithWorker({current: '1'});
         }
         
-        var techBonusAttrs = filterObjs(function(obj) {
+        let techBonusAttrs = filterObjs(function(obj) {
             if(obj.get('_type') == 'attribute' &&
                obj.get('name').indexOf(tech.id) > -1 &&
                obj.get('name').indexOf('bonus') > -1) {
@@ -2539,7 +2603,7 @@ on('chat:message', function(msg) {
             return false;
         });
         if(techBonusAttrs && techBonusAttrs.length > 0) {
-            var bonus = techBonusAttrs[0];
+            let bonus = techBonusAttrs[0];
             bonus.setWithWorker({current: '0'});
         }
         
@@ -2565,8 +2629,8 @@ on('chat:message', function(msg) {
             return;
         }
         
-        var techLog = state.techHistory[state.techHistory.length - 1];
-        var turnOrder = JSON.parse(Campaign().get('turnorder'));
+        let techLog = state.techHistory[state.techHistory.length - 1];
+        let turnOrder = JSON.parse(Campaign().get('turnorder'));
         
         // Refund lost resources
         updateValue(techLog.id, 'hp', techLog.hpCost);
@@ -2585,27 +2649,27 @@ on('chat:message', function(msg) {
         // Remove tech from history
         state.techHistory = state.techHistory.slice(0, state.techHistory.length - 1);
         
-        var token = getObj('graphic', techLog.id);
+        let token = getObj('graphic', techLog.id);
         
-        var techDataId = token.get('represents') + '.' + techLog.techName;
+        let techDataId = token.get('represents') + '.' + techLog.techName;
         if(state.techData[techDataId]) {
             state.techData[techDataId].timesUsed = state.techData[techDataId].timesUsed.slice(0, 
             state.techData[techDataId].timesUsed.length - 1);
         }
         
-        var name = token.get('name');
+        let name = token.get('name');
         if(!name) {
-            var characters = filterObjs(function(obj) {
+            let characters = filterObjs(function(obj) {
                 return obj.get('_type') === 'character' &&
                        obj.get('_id') === token.get('represents');
             });
             
             if(characters.length > 0) {
-                var actor = characters[0];
+                let actor = characters[0];
                 name = actor.get('name');
             }
         }
-        var message = name ? 'Reverted use of technique ' + techLog.techName + ' used by ' + name + '. ' :
+        let message = name ? 'Reverted use of technique ' + techLog.techName + ' used by ' + name + '. ' :
             'Reverted use of technique' + techLog.techName + '. ';
         sendChat('Valor', message);
         log(message + state.techHistory.length + ' techs remaining in history log.');
@@ -2618,32 +2682,32 @@ on('chat:message', function(msg) {
     msg.type == 'api' && msg.content.indexOf('!effect') == 0) {
         startEvent('!effect');
         // Get params
-        var split = msg.content.match(/(".*?")|(\S+)/g);
+        let split = msg.content.match(/(".*?")|(\S+)/g);
         if(split.length < 2) {
             log('Not enough arguments.');
             return;
         }
 
-        var turnOrder = JSON.parse(Campaign().get('turnorder'));
+        let turnOrder = JSON.parse(Campaign().get('turnorder'));
         if(!turnOrder || turnOrder.length == 0) {
             // Nothing to do
             log('Turn Tracker is not enabled.');
         }
         
         // Figure out who the actor is
-        var actor = getActor(msg);
+        let actor = getActor(msg);
         if(!actor) {
             for(i = 0; i < turnOrder.length; i++) {
                 if(turnOrder[i].id != '-1') {
-                    var token = getObj('graphic', turnOrder[i].id);
+                    let token = getObj('graphic', turnOrder[i].id);
                     actor = getObj('character', token.get('represents'));
                     break;
                 }
             }
         }
         
-        var effectName = split[1];
-        var nextParam = 2;
+        let effectName = split[1];
+        let nextParam = 2;
         while(nextParam < split.length && parseInt(split[nextParam]) != parseInt(split[nextParam])) {
             effectName += ' ' + split[nextParam];
             nextParam++;
@@ -2652,9 +2716,9 @@ on('chat:message', function(msg) {
         if(effectName[0] == '"') {
             effectName = effectName.substring(1, effectName.length - 1);
         }
-        var duration = 3;
+        let duration = 3;
         if(split.length > nextParam) {
-            var inputDuration = parseInt(split[nextParam]);
+            let inputDuration = parseInt(split[nextParam]);
             if(inputDuration == inputDuration) {
                 duration = inputDuration;
             }
@@ -2669,15 +2733,15 @@ function addEffect(turnOrder, actorId, effectName, duration) {
     // Add a new item to the turn log
     for(i = 0; i < turnOrder.length; i++) {
         if(turnOrder[i].id != '-1') {
-            var token = getObj('graphic', turnOrder[i].id);
+            let token = getObj('graphic', turnOrder[i].id);
             if(token && token.get('represents') == actorId) {
-                var effect = {
+                let effect = {
                     id: '-1',
                     custom: effectName,
                     pr: duration,
                     formula: '-1'
                 };
-                var newTurnOrder = turnOrder.slice(0, i + 1).concat([effect]).concat(turnOrder.slice(i + 1));
+                let newTurnOrder = turnOrder.slice(0, i + 1).concat([effect]).concat(turnOrder.slice(i + 1));
                 Campaign().set('turnorder', JSON.stringify(newTurnOrder));
                 log('Effect ' + effectName + ' added to Turn Tracker.');
                 return;
@@ -2696,7 +2760,7 @@ on('chat:message', function(msg) {
         startEvent('!rest');
         
         // Find all characters with Fast Healing
-        var fastHealingSkills = filterObjs(function(obj) {
+        let fastHealingSkills = filterObjs(function(obj) {
             if(obj.get('_type') == 'attribute' &&
                obj.get('name').indexOf('repeating_skills') > -1 &&
                obj.get('current') == 'fastHealing') {
@@ -2704,29 +2768,29 @@ on('chat:message', function(msg) {
             }
             return false;
         });
-        var fastHealingCharacters = {};
+        let fastHealingCharacters = {};
         fastHealingSkills.forEach(function(skill) {
-            var charId = skill.get('_characterid');
-            var di = parseInt(getAttrByName(charId, 'di'));
+            let charId = skill.get('_characterid');
+            let di = parseInt(getAttrByName(charId, 'di'));
             if(di == di) {
                 fastHealingCharacters[charId] = di;
             }
         })
         
-        var startingValor = {};
+        let startingValor = {};
         
         // Determine starting Valor for every charId
         if(state.houseRulesEnabled) {
-            var levelAttrs = filterObjs(function(obj) {
+            let levelAttrs = filterObjs(function(obj) {
                 return obj.get('_type') == 'attribute' &&
                     obj.get('name') == 'level';
             });
             
             levelAttrs.forEach(function(levelAttr) {
-                var level = parseInt(levelAttr.get('current'));
-                var charId = levelAttr.get('_characterid');
+                let level = parseInt(levelAttr.get('current'));
+                let charId = levelAttr.get('_characterid');
                 if(level == level) {
-                    var valorBySeason = Math.ceil(level / 5) - 1;
+                    let valorBySeason = Math.ceil(level / 5) - 1;
                     if(getAttrByName(charId, 'type') == 'master') {
                         valorBySeason *= 2;
                     }
@@ -2736,7 +2800,7 @@ on('chat:message', function(msg) {
         }
         
         // Find all characters with Bravado
-        var bravadoSkills = filterObjs(function(obj) {
+        let bravadoSkills = filterObjs(function(obj) {
             if(obj.get('_type') == 'attribute' &&
                obj.get('name').indexOf('repeating_skills') > -1 &&
                obj.get('current') == 'bravado') {
@@ -2746,11 +2810,11 @@ on('chat:message', function(msg) {
         });
         
         bravadoSkills.forEach(function(skill) {
-            var valor = 1;
+            let valor = 1;
             if(!state.houseRulesEnabled) {
                 // Get the corresponding skill level
-                var skillId = skillName.split('_')[2];
-                var skillLevelAttr = filterObjs(function(obj) {
+                let skillId = skillName.split('_')[2];
+                let skillLevelAttr = filterObjs(function(obj) {
                     if(obj.get('_type') == 'attribute' &&
                        obj.get('name').indexOf('skilllevel') > -1 &&
                        obj.get('name').indexOf(skillId) > -1) {
@@ -2766,7 +2830,7 @@ on('chat:message', function(msg) {
                 }
             }
             
-            var charId = skill.get('_characterid');
+            let charId = skill.get('_characterid');
             if(startingValor[charId]) {
                 startingValor[charId] += valor;
             } else {
@@ -2775,14 +2839,14 @@ on('chat:message', function(msg) {
         });
         
         // Update every HP attribute
-        var hpAttrs = filterObjs(function(obj) {
+        let hpAttrs = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                 obj.get('name') == 'hp';
         });
         
         hpAttrs.forEach(function(hpAttr) {
-            var oldValue = parseInt(hpAttr.get('current'));
-            var maxValue = parseInt(hpAttr.get('max'));
+            let oldValue = parseInt(hpAttr.get('current'));
+            let maxValue = parseInt(hpAttr.get('max'));
             if(oldValue != oldValue) {
                 oldValue = 0;
             }
@@ -2790,9 +2854,9 @@ on('chat:message', function(msg) {
                 maxValue = 0;
             }
             
-            var newValue = oldValue + Math.ceil(maxValue / 5);
+            let newValue = oldValue + Math.ceil(maxValue / 5);
             
-            var charId = hpAttr.get('_characterid');
+            let charId = hpAttr.get('_characterid');
             if(fastHealingCharacters[charId]) {
                 // Apply Fast Healing skill
                 newValue += fastHealingCharacters[charId];
@@ -2806,14 +2870,14 @@ on('chat:message', function(msg) {
         });
         
         // Update every ST attribute
-        var stAttrs = filterObjs(function(obj) {
+        let stAttrs = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                 obj.get('name') == 'st';
         });
         
         stAttrs.forEach(function(stAttr) {
-            var oldValue = parseInt(stAttr.get('current'));
-            var maxValue = parseInt(stAttr.get('max'));
+            let oldValue = parseInt(stAttr.get('current'));
+            let maxValue = parseInt(stAttr.get('max'));
             if(oldValue != oldValue) {
                 oldValue = 0;
             }
@@ -2821,7 +2885,7 @@ on('chat:message', function(msg) {
                 maxValue = 0;
             }
             
-            var newValue = oldValue + Math.ceil(maxValue / 5);
+            let newValue = oldValue + Math.ceil(maxValue / 5);
             
             if(newValue > maxValue) {
                 newValue = maxValue;
@@ -2831,13 +2895,13 @@ on('chat:message', function(msg) {
         });
         
         // Update every Valor attribute
-        var vAttrs = filterObjs(function(obj) {
+        let vAttrs = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                 obj.get('name') == 'valor';
         });
         
         vAttrs.forEach(function(vAttr) {
-            var charId = vAttr.get('_characterid');
+            let charId = vAttr.get('_characterid');
             
             if(startingValor[charId]) {
                 vAttr.set('current', startingValor[charId]);
@@ -2851,15 +2915,15 @@ on('chat:message', function(msg) {
         checkEvent('!rest');
         
         // Handle values as best we can for current-page, Object layer unaffiliated tokens
-        var page = Campaign().get('playerpageid');
-        var tokens = filterObjs(function(obj) {
+        let page = Campaign().get('playerpageid');
+        let tokens = filterObjs(function(obj) {
             return obj.get('_type') == 'graphic' &&
                 obj.get('layer') == 'objects' &&
                 !obj.get('isdrawing') &&
                 !obj.get('represents');
         });
         tokens.forEach(function(token) {
-            var tokenId = token.get('_id');
+            let tokenId = token.get('_id');
             updateValue(tokenId, 'hp', 0.2, true);
             updateValue(tokenId, 'st', 0.2, true);
             updateValue(tokenId, 'valor', 0, false, true);
@@ -2880,20 +2944,20 @@ on('chat:message', function(msg) {
         && playerIsGM(msg.playerid)) {
         startEvent('!fullrest');
         
-        var startingValor = {};
+        let startingValor = {};
         
         // Determine starting Valor for every charId
         if(state.houseRulesEnabled) {
-            var levelAttrs = filterObjs(function(obj) {
+            let levelAttrs = filterObjs(function(obj) {
                 return obj.get('_type') == 'attribute' &&
                     obj.get('name') == 'level';
             });
             
             levelAttrs.forEach(function(levelAttr) {
-                var level = parseInt(levelAttr.get('current'));
-                var charId = levelAttr.get('_characterid');
+                let level = parseInt(levelAttr.get('current'));
+                let charId = levelAttr.get('_characterid');
                 if(level == level) {
-                    var valorBySeason = Math.ceil(level / 5) - 1;
+                    let valorBySeason = Math.ceil(level / 5) - 1;
                     if(getAttrByName(charId, 'type') == 'master') {
                         valorBySeason *= 2;
                     }
@@ -2903,7 +2967,7 @@ on('chat:message', function(msg) {
         }
         
         // Find all characters with Bravado
-        var bravadoSkills = filterObjs(function(obj) {
+        let bravadoSkills = filterObjs(function(obj) {
             if(obj.get('_type') == 'attribute' &&
                obj.get('name').indexOf('repeating_skills') > -1 &&
                obj.get('current') == 'bravado') {
@@ -2913,11 +2977,11 @@ on('chat:message', function(msg) {
         });
         
         bravadoSkills.forEach(function(skill) {
-            var valor = 1;
+            let valor = 1;
             if(!state.houseRulesEnabled) {
                 // Get the corresponding skill level
-                var skillId = skillName.split('_')[2];
-                var skillLevelAttr = filterObjs(function(obj) {
+                let skillId = skillName.split('_')[2];
+                let skillLevelAttr = filterObjs(function(obj) {
                     if(obj.get('_type') == 'attribute' &&
                        obj.get('name').indexOf('skilllevel') > -1 &&
                        obj.get('name').indexOf(skillId) > -1) {
@@ -2933,7 +2997,7 @@ on('chat:message', function(msg) {
                 }
             }
             
-            var charId = skill.get('_characterid');
+            let charId = skill.get('_characterid');
             if(startingValor[charId]) {
                 startingValor[charId] += valor;
             } else {
@@ -2942,13 +3006,13 @@ on('chat:message', function(msg) {
         });
         
         // Update every HP attribute
-        var hpAttrs = filterObjs(function(obj) {
+        let hpAttrs = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                 obj.get('name') == 'hp';
         });
         
         hpAttrs.forEach(function(hpAttr) {
-            var maxValue = parseInt(hpAttr.get('max'));
+            let maxValue = parseInt(hpAttr.get('max'));
             if(maxValue != maxValue) {
                 maxValue = 0;
             }
@@ -2957,13 +3021,13 @@ on('chat:message', function(msg) {
         });
         
         // Update every ST attribute
-        var stAttrs = filterObjs(function(obj) {
+        let stAttrs = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                 obj.get('name') == 'st';
         });
         
         stAttrs.forEach(function(stAttr) {
-            var maxValue = parseInt(stAttr.get('max'));
+            let maxValue = parseInt(stAttr.get('max'));
             if(maxValue != maxValue) {
                 maxValue = 0;
             }
@@ -2972,13 +3036,13 @@ on('chat:message', function(msg) {
         });
         
         // Update every Valor attribute
-        var vAttrs = filterObjs(function(obj) {
+        let vAttrs = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                 obj.get('name') == 'valor';
         });
         
         vAttrs.forEach(function(vAttr) {
-            var charId = vAttr.get('_characterid');
+            let charId = vAttr.get('_characterid');
             
             if(startingValor[charId]) {
                 vAttr.set('current', startingValor[charId]);
@@ -2992,15 +3056,15 @@ on('chat:message', function(msg) {
         checkEvent('!fullrest');
         
         // Handle values as best we can for current-page, Object layer unaffiliated tokens
-        var page = Campaign().get('playerpageid');
-        var tokens = filterObjs(function(obj) {
+        let page = Campaign().get('playerpageid');
+        let tokens = filterObjs(function(obj) {
             return obj.get('_type') == 'graphic' &&
                 obj.get('layer') == 'objects' &&
                 !obj.get('isdrawing') &&
                 !obj.get('represents');
         });
         tokens.forEach(function(token) {
-            var tokenId = token.get('_id');
+            let tokenId = token.get('_id');
             updateValue(tokenId, 'hp', 1.0, true, true);
             updateValue(tokenId, 'st', 1.0, true, true);
             updateValue(tokenId, 'valor', 0, false, true);
@@ -3021,8 +3085,8 @@ on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!init') == 0
         && playerIsGM(msg.playerid)) {
         startEvent('!init');
-        var split = msg.content.match(/(".*?")|(\S+)/g);
-        var turnOrder = JSON.parse(Campaign().get('turnorder'));
+        let split = msg.content.match(/(".*?")|(\S+)/g);
+        let turnOrder = JSON.parse(Campaign().get('turnorder'));
         if(!turnOrder) {
             turnOrder = [];
         }
@@ -3037,11 +3101,11 @@ on('chat:message', function(msg) {
         log('Initiative roll commencing');
         
         // Get list of tokens
-        var page = Campaign().get('playerpageid');
-        var allTokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
-        var actorIds = [];
-        var tokens = [];
-        var duplicateIds = [];
+        let page = Campaign().get('playerpageid');
+        let allTokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
+        let actorIds = [];
+        let tokens = [];
+        let duplicateIds = [];
         
         // Destroy existing Init Tokens
         for(i = 0; i < allTokens.length; i++) {
@@ -3054,7 +3118,7 @@ on('chat:message', function(msg) {
         }
         
         allTokens.forEach(function(token) {
-            var actorId = token.get('represents');
+            let actorId = token.get('represents');
             if(actorIds.indexOf(actorId) == -1) {
                 log('Adding ' + token.get('name') + ' to init token list');
                 actorIds.push(actorId);
@@ -3063,7 +3127,7 @@ on('chat:message', function(msg) {
                 if(duplicateIds.indexOf(actorId) == -1) {
                     log('Adding ' + token.get('name') + ' to duplicate token list');
                     duplicateIds.push(actorId);
-                    var oldToken = tokens.find(function(t) { return t.get('represents') == actorId });
+                    let oldToken = tokens.find(function(t) { return t.get('represents') == actorId });
                     tokens.splice(tokens.indexOf(oldToken), 1);
                 } else {
                     log('No action taken on ' + token.get('name'));
@@ -3073,8 +3137,8 @@ on('chat:message', function(msg) {
         
         // For duplicate character tokens, create an init-tracker token that the players can't see
         duplicateIds.forEach(function(id) {
-            var oldToken = allTokens.find(function(t) { return t.get('represents') == id});
-            var newToken = createObj('graphic', {
+            let oldToken = allTokens.find(function(t) { return t.get('represents') == id});
+            let newToken = createObj('graphic', {
                 _pageid: oldToken.get('_pageid'),
                 left: -1000,
                 top: -1000,
@@ -3089,17 +3153,16 @@ on('chat:message', function(msg) {
             tokens.push(newToken);
         });
 
-        var message = '<table><tr><td>**ROLLING INITIATIVE**</td></tr>';
-        var turnOrder = [];
+        let message = '<table><tr><td>**ROLLING INITIATIVE**</td></tr>';
         tokens.forEach(function(token) {
             if(token) {
-                var actorId = token.get('represents');
-                var actor = getObj('character', actorId);
+                let actorId = token.get('represents');
+                let actor = getObj('character', actorId);
                 
                 if(actor) {
-                    var initMod = getAttrByName(actorId, 'init')
-                    var init = initMod + randomInteger(10);
-                    var actorName = actor.get('name');
+                    let initMod = getAttrByName(actorId, 'init')
+                    let init = initMod + randomInteger(10);
+                    let actorName = actor.get('name');
                     turnOrder.push({
                         id: token.get('_id'),
                         pr: init,
@@ -3144,14 +3207,14 @@ on('chat:message', function(msg) {
         startEvent('!def');
         
         // Get list of tokens
-        var page = Campaign().get('playerpageid');
-        var allTokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
-        var actorIds = [];
-        var tokens = [];
-        var duplicateIds = [];
+        let page = Campaign().get('playerpageid');
+        let allTokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
+        let actorIds = [];
+        let tokens = [];
+        let duplicateIds = [];
         
         allTokens.forEach(function(token) {
-            var actorId = token.get('represents');
+            let actorId = token.get('represents');
             if(actorId && actorIds.indexOf(actorId) == -1) {
                 log('Adding ' + token.get('name') + ' to defense token list');
                 actorIds.push(actorId);
@@ -3159,16 +3222,16 @@ on('chat:message', function(msg) {
             }
         });
 
-        var message = '';
-        var turnOrder = [];
+        let message = '';
+        let turnOrder = [];
         tokens.forEach(function(token) {
-            var actorId = token.get('represents');
-            var actor = getObj('character', actorId);
+            let actorId = token.get('represents');
+            let actor = getObj('character', actorId);
             
             if(actor) {
-                var def = getAttrByName(actorId, 'defense')
-                var res = getAttrByName(actorId, 'resistance')
-                var actorName = actor.get('name');
+                let def = getAttrByName(actorId, 'defense')
+                let res = getAttrByName(actorId, 'resistance')
+                let actorName = actor.get('name');
                 if(message.length > 0) {
                     message += '<br />';
                 }
@@ -3191,14 +3254,14 @@ on('chat:message', function(msg) {
         startEvent('!di');
         
         // Get list of tokens
-        var page = Campaign().get('playerpageid');
-        var allTokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
-        var actorIds = [];
-        var tokens = [];
-        var duplicateIds = [];
+        let page = Campaign().get('playerpageid');
+        let allTokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
+        let actorIds = [];
+        let tokens = [];
+        let duplicateIds = [];
         
         allTokens.forEach(function(token) {
-            var actorId = token.get('represents');
+            let actorId = token.get('represents');
             if(actorId && actorIds.indexOf(actorId) == -1) {
                 log('Adding ' + token.get('name') + ' to defense token list');
                 actorIds.push(actorId);
@@ -3206,15 +3269,15 @@ on('chat:message', function(msg) {
             }
         });
 
-        var message = '';
-        var turnOrder = [];
+        let message = '';
+        let turnOrder = [];
         tokens.forEach(function(token) {
-            var actorId = token.get('represents');
-            var actor = getObj('character', actorId);
+            let actorId = token.get('represents');
+            let actor = getObj('character', actorId);
             
             if(actor) {
-                var di = getAttrByName(actorId, 'di')
-                var actorName = actor.get('name');
+                let di = getAttrByName(actorId, 'di')
+                let actorName = actor.get('name');
                 if(message.length > 0) {
                     message += '<br />';
                 }
@@ -3240,8 +3303,8 @@ on('chat:message', function(msg) {
         }
         
         // Get params
-        var split = msg.content.match(/(".*?")|(\S+)/g);
-        var lookback = 1;
+        let split = msg.content.match(/(".*?")|(\S+)/g);
+        let lookback = 1;
         if(split.length > 1) {
             lookback = parseInt(split[1]);
         }
@@ -3252,27 +3315,27 @@ on('chat:message', function(msg) {
         }
         
         // Get tech data
-        var techHistory = state.techHistory[state.techHistory.length - lookback];
-        var actorToken = getObj('graphic', techHistory.id);
-        var tech = getTechByName(techHistory.techName, actorToken.get('represents'));
+        let techHistory = state.techHistory[state.techHistory.length - lookback];
+        let actorToken = getObj('graphic', techHistory.id);
+        let tech = getTechByName(techHistory.techName, actorToken.get('represents'));
         
         if(tech.core != 'damage' && tech.core != 'ultDamage') {
             sendChat('Valor', '/w gm ' + techHistory.techName + ' is not a damage technique.');
             return;
         }
         
-        var targetsList = techHistory.targets ? techHistory.targets : [];
+        let targetsList = techHistory.targets ? techHistory.targets : [];
         
-        var output = 'Critical hit for **' + techHistory.techName + '**:';
+        let output = 'Critical hit for **' + techHistory.techName + '**:';
         
         if(targetsList.length > 0) {
-            var firstTarget = true;
+            let firstTarget = true;
             
             targetsList.forEach(function(targetId) {
-                var target = getObj('graphic', targetId);
-                var targetChar = getObj('character', target.get('represents'));
+                let target = getObj('graphic', targetId);
+                let targetChar = getObj('character', target.get('represents'));
                 
-                var targetName = target.get('name');
+                let targetName = target.get('name');
                 if(!targetName && targetChar) {
                     targetName = targetChar.get('name');
                 }
@@ -3281,16 +3344,16 @@ on('chat:message', function(msg) {
                 }
                 
                 // Get crit damage
-                var damage = getTechDamage(tech, actorToken.get('represents'), true);
+                let damage = getTechDamage(tech, actorToken.get('represents'), true);
                 
                 // Get def/res
-                var defRes = 0;
-                var defResStat = tech.newStat ? tech.newStat : tech.stat;
+                let defRes = 0;
+                let defResStat = tech.newStat ? tech.newStat : tech.stat;
                 
                 if(targetChar && (!tech.mods || !tech.mods.find(function(m) {
                     return m.toLowerCase().indexOf('piercing') > -1
                 }))) {
-                    var physical = defResStat == 'str' || defResStat == 'agi';
+                    let physical = defResStat == 'str' || defResStat == 'agi';
                     if(tech.mods && tech.mods.find(function(m) {
                         return m.toLowerCase().indexOf('shift') > -1
                     })) {
@@ -3298,13 +3361,13 @@ on('chat:message', function(msg) {
                     }
                     if(physical) {
                         defRes = getAttrByName(targetChar.get('_id'), 'defense');
-                        var bonus = parseInt(getAttrByName(targetChar.get('_id'), 'defensebonus'));
+                        let bonus = parseInt(getAttrByName(targetChar.get('_id'), 'defensebonus'));
                         if(bonus == bonus) {
                             defRes += bonus;
                         }
                     } else {
                         defRes = getAttrByName(targetChar.get('_id'), 'resistance');
-                        var bonus = parseInt(getAttrByName(targetChar.get('_id'), 'resistancebonus'));
+                        let bonus = parseInt(getAttrByName(targetChar.get('_id'), 'resistancebonus'));
                         if(bonus == bonus) {
                             defRes += bonus;
                         }
@@ -3315,7 +3378,7 @@ on('chat:message', function(msg) {
             });
         } else {
             // Get crit damage
-            var damage = getTechDamage(tech, actorToken.get('represents'), true);
+            let damage = getTechDamage(tech, actorToken.get('represents'), true);
             
             if(tech.mods && tech.mods.find(function(m) {
                 return m.toLowerCase().indexOf('shift') > -1
@@ -3337,7 +3400,7 @@ on('chat:message', function(msg) {
 // Used by character sheet - create a temporary level-up sheet for a given character.
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!duplicate') == 0) {
-        var split = msg.content.match(/(".*?")|(\S+)/g);
+        let split = msg.content.match(/(".*?")|(\S+)/g);
         if(split.length < 2) {
             log('Not enough arguments.');
             return;
@@ -3350,12 +3413,12 @@ on('chat:message', function(msg) {
         }
         
         // Figure out who to duplicate
-        var actor = getObj('character', split[1]);
-        var actorId = actor.get('_id');
+        let actor = getObj('character', split[1]);
+        let actorId = actor.get('_id');
         
         // Check to see if they already have a level up sheet
         if(state.linkedSheets[actorId]) {
-            var oldActor = getObj('character', state.linkedSheets[actorId]);
+            let oldActor = getObj('character', state.linkedSheets[actorId]);
             if(oldActor) {
                 sendChat('Valor', '/w "' + actor.get('name') + "\" You already have an open level-up sheet.");
                 return;
@@ -3366,16 +3429,16 @@ on('chat:message', function(msg) {
         }
         
         // Create new character, copy over basic traits
-        var newActor = createObj('character', {
+        let newActor = createObj('character', {
             name: 'Level up - ' + actor.get('name'),
             inplayerjournals: actor.get('inplayerjournals'),
             controlledby: actor.get('controlledby'),
             avatar: actor.get('avatar')
         });
-        var newActorId = newActor.get('_id');
+        let newActorId = newActor.get('_id');
         
         // Copy over attributes
-        var attributes = filterObjs(function(obj) {
+        let attributes = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                    obj.get('_characterid') == actorId;
         });
@@ -3409,7 +3472,7 @@ on('chat:message', function(msg) {
 // Used by character sheet - fold the level up character sheet back into the original.
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!d-finalize') == 0) {
-        var split = msg.content.match(/(".*?")|(\S+)/g);
+        let split = msg.content.match(/(".*?")|(\S+)/g);
         if(split.length < 2) {
             log('Not enough arguments.');
             return;
@@ -3422,14 +3485,14 @@ on('chat:message', function(msg) {
         }
         
         // Fetch the level-up sheet
-        var actor = getObj('character', split[1]);
-        var actorId = actor.get('_id');
+        let actor = getObj('character', split[1]);
+        let actorId = actor.get('_id');
         
         // Fetch the original sheet
-        var oldActor;
-        var oldActorId;
+        let oldActor;
+        let oldActorId;
         if(split.length > 2 && split[2] == '--use-current') {
-            var oldActorSearch = findObjs({
+            let oldActorSearch = findObjs({
                 type: 'character',
                 name: msg.who
             });
@@ -3458,53 +3521,62 @@ on('chat:message', function(msg) {
             return;
         }
         
-        var oldAttributes = filterObjs(function(obj) {
+        let oldAttributes = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                    obj.get('_characterid') == oldActorId;
         });
-        var attributes = filterObjs(function(obj) {
+        let attributes = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
                    obj.get('_characterid') == actorId;
         });
         
-        var oldHp = oldAttributes.find(function(obj) {
+        let oldHp = oldAttributes.find(function(obj) {
             return obj.get('name') == 'hp';
         });
-        var newHp = attributes.find(function(obj) {
+        let newHp = attributes.find(function(obj) {
             return obj.get('name') == 'hp';
         });
-        var oldHpMax = parseInt(oldHp.get('max'));
-        var newHpMax = parseInt(newHp.get('max'));
+        let oldHpMax = parseInt(oldHp.get('max'));
+        let newHpMax = parseInt(newHp.get('max'));
         
-        var oldSt = oldAttributes.find(function(obj) {
+        let oldSt = oldAttributes.find(function(obj) {
             return obj.get('name') == 'st';
         });
-        var newSt = attributes.find(function(obj) {
+        let newSt = attributes.find(function(obj) {
             return obj.get('name') == 'st';
         });
-        var oldStMax = parseInt(oldSt.get('max'));
-        var newStMax = parseInt(newSt.get('max'));
+        let oldStMax = parseInt(oldSt.get('max'));
+        let newStMax = parseInt(newSt.get('max'));
+        
+        let oldLevel = oldAttributes.find(function(obj) {
+            return obj.get('name') == 'level';
+        });
+        let newLevel = attributes.find(function(obj) {
+            return obj.get('name') == 'level';
+        });
+        let oldLevelValue = parseInt(oldLevel.get('current'));
+        let newLevelValue = parseInt(newLevel.get('current'));
         
         // Get list of skills/flaws/techs from old sheet
-        var oldFlaws = [];
-        var oldSkills = [];
-        var oldTechs = [];
+        let oldFlaws = [];
+        let oldSkills = [];
+        let oldTechs = [];
         oldAttributes.forEach(function(attr) {
-            var attrName = attr.get('name');
+            let attrName = attr.get('name');
             if(attrName && attrName.indexOf('repeating_flaws_') > -1) {
-                var flawId = attrName.substring(16, 36);
+                let flawId = attrName.substring(16, 36);
                 if(oldFlaws.indexOf(flawId) == -1) {
                     oldFlaws.push(flawId);
                 }
             }
             if(attrName && attrName.indexOf('repeating_skills_') > -1) {
-                var skillId = attrName.substring(17, 37);
+                let skillId = attrName.substring(17, 37);
                 if(oldSkills.indexOf(skillId) == -1) {
                     oldSkills.push(skillId);
                 }
             }
             if(attrName && attrName.indexOf('repeating_techs_') > -1) {
-                var techId = attrName.substring(16, 36);
+                let techId = attrName.substring(16, 36);
                 if(oldTechs.indexOf(techId) == -1) {
                     oldTechs.push(techId);
                 }
@@ -3512,13 +3584,13 @@ on('chat:message', function(msg) {
         });
         
         // Paste over attributes
-        var newFlaws = [];
-        var newSkills = [];
-        var newTechs = [];
+        let newFlaws = [];
+        let newSkills = [];
+        let newTechs = [];
         attributes.forEach(function(attr) {
-            var attrName = attr.get('name');
+            let attrName = attr.get('name');
             if(attrName != 'is_duplicate') {
-                var oldAttribute = oldAttributes.find(function(obj) {
+                let oldAttribute = oldAttributes.find(function(obj) {
                     return obj.get('name') == attrName;
                 });
                 
@@ -3539,19 +3611,19 @@ on('chat:message', function(msg) {
                 }
                 
                 if(attrName && attrName.indexOf('repeating_flaws_') > -1) {
-                    var flawId = attrName.substring(16, 36);
+                    let flawId = attrName.substring(16, 36);
                     if(newFlaws.indexOf(flawId) == -1) {
                         newFlaws.push(flawId);
                     }
                 }
                 if(attrName && attrName.indexOf('repeating_skills_') > -1) {
-                    var skillId = attrName.substring(17, 37);
+                    let skillId = attrName.substring(17, 37);
                     if(newSkills.indexOf(skillId) == -1) {
                         newSkills.push(skillId);
                     }
                 }
                 if(attrName && attrName.indexOf('repeating_techs_') > -1) {
-                    var techId = attrName.substring(16, 36);
+                    let techId = attrName.substring(16, 36);
                     if(newTechs.indexOf(techId) == -1) {
                         newTechs.push(techId);
                     }
@@ -3565,7 +3637,7 @@ on('chat:message', function(msg) {
                 log('Deleting Flaw ID ' + flaw);
                 
                 oldAttributes.forEach(function(attr) {
-                    var attrName = attr.get('name');
+                    let attrName = attr.get('name');
                     if(attrName && attrName.indexOf(flaw) > -1) {
                         attr.remove();
                     }
@@ -3577,7 +3649,7 @@ on('chat:message', function(msg) {
                 log('Deleting Skill ID ' + skill);
                 
                 oldAttributes.forEach(function(attr) {
-                    var attrName = attr.get('name');
+                    let attrName = attr.get('name');
                     if(attrName && attrName.indexOf(skill) > -1) {
                         attr.remove();
                     }
@@ -3589,7 +3661,7 @@ on('chat:message', function(msg) {
                 log('Deleting Tech ID ' + tech);
                 
                 oldAttributes.forEach(function(attr) {
-                    var attrName = attr.get('name');
+                    let attrName = attr.get('name');
                     if(attrName && attrName.indexOf(tech) > -1) {
                         attr.remove();
                     }
@@ -3599,18 +3671,18 @@ on('chat:message', function(msg) {
         
         // Update current HP and ST
         if(oldHpMax == oldHpMax && newHpMax == newHpMax) {
-            var hpChange = newHpMax - oldHpMax;
+            let hpChange = newHpMax - oldHpMax;
             
-            var oldHpValue = parseInt(oldHp.get('current'));
+            let oldHpValue = parseInt(oldHp.get('current'));
             if(oldHpValue == oldHpValue) {
                 oldHp.set('current', oldHpValue + hpChange);
             }
         }
         
         if(oldStMax == oldStMax && newStMax == newStMax) {
-            var stChange = newStMax - oldStMax;
+            let stChange = newStMax - oldStMax;
             
-            var oldStValue = parseInt(oldSt.get('current'));
+            let oldStValue = parseInt(oldSt.get('current'));
             if(oldStValue == oldStValue) {
                 oldSt.set('current', oldStValue + stChange);
             }
@@ -3621,7 +3693,19 @@ on('chat:message', function(msg) {
         state.linkedSheets[actorId] = undefined;
         state.linkedSheets[oldActorId] = undefined;
         
-        sendChat('Valor', 'Character sheet for ' + oldActor.get('name') + ' has been updated.');
+        
+        if(oldLevelValue == oldLevelValue && newLevelValue == newLevelValue) {
+            if(oldLevelValue < newLevelValue) {
+                sendChat('Valor', `Character sheet for ${oldActor.get('name')} has been updated, gaining ${newLevelValue - oldLevelValue} ` +
+                    `${newLevelValue - oldLevelValue == 1 ? 'level' : 'levels'}.`);
+            } else if(oldLevelValue > newLevelValue) {
+                sendChat('Valor', `Character sheet for ${oldActor.get('name')} has been updated, losing ${oldLevelValue - newLevelValue} ` +
+                    `${oldLevelValue - newLevelValue == 1 ? 'level' : 'levels'}.`);
+            } else {
+                sendChat('Valor', `Character sheet for ${oldActor.get('name')} has been updated.`);
+            }
+        }
+        
         log('Character sheet for ' + oldActor.get('name') + ' has been updated.');
         endEvent('!d-finalize');
     }
@@ -3633,13 +3717,13 @@ on('chat:message', function(msg) {
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!mook') == 0) {
         startEvent('!mook');
-        var split = msg.content.match(/(".*?")|(\S+)/g);
+        let split = msg.content.match(/(".*?")|(\S+)/g);
         
         // Get parameters
-        var level = 1;
-        var highStatsParam = [];
-        var type = 'flunky';
-        for(var i = 0; i < split.length - 1; i++) {
+        let level = 1;
+        let highStatsParam = [];
+        let type = 'flunky';
+        for(let i = 0; i < split.length - 1; i++) {
             if(split[i] == '--level' || split[i] == '-l') {
                 level = parseInt(split[i+1]);
                 if(level != level) {
@@ -3669,7 +3753,7 @@ on('chat:message', function(msg) {
             }
         }
         
-        var highStats = [];
+        let highStats = [];
         highStatsParam.forEach(function(s) {
             s = s.trim();
             if(s.indexOf('str') == 0 || s.indexOf('mus') == 0) {
@@ -3695,11 +3779,11 @@ on('chat:message', function(msg) {
         }
         
         // Determine character attributes
-        var attributes = [0,0,0,0,0];
+        let attributes = [0,0,0,0,0];
         
         if(highStats.length == 0) {
-            var stats = 2;
-            var roll = randomInteger(10);
+            let stats = 2;
+            let roll = randomInteger(10);
             if(roll == 1) {
                 stats = 1;
             }
@@ -3707,16 +3791,16 @@ on('chat:message', function(msg) {
                 stats == 3;
             }
             
-            var attrs = [0,1,2,3,4];
-            for(var i = 0; i < stats; i++) {
-                var aId = randomInteger(attrs.length) - 1;
+            let attrs = [0,1,2,3,4];
+            for(let i = 0; i < stats; i++) {
+                let aId = randomInteger(attrs.length) - 1;
                 highStats.push(attrs[aId]);
                 attrs.splice(aId, 1);
             }
         }
         
-        var ap = level * 3 + 22;
-        var attributesLeft = 5;
+        let ap = level * 3 + 22;
+        let attributesLeft = 5;
         
         if(highStats.length == 1) {
             attributes[highStats[0]] = level + 7;
@@ -3737,13 +3821,13 @@ on('chat:message', function(msg) {
             attributesLeft = 2;
         }
         
-        for(var i = 0; i < 5; i++) {
+        for(let i = 0; i < 5; i++) {
             if(attributes[i] == 0) {
                 if(attributesLeft == 1) {
                     attributes[i] = ap;
                     attributesLeft = 0;
                 } else {
-                    var value = randomInteger(ap - attributesLeft);
+                    let value = randomInteger(ap - attributesLeft);
                     attributes[i] = value;
                     ap -= value;
                     attributesLeft--;
@@ -3752,7 +3836,7 @@ on('chat:message', function(msg) {
         }
         
         // Determine set of viable skills
-        var skillLibrary = [];
+        let skillLibrary = [];
         highStats.forEach(function(s) {
             switch(s) {
                 case 0:
@@ -3839,8 +3923,8 @@ on('chat:message', function(msg) {
                 ]);
         }
         
-        var skills = [];
-        var skillCount = 1;
+        let skills = [];
+        let skillCount = 1;
         if(level >= 6) {
             skillCount++;
         }
@@ -3852,9 +3936,9 @@ on('chat:message', function(msg) {
             skillCount--;
         }
         
-        for(var i = 0; i < skillCount; i++) {
-            var skill = skillLibrary[randomInteger(skillLibrary.length) - 1];
-            var skillLevel = 1;
+        for(let i = 0; i < skillCount; i++) {
+            let skill = skillLibrary[randomInteger(skillLibrary.length) - 1];
+            let skillLevel = 1;
             if(skill.progression == 1) {
                 skillLevel = Math.ceil(level / 5);
             }
@@ -3872,7 +3956,7 @@ on('chat:message', function(msg) {
             }
         }
         
-        var tp = 1;
+        let tp = 1;
         if(type == 'flunky') {
             tp = 2 + level;
             if(level > 5)
@@ -3885,21 +3969,21 @@ on('chat:message', function(msg) {
                 tp += level - 15;
         }
         
-        var techLevels = [Math.min(level + 3, tp)];
+        let techLevels = [Math.min(level + 3, tp)];
         tp -= techLevels[0];
         if(tp > 0 && level > 5) {
             techLevels.push(Math.min(level, tp));
         }
         
-        var techStats = highStats.filter(function(s) {
+        let techStats = highStats.filter(function(s) {
             return s != 4
         });
         
-        var techs = [];
+        let techs = [];
         techLevels.forEach(function(techLevel) {
-            var techStatId = techStats[randomInteger(techStats.length) - 1];
-            var techStat = '';
-            var modLibrary = [];
+            let techStatId = techStats[randomInteger(techStats.length) - 1];
+            let techStat = '';
+            let modLibrary = [];
             switch(techStatId) {
                 case 0:
                     techStat = 'str';
@@ -3976,8 +4060,8 @@ on('chat:message', function(msg) {
                     ]);
             }
             
-            var mods = null;
-            var coreLevel = techLevel;
+            let mods = null;
+            let coreLevel = techLevel;
             if(randomInteger(10) > 3) {
                 mods = modLibrary[randomInteger(modLibrary.length) - 1];
                 coreLevel -= mods.tp;
@@ -3992,12 +4076,12 @@ on('chat:message', function(msg) {
         });
         
         // Create new character, copy over basic stats
-        var newActor = createObj('character', {
+        let newActor = createObj('character', {
             name: 'New Mook',
             type: type,
             level: level
         });
-        var newActorId = newActor.get('_id');
+        let newActorId = newActor.get('_id');
         
         createObj('attribute', {
             characterid: newActorId, name: 'type', current: type
@@ -4022,7 +4106,7 @@ on('chat:message', function(msg) {
         });
         
         skills.forEach(function(skill) {
-            var rowId = generateRowID();
+            let rowId = generateRowID();
             
             createObj('attribute', {
                 characterid: newActorId, name: 'repeating_skills_' + rowId + '_skillname', current: skill.name
@@ -4033,7 +4117,7 @@ on('chat:message', function(msg) {
         });
         
         techs.forEach(function(tech) {
-            var rowId = generateRowID();
+            let rowId = generateRowID();
             
             createObj('attribute', {
                 characterid: newActorId, name: 'repeating_techs_' + rowId + '_tech_name', current: 'Unnamed Technique'
@@ -4058,10 +4142,10 @@ on('chat:message', function(msg) {
 
 // Generates a unique ID that roll20 can parse. I didn't write this.
 function generateUUID() {
-    var a = 0, b = [];
-    var c = (new Date()).getTime() + 0, d = c === a;
+    let a = 0, b = [];
+    let c = (new Date()).getTime() + 0, d = c === a;
     a = c;
-    for (var e = new Array(8), f = 7; 0 <= f; f--) {
+    for (let e = new Array(8), f = 7; 0 <= f; f--) {
         e[f] = "-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz".charAt(c % 64);
         c = Math.floor(c / 64);
     }
@@ -4092,21 +4176,21 @@ function generateRowID() {
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!set-vrate') == 0
         && playerIsGM(msg.playerid)) {
-        var args = msg.content.split(/\s+/);
+        let args = msg.content.split(/\s+/);
         if(args.length < 2) {
             log('Format: !set-vrate 2');
             return;
         }
         
-        var setRate = parseInt(args[1]);
+        let setRate = parseInt(args[1]);
         if(!state.charData) {
             state.charData = {};
         }
         
         msg.selected.forEach(function(s) {
-            var token = getObj('graphic', s._id);
+            let token = getObj('graphic', s._id);
             if(token.get('represents') != '') {
-                var id = token.get('represents');
+                let id = token.get('represents');
                 if(!state.charData[id]) {
                     state.charData[id] = {};
                 }
@@ -4123,15 +4207,15 @@ on('chat:message', function(msg) {
 // Meant to be used by the character sheet, not the user.
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!roll-as') == 0) {
-        var split = msg.content.match(/(".*?")|(\S+)/g);
+        let split = msg.content.match(/(".*?")|(\S+)/g);
         
         if(split.length < 3) {
             log('!roll-as: Not enough arguments.');
         }
         
-        var as = split[1];
-        var roll = split[2];
-        var label = split.length > 3 ? split[3] : null;
+        let as = split[1];
+        let roll = split[2];
+        let label = split.length > 3 ? split[3] : null;
         
         // Trim quotes
         if(roll[0] == '"') {
@@ -4152,44 +4236,45 @@ on('change:attribute', function(obj, prev) {
     if(obj.get('name') == 'hp' || 
         obj.get('name') == 'st') {
         if(prev.max && obj.get('max') && prev.max != obj.get('max')) {
-            var oldMax = parseInt(prev.max);
-            var newMax = parseInt(obj.get('max'));
+            let oldMax = parseInt(prev.max);
+            let newMax = parseInt(obj.get('max'));
             if(oldMax == oldMax && newMax == newMax) {
-                var maxChange = newMax - oldMax;
-                var charId = obj.get('_characterid');
+                let maxChange = newMax - oldMax;
+                let charId = obj.get('_characterid');
                 updateValueForCharacter(charId, obj.get('name'), maxChange);
+                log(`Max ${obj.get('name')} for character ${charId} changed from ` +
+                    `${oldMax} to ${newMax}, changing value by ${maxChange}`);
             }
         }
     }
 });
 
 function criticalHealthWarning(obj, oldHp) {
-    var newHp = parseInt(obj.get('bar1_value'));
-    var maxHp = parseInt(obj.get('bar1_max'));
+    let hp = getHp(obj.get('_id'), obj.get('represents'));
     
-    if(oldHp == oldHp && newHp == newHp && maxHp == maxHp && oldHp != newHp) {
-        var critical = Math.ceil(maxHp * 0.4);
-        var message;
-        if(oldHp > critical && newHp <= critical) {
+    if(oldHp == oldHp && oldHp != hp) {
+        let critical = Math.ceil(hp.max * 0.4);
+        let message;
+        if(oldHp > critical && hp.val <= critical) {
             message = ' is now at critical health.';
-        } else if (oldHp <= critical && newHp >= critical) {
+        } else if (oldHp <= critical && hp.val >= critical) {
             message = ' is no longer at critical health.';
         }
         if(message) {
             // Message character
-            var controlledBy;
-            var name;
+            let controlledBy;
+            let name;
             
-            var charId = obj.get('represents');
+            let charId = obj.get('represents');
             if(charId) {
-                var actor = getObj('character',charId);
+                let actor = getObj('character',charId);
                 controlledBy = actor.get('controlledby');
                 name = actor.get('name');
             } else {
                 name = obj.get('name');
             }
             
-            var whisperTo = 'gm';
+            let whisperTo = 'gm';
             
             if(controlledBy && controlledBy != '') {
                 whisperTo = name;
@@ -4198,7 +4283,7 @@ function criticalHealthWarning(obj, oldHp) {
             if(name) {
                 sendChat('Valor', '/w "' + whisperTo + '" ' + name + message);
             }
-            log('Alerted ' + whisperTo + ' about critical HP for token ID ' + obj.get('_id') + '.');
+            log(`Alerted ${whisperTo} about critical HP for token ID ${obj.get('_id')}.`);
         }
     }
 }
@@ -4223,13 +4308,13 @@ on('change:graphic', function(obj, prev) {
         return;
     }
     
-    var page = Campaign().get('playerpageid');
+    let page = Campaign().get('playerpageid');
     if(obj.get('_pageid') != page) {
         // Do nothing if it was a token on another page
         return;
     }
     
-    var oldHp = parseInt(prev.bar1_value);
+    let oldHp = parseInt(prev.bar1_value);
     criticalHealthWarning(obj, oldHp);
 });
 
@@ -4244,13 +4329,13 @@ function processOngoingEffects(obj) {
         return;
     }
     
-    var turnOrder = JSON.parse(obj.get('turnorder'));
+    let turnOrder = JSON.parse(obj.get('turnorder'));
     if(!turnOrder || turnOrder.length === 0) {
         // Do nothing if the init tracker is empty
         return;
     }
     
-    var effectChar = turnOrder[turnOrder.length - 1];
+    let effectChar = turnOrder[turnOrder.length - 1];
     if(!effectChar || (effectChar.custom.indexOf('Ongoing') == -1 && 
         effectChar.custom.indexOf('Regen') == -1 &&
         effectChar.custom.indexOf('SRegen') == -1)) {
@@ -4259,34 +4344,29 @@ function processOngoingEffects(obj) {
     }
     
     // Scan backwards for the character this condition applies to
-    var i = turnOrder.length - 2;
-    var lastCharId = turnOrder[i] ? turnOrder[i].id : null;
-    var lastChar = lastCharId ? getObj('graphic', lastCharId) : null;
+    let i = turnOrder.length - 2;
+    let lastCharId = turnOrder[i] ? turnOrder[i].id : null;
+    let lastChar = lastCharId ? getObj('graphic', lastCharId) : null;
     while(!lastChar) {
         i--;
         if(i == 0) {
             // We didn't find anyone - abort
             return;
         }
-        var lastCharId = turnOrder[i] ? turnOrder[i].id : null;
+        let lastCharId = turnOrder[i] ? turnOrder[i].id : null;
         if(lastCharId) {
             lastChar = getObj('graphic', lastCharId);
         }
     }
     
     // Update HP or ST
-    var parts = effectChar.custom.split(' ');
-    var value = parseInt(parts[1]);
-    var actor = getObj('character', lastChar.get('represents'));
-    var name = lastChar.get('name');
+    let parts = effectChar.custom.split(' ');
+    let value = parseInt(parts[1]);
+    let actor = getObj('character', lastChar.get('represents'));
+    let name = lastChar.get('name');
     if(actor) {
         name = actor.get('name');
     }
-    var oldHp = parseInt(lastChar.get('bar1_value'));
-    if(oldHp != oldHp) {
-        oldHp = 0;
-    }
-    
     if(value == value) {
         if(parts[0] === 'Ongoing') {
             updateValue(lastCharId, 'hp', -value);
@@ -4309,16 +4389,16 @@ function processOngoingEffects(obj) {
 // initiative list changes.
 // Prevents repeat events when adjusting other things on the init list.
 on('change:campaign:turnorder', function(obj) {
-    var turnOrder = JSON.parse(obj.get('turnorder'));
+    let turnOrder = JSON.parse(obj.get('turnorder'));
     if(!turnOrder || turnOrder.length === 0) {
         // Do nothing if the init tracker is empty
         return;
     }
     
-    var topChar = turnOrder[0];
+    let topChar = turnOrder[0];
     
     if(state.lastActor) {
-        var nextActor;
+        let nextActor;
         // Get a label or ID for the current top actor
         if(topChar.custom) {
             nextActor = topChar.custom;
