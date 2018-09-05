@@ -23,7 +23,7 @@ This is a collection of scripts that will automate a lot of important Valor logi
 ## Usage
 Mostly self-explanatory - just put values into boxes, and the sheet will update other values as necessary. For Skills such as Proficiency that require extra info, enter it into the Notes field to the right of the Skill/Flaw. If you want to use a custom Skill or Flaw that isn't in the system, enter Custom Skill or Custom Flaw, and add details to the right. Set the Skill/Flaw level to equal the amount of SP you want the Custom trait to be worth.
 
-For Techniques, Tech Level is automatically calculated based on core level and the list of modifiers. Put each mod on a separate line, ending with the mod level if relevant - if you want a Level 2 Ranged Technique modifier, put in something like "Ranged Technique 2" or "Ranged 2" - as long as it starts with 'ranged' and ends in '2', it'll read correctly. If there's no number listed, it will assume level 1. Clicking the "Use Technique" button will automatically deduct from your resources as required for the tech's limits.
+For Techniques, Tech Level is automatically calculated based on core level and the list of modifiers. Put each mod on a separate line, ending with the mod level if relevant - if you want a Level 2 Ranged Technique modifier, put in something like "Ranged Technique 2" or "Ranged 2" - as long as it starts with 'ranged' and ends in '2', it'll read correctly. If there's no number listed, it will assume level 1. Clicking the "Use Technique" button will automatically deduct from your resources as required for the tech's limits. If you set "Targets" or "Bonus" to the right of the button before clicking, it will execute with the appropriate number of targets and the appropriate bonus to the attack roll.
 
 Limits work the same way. For either one, if you want to use a mod or limit that isn't in the game library, preface it with Custom, i.e. "Custom - Encroachment Limit 4". The number will be used for either how many levels the mod adds to the technique, or as how much the limit reduces the Stamina cost by.
 
@@ -31,7 +31,7 @@ For Mimic Core techniques, put the exact name of the target technique in the "Mi
 
 For maximum benefit, associate a token with a character sheet, then set the three bars to represent "hp", "st" and "valor", in that order.
 
-## New Commands
+## Valor Commands
 
 ### Use Tech
 Syntax: `!t Fireball 3 +1`
@@ -75,6 +75,11 @@ Recovers resources for the end of a scene. Valor will be set to 0, or lower/high
 Syntax: `!fullrest`
 
 As above, but all Health and Stamina is recovered.
+
+### Add/Subtract HP/ST
+Syntax: `!addhp/subhp/addst/subst`
+
+Depending on the command, adds or subtracts one increment of HP or ST from all selected tokens.
 
 ### Reset
 Syntax: `!reset`
