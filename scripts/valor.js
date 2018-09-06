@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.2.1
+ * v1.2.2
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -2171,11 +2171,11 @@ on('chat:message', function(msg) {
                 
                 if(tech.core == 'damage' || tech.core == 'ultDamate' || tech.core == 'weaken' || tech.core == 'custom') {
                     rollText += ':';
+                    for(i = 0; i < targets; i++) {
+                        rollText += ' [[1d10+' + roll + ']]';
+                    }
                 }
                 
-                for(i = 0; i < targets; i++) {
-                    rollText += ' [[1d10+' + roll + ']]';
-                }
             }
         }
         
@@ -4250,14 +4250,15 @@ on('change:attribute', function(obj, prev) {
 });
 
 function criticalHealthWarning(obj, oldHp) {
-    let hp = getHp(obj.get('_id'), obj.get('represents'));
+    let newHp = parseInt(obj.get('bar1_value'));
+    let maxHp = parseInt(obj.get('bar1_max'));
     
-    if(oldHp == oldHp && oldHp != hp) {
-        let critical = Math.ceil(hp.max * 0.4);
+    if(oldHp == oldHp && newHp == newHp && maxHp == maxHp && oldHp != newHp) {
+        let critical = Math.ceil(maxHp * 0.4);
         let message;
-        if(oldHp > critical && hp.val <= critical) {
+        if(oldHp > critical && newHp <= critical) {
             message = ' is now at critical health.';
-        } else if (oldHp <= critical && hp.val >= critical) {
+        } else if (oldHp <= critical && newHp >= critical) {
             message = ' is no longer at critical health.';
         }
         if(message) {

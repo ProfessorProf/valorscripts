@@ -301,3 +301,7 @@ v1.2.0 (9/5/18):
 v1.2.1 (9/5/18):
 - Bugfix: Using a healing tech with no associated stat caused a crash.
 - Bugfix: Repositions were all displaying 0.
+
+v1.2.2 (9/6/18):
+- Bugfix: Boosts and Heals with stats associated with them no longer show a die roll.
+- Bugfix: I hecked up critical health warnings REAL bad.
