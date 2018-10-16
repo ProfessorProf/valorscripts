@@ -201,3 +201,7 @@ v1.1.0 (9/4/2018):
 - Errata: Increased Size cost is now 2/1.
 - Errata: Unmovable cost is now 4/2.
 - Errata: Underhanded is now a Season 1 Skill.
+
+v1.1.1 (10/16/2018):
+- Added checkboxes for Overdrive Skills.
+- Fixed a few mistakes in the skill library.

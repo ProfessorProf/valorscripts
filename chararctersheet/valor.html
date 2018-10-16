@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.1.0
+ * v1.1.1
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -21,7 +21,7 @@
  * 
  **/
 
-var flawLibrary = [
+let flawLibrary = [
     { cost: 1, levelUp: 1, speed: 3, id: 'customFlaw' },
     { cost: 2, levelUp: 0, speed: 0, id: 'aggravatedWounds' },
     { cost: 5, levelUp: 0, speed: 0, id: 'berserker' },
@@ -57,7 +57,7 @@ var flawLibrary = [
     { cost: 2, levelUp: 0, speed: 0, id: 'weakGuard' },
     { cost: 10, levelUp: 0, speed: 0, id: 'malevolentPossession' }
 ];
-var skillLibrary = [
+let skillLibrary = [
     { cost: 1, levelUp: 1, speed: 3, id: 'customSkill' },
     { cost: 8, levelUp: 0, speed: 0, id: 'balancedFighter' },
     { cost: 6, levelUp: 6, speed: 0, id: 'bravado' },
@@ -237,7 +237,7 @@ var skillLibrary = [
     { cost: 3, levelUp: 0, speed: 0, id: 'alteredDurability' },
     { cost: 3, levelUp: 0, speed: 0, id: 'amphibious' },
     { cost: 6, levelUp: 0, speed: 0, id: 'destructiveBurrow' },
-    { cost: 6, levelUp: 3, speed: 0, id: 'durableFlunky' },
+    { cost: 6, levelUp: 3, speed: 1, id: 'durableFlunky' },
     { cost: 3, levelUp: 0, speed: 0, id: 'freeBurrow' },
     { cost: 4, levelUp: 0, speed: 0, id: 'landAdaptation' },
     { cost: 8, levelUp: 0, speed: 0, id: 'resurrectingFlunky' },
@@ -253,7 +253,7 @@ var skillLibrary = [
     { cost: 8, levelUp: 0, speed: 0, id: 'victorAtAnyCost' },
     { cost: 1, levelUp: 1, speed: 0, id: 'increasedCompanionSize' }
 ];
-var coreLibrary = [
+let coreLibrary = [
     { cost: 2, levelUp: 1, id: 'damage' },
     { cost: 1, levelUp: 1, id: 'barrier' },
     { cost: 0, levelUp: 2, id: 'boost' },
@@ -270,12 +270,12 @@ var coreLibrary = [
 function calculateBaseAttributes() {
     log('VALOR - Recalculating Base Attributes');
     getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut'], function(values) {
-        var level = parseInt(values.level);
-        var str = parseInt(values.str);
-        var agi = parseInt(values.agi);
-        var spr = parseInt(values.spr);
-        var mnd = parseInt(values.mnd);
-        var gut = parseInt(values.gut);
+        let level = parseInt(values.level);
+        let str = parseInt(values.str);
+        let agi = parseInt(values.agi);
+        let spr = parseInt(values.spr);
+        let mnd = parseInt(values.mnd);
+        let gut = parseInt(values.gut);
         
         if(str > level + 7) {
             str = level + 7;
@@ -309,7 +309,7 @@ function calculateBaseAttributes() {
             gut = 1
         }
         
-        var unspentAP = 22 + 3 * level - str - agi - spr - mnd - gut;
+        let unspentAP = 22 + 3 * level - str - agi - spr - mnd - gut;
         
         // Set values
         setAttrs({
@@ -325,19 +325,26 @@ function calculateBaseAttributes() {
 
 function calculateActiveAttributes() {
     log('VALOR - Recalculating Active Attributes');
-    getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type'], function(values) {
-        var level = parseInt(values.level);
-        var str = parseInt(values.str);
-        var agi = parseInt(values.agi);
-        var spr = parseInt(values.spr);
-        var mnd = parseInt(values.mnd);
-        var gut = parseInt(values.gut);
+    getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type', 
+        'boostmus', 'boostdex', 'boostaur', 'boostint', 'boostres'], function(values) {
+        const level = parseInt(values.level);
+        const str = parseInt(values.str);
+        const agi = parseInt(values.agi);
+        const spr = parseInt(values.spr);
+        const mnd = parseInt(values.mnd);
+        const gut = parseInt(values.gut);
         
-        var mus = Math.ceil((level + str) / 2);
-        var dex = Math.ceil((level + agi) / 2);
-        var aur = Math.ceil((level + spr) / 2);
-        var int = Math.ceil((level + mnd) / 2);
-        var res = Math.ceil((level + gut) / 2);
+        let mus = Math.ceil((level + str) / 2);
+        let dex = Math.ceil((level + agi) / 2);
+        let aur = Math.ceil((level + spr) / 2);
+        let int = Math.ceil((level + mnd) / 2);
+        let res = Math.ceil((level + gut) / 2);
+        
+        const boostmus = values.boostmus == 'on';
+        const boostdex = values.boostdex == 'on';
+        const boostaur = values.boostaur == 'on';
+        const boostint = values.boostint == 'on';
+        const boostres = values.boostres == 'on';
         
         switch(values.type) {
             case 'flunky':
@@ -350,24 +357,30 @@ function calculateActiveAttributes() {
                 break;
         }
         
+        if(boostmus) mus++;
+        if(boostdex) dex++;
+        if(boostaur) aur++;
+        if(boostint) int++;
+        if(boostres) res++;
+        
         // Apply Skills
-        var skillFieldNames = [];
+        let skillFieldNames = [];
         getSectionIDs('repeating_skills', function(sidarray) {
-            for(var i = 0; i < sidarray.length; i++) {
+            for(let i = 0; i < sidarray.length; i++) {
                 skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
                 skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
             }
             getAttrs(skillFieldNames, function(skillValues) {
-                for(var i = 0; i < sidarray.length; i++) {
-                    var skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                for(let i = 0; i < sidarray.length; i++) {
+                    let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
                     if(!skillName) {
                         skillName = 'customSkill';
                     }
                     
                     switch(skillName) {
                         case 'balancedFighter':
-                            var stats = [mus, dex, aur, int, res];
-                            var highestStat = Math.max(...stats);
+                            let stats = [mus, dex, aur, int, res];
+                            let highestStat = Math.max(...stats);
                             if(mus < highestStat) {
                                 mus++;
                             }
@@ -400,20 +413,73 @@ function calculateActiveAttributes() {
     });
 }
 
+function calculateBoostVisibility() {
+    log('VALOR - Recalculating Boost Visibility');
+    
+    let canBoostMus = false;
+    let canBoostDex = false;
+    let canBoostAur = false;
+    let canBoostInt = false;
+    let canBoostRes = false;
+    
+    getSectionIDs('repeating_skills', function(sidarray) {
+        let skillFieldNames = [];
+        for(let i = 0; i < sidarray.length; i++) {
+            skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
+        }
+        getAttrs(skillFieldNames, function(skillValues) {
+            for(let i = 0; i < sidarray.length; i++) {
+                let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                log(skillName);
+                
+                switch(skillName) {
+                    case 'acceleration':
+                        canBoostDex = true;
+                        break;
+                    case 'analysis':
+                        canBoostInt = true;
+                        break;
+                    case 'burningPassion':
+                        canBoostres = true;
+                        break;
+                    case 'resoluteAura':
+                        canBoostaur = true;
+                        break;
+                    case 'strengthOfWill':
+                        canBoostMus = true;
+                        break;
+                }
+            }
+            
+            let attrs = {};
+            attrs['can_boost_mus'] = canBoostMus ? 'on' : 0;;
+            attrs['can_boost_dex'] = canBoostDex ? 'on' : 0;;
+            attrs['can_boost_aur'] = canBoostAur ? 'on' : 0;;
+            attrs['can_boost_int'] = canBoostInt ? 'on' : 0;;
+            attrs['can_boost_res'] = canBoostRes ? 'on' : 0;;
+            
+            log(attrs);
+            
+            // Set values
+            setAttrs(attrs);
+        });
+    });
+}
+
 function calculateAttack() {
     log('VALOR - Recalculating Attack');
     getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type'], function(values) {
-        var level = parseInt(values.level);
-        var str = parseInt(values.str);
-        var agi = parseInt(values.agi);
-        var spr = parseInt(values.spr);
-        var mnd = parseInt(values.mnd);
-        var gut = parseInt(values.gut);
+        let level = parseInt(values.level);
+        let str = parseInt(values.str);
+        let agi = parseInt(values.agi);
+        let spr = parseInt(values.spr);
+        let mnd = parseInt(values.mnd);
+        let gut = parseInt(values.gut);
         
-        var strAtk = (level + str) * 2;
-        var agiAtk = (level + agi) * 2;
-        var sprAtk = (level + spr) * 2;
-        var mndAtk = (level + mnd) * 2;
+        let strAtk = (level + str) * 2;
+        let agiAtk = (level + agi) * 2;
+        let sprAtk = (level + spr) * 2;
+        let mndAtk = (level + mnd) * 2;
         
         switch(values.type) {
             case 'flunky':
@@ -433,19 +499,19 @@ function calculateAttack() {
         }
         
         // Apply Skills
-        var skillFieldNames = [];
+        let skillFieldNames = [];
         getSectionIDs('repeating_skills', function(sidarray) {
-            for(var i = 0; i < sidarray.length; i++) {
+            for(let i = 0; i < sidarray.length; i++) {
                 skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
                 skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
             }
             getAttrs(skillFieldNames, function(skillValues) {
-                for(var i = 0; i < sidarray.length; i++) {
-                    var skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                for(let i = 0; i < sidarray.length; i++) {
+                    let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
                     if(!skillName) {
                         skillName = 'customSkill';
                     }
-                    var skillLevel = 1;
+                    let skillLevel = 1;
                     if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
                         skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
                     }
@@ -477,26 +543,26 @@ function calculateAttack() {
 function calculateHealth() {
     log('VALOR - Recalculating Max Health');
     getAttrs(['level', 'str', 'gut', 'type'], function(values) {
-        var level = parseInt(values.level);
-        var str = parseInt(values.str);
-        var gut = parseInt(values.gut);
+        let level = parseInt(values.level);
+        let str = parseInt(values.str);
+        let gut = parseInt(values.gut);
         
-        var hp = 50 + 10 * level + 10 * gut + 5 * str;
+        let hp = 50 + 10 * level + 10 * gut + 5 * str;
         
         // Apply Flaws
-        var flawFieldNames = [];
+        let flawFieldNames = [];
         getSectionIDs('repeating_flaws', function(idarray) {
-            for(var i = 0; i < idarray.length; i++) {
+            for(let i = 0; i < idarray.length; i++) {
                 flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawname');
                 flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawlevel');
             }
             getAttrs(flawFieldNames, function(flawValues) {
-                for(var i = 0; i < idarray.length; i++) {
-                    var flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
+                for(let i = 0; i < idarray.length; i++) {
+                    let flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
                     if(!flawName) {
                         flawName = 'customFlaw';
                     }
-                    var flawLevel = 1;
+                    let flawLevel = 1;
                     if(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']) {
                         flawLevel = parseInt(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']);
                     }
@@ -510,19 +576,19 @@ function calculateHealth() {
                 }
                 
                 // Apply Skills
-                var skillFieldNames = [];
+                let skillFieldNames = [];
                 getSectionIDs('repeating_skills', function(sidarray) {
-                    for(var i = 0; i < sidarray.length; i++) {
+                    for(let i = 0; i < sidarray.length; i++) {
                         skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
                         skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
                     }
                     getAttrs(skillFieldNames, function(skillValues) {
-                        for(var i = 0; i < sidarray.length; i++) {
-                            var skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                        for(let i = 0; i < sidarray.length; i++) {
+                            let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
                             if(!skillName) {
                                 skillName = 'customSkill';
                             }
-                            var skillLevel = 1;
+                            let skillLevel = 1;
                             if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
                                 skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
                             }
@@ -565,26 +631,26 @@ function calculateHealth() {
 function calculateStamina() {
     log('VALOR - Recalculating Max Stamina');
     getAttrs(['level', 'mnd', 'spr', 'type'], function(values) {
-        var level = parseInt(values.level);
-        var mnd = parseInt(values.mnd);
-        var spr = parseInt(values.spr);
+        let level = parseInt(values.level);
+        let mnd = parseInt(values.mnd);
+        let spr = parseInt(values.spr);
         
-        var st = 8 + 4 * level + 2 * spr + 2 * mnd;
+        let st = 8 + 4 * level + 2 * spr + 2 * mnd;
         
         // Apply Flaws
-        var flawFieldNames = [];
+        let flawFieldNames = [];
         getSectionIDs('repeating_flaws', function(idarray) {
-            for(var i = 0; i < idarray.length; i++) {
+            for(let i = 0; i < idarray.length; i++) {
                 flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawname');
                 flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawlevel');
             }
             getAttrs(flawFieldNames, function(flawValues) {
-                for(var i = 0; i < idarray.length; i++) {
-                    var flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
+                for(let i = 0; i < idarray.length; i++) {
+                    let flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
                     if(!flawName) {
                         flawName = 'customFlaw';
                     }
-                    var flawLevel = 1;
+                    let flawLevel = 1;
                     if(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']) {
                         flawLevel = parseInt(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']);
                     }
@@ -598,19 +664,19 @@ function calculateStamina() {
                 }
                 
                 // Apply Skills
-                var skillFieldNames = [];
+                let skillFieldNames = [];
                 getSectionIDs('repeating_skills', function(sidarray) {
-                    for(var i = 0; i < sidarray.length; i++) {
+                    for(let i = 0; i < sidarray.length; i++) {
                         skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
                         skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
                     }
                     getAttrs(skillFieldNames, function(skillValues) {
-                        for(var i = 0; i < sidarray.length; i++) {
-                            var skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                        for(let i = 0; i < sidarray.length; i++) {
+                            let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
                             if(!skillName) {
                                 skillName = 'customSkill';
                             }
-                            var skillLevel = 1;
+                            let skillLevel = 1;
                             if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
                                 skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
                             }
@@ -643,26 +709,26 @@ function calculateStamina() {
 function calculateDefense() {
     log('VALOR - Recalculating Defense');
     getAttrs(['level', 'str', 'gut', 'type'], function(values) {
-        var level = parseInt(values.level);
-        var str = parseInt(values.str);
-        var gut = parseInt(values.gut);
+        let level = parseInt(values.level);
+        let str = parseInt(values.str);
+        let gut = parseInt(values.gut);
         
-        var defense = 2 * level + str + gut;
+        let defense = 2 * level + str + gut;
         
         // Apply Flaws
-        var flawFieldNames = [];
+        let flawFieldNames = [];
         getSectionIDs('repeating_flaws', function(idarray) {
-            for(var i = 0; i < idarray.length; i++) {
+            for(let i = 0; i < idarray.length; i++) {
                 flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawname');
                 flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawlevel');
             }
             getAttrs(flawFieldNames, function(flawValues) {
-                for(var i = 0; i < idarray.length; i++) {
-                    var flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
+                for(let i = 0; i < idarray.length; i++) {
+                    let flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
                     if(!flawName) {
                         flawName = 'customFlaw';
                     }
-                    var flawLevel = 1;
+                    let flawLevel = 1;
                     if(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']) {
                         flawLevel = parseInt(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']);
                     }
@@ -676,19 +742,19 @@ function calculateDefense() {
                 }
                 
                 // Apply Skills
-                var skillFieldNames = [];
+                let skillFieldNames = [];
                 getSectionIDs('repeating_skills', function(sidarray) {
-                    for(var i = 0; i < sidarray.length; i++) {
+                    for(let i = 0; i < sidarray.length; i++) {
                         skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
                         skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
                     }
                     getAttrs(skillFieldNames, function(skillValues) {
-                        for(var i = 0; i < sidarray.length; i++) {
-                            var skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                        for(let i = 0; i < sidarray.length; i++) {
+                            let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
                             if(!skillName) {
                                 skillName = 'customSkill';
                             }
-                            var skillLevel = 1;
+                            let skillLevel = 1;
                             if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
                                 skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
                             }
@@ -717,26 +783,26 @@ function calculateDefense() {
 function calculateResistance() {
     log('VALOR - Recalculating Resistance');
     getAttrs(['level', 'spr', 'mnd', 'type'], function(values) {
-        var level = parseInt(values.level);
-        var spr = parseInt(values.spr);
-        var mnd = parseInt(values.mnd);
+        let level = parseInt(values.level);
+        let spr = parseInt(values.spr);
+        let mnd = parseInt(values.mnd);
         
-        var resistance = 2 * level + spr + mnd;
+        let resistance = 2 * level + spr + mnd;
         
         // Apply Flaws
-        var flawFieldNames = [];
+        let flawFieldNames = [];
         getSectionIDs('repeating_flaws', function(idarray) {
-            for(var i = 0; i < idarray.length; i++) {
+            for(let i = 0; i < idarray.length; i++) {
                 flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawname');
                 flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawlevel');
             }
             getAttrs(flawFieldNames, function(flawValues) {
-                for(var i = 0; i < idarray.length; i++) {
-                    var flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
+                for(let i = 0; i < idarray.length; i++) {
+                    let flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
                     if(!flawName) {
                         flawName = 'customFlaw';
                     }
-                    var flawLevel = 1;
+                    let flawLevel = 1;
                     if(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']) {
                         flawLevel = parseInt(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']);
                     }
@@ -750,19 +816,19 @@ function calculateResistance() {
                 }
                 
                 // Apply Skills
-                var skillFieldNames = [];
+                let skillFieldNames = [];
                 getSectionIDs('repeating_skills', function(sidarray) {
-                    for(var i = 0; i < sidarray.length; i++) {
+                    for(let i = 0; i < sidarray.length; i++) {
                         skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
                         skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
                     }
                     getAttrs(skillFieldNames, function(skillValues) {
-                        for(var i = 0; i < sidarray.length; i++) {
-                            var skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                        for(let i = 0; i < sidarray.length; i++) {
+                            let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
                             if(!skillName) {
                                 skillName = 'customSkill';
                             }
-                            var skillLevel = 1;
+                            let skillLevel = 1;
                             if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
                                 skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
                             }
@@ -791,24 +857,24 @@ function calculateResistance() {
 function calculateSpeed() {
     log('VALOR - Recalculating Move');
     getAttrs(['agi'], function(values) {
-        var agi = parseInt(values.agi);
+        let agi = parseInt(values.agi);
         
-        var speed = Math.ceil(agi / 4) + 2;
+        let speed = Math.ceil(agi / 4) + 2;
         
         // Apply Flaws
-        var flawFieldNames = [];
+        let flawFieldNames = [];
         getSectionIDs('repeating_flaws', function(idarray) {
-            for(var i = 0; i < idarray.length; i++) {
+            for(let i = 0; i < idarray.length; i++) {
                 flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawname');
                 flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawlevel');
             }
             getAttrs(flawFieldNames, function(flawValues) {
-                for(var i = 0; i < idarray.length; i++) {
-                    var flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
+                for(let i = 0; i < idarray.length; i++) {
+                    let flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
                     if(!flawName) {
                         flawName = 'customFlaw';
                     }
-                    var flawLevel = 1;
+                    let flawLevel = 1;
                     if(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']) {
                         flawLevel = parseInt(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']);
                     }
@@ -825,19 +891,19 @@ function calculateSpeed() {
                 }
                 
                 // Apply Skills
-                var skillFieldNames = [];
+                let skillFieldNames = [];
                 getSectionIDs('repeating_skills', function(sidarray) {
-                    for(var i = 0; i < sidarray.length; i++) {
+                    for(let i = 0; i < sidarray.length; i++) {
                         skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
                         skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
                     }
                     getAttrs(skillFieldNames, function(skillValues) {
-                        for(var i = 0; i < sidarray.length; i++) {
-                            var skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                        for(let i = 0; i < sidarray.length; i++) {
+                            let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
                             if(!skillName) {
                                 skillName = 'customSkill';
                             }
-                            var skillLevel = 1;
+                            let skillLevel = 1;
                             if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
                                 skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
                             }
@@ -863,24 +929,24 @@ function calculateSpeed() {
 function calculateDamageIncrement() {
     log('VALOR - Recalculating Damage Increment');
     getAttrs(['level', 'type'], function(values) {
-        var level = parseInt(values.level);
+        let level = parseInt(values.level);
         
-        var di = level + 5;
+        let di = level + 5;
         
         // Apply Skills
-        var skillFieldNames = [];
+        let skillFieldNames = [];
         getSectionIDs('repeating_skills', function(sidarray) {
-            for(var i = 0; i < sidarray.length; i++) {
+            for(let i = 0; i < sidarray.length; i++) {
                 skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
                 skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
             }
             getAttrs(skillFieldNames, function(skillValues) {
-                for(var i = 0; i < sidarray.length; i++) {
-                    var skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                for(let i = 0; i < sidarray.length; i++) {
+                    let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
                     if(!skillName) {
                         skillName = 'customSkill';
                     }
-                    var skillLevel = 1;
+                    let skillLevel = 1;
                     if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
                         skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
                     }
@@ -911,18 +977,18 @@ function calculateDamageIncrement() {
 function calculateInitiative() {
     log('VALOR - Recalculating Initiative');
     getAttrs(['dex'], function(values) {
-        var init = parseInt(values.dex);
+        let init = parseInt(values.dex);
         
         // Apply Flaws
-        var flawFieldNames = [];
+        let flawFieldNames = [];
         getSectionIDs('repeating_flaws', function(idarray) {
-            for(var i = 0; i < idarray.length; i++) {
+            for(let i = 0; i < idarray.length; i++) {
                 flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawname');
                 flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawlevel');
             }
             getAttrs(flawFieldNames, function(flawValues) {
-                for(var i = 0; i < idarray.length; i++) {
-                    var flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
+                for(let i = 0; i < idarray.length; i++) {
+                    let flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
                     if(!flawName) {
                         flawName = 'customFlaw';
                     }
@@ -936,15 +1002,15 @@ function calculateInitiative() {
                 }
                 
                 // Apply Skills
-                var skillFieldNames = [];
+                let skillFieldNames = [];
                 getSectionIDs('repeating_skills', function(sidarray) {
-                    for(var i = 0; i < sidarray.length; i++) {
+                    for(let i = 0; i < sidarray.length; i++) {
                         skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
                         skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
                     }
                     getAttrs(skillFieldNames, function(skillValues) {
-                        for(var i = 0; i < sidarray.length; i++) {
-                            var skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                        for(let i = 0; i < sidarray.length; i++) {
+                            let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
                             if(!skillName) {
                                 skillName = 'customSkill';
                             }
@@ -971,27 +1037,27 @@ function calculateBonuses() {
     log('VALOR - Recalculating Attack/Defense Bonuses');
     getAttrs(['type'], function(values) {
         
-        var atkBonus = 0;
-        var defBonus = 0;
+        let atkBonus = 0;
+        let defBonus = 0;
         
         if(values.type == 'master') {
             atkBonus++;
         }
 
         // Apply Skills
-        var skillFieldNames = [];
+        let skillFieldNames = [];
         getSectionIDs('repeating_skills', function(sidarray) {
-            for(var i = 0; i < sidarray.length; i++) {
+            for(let i = 0; i < sidarray.length; i++) {
                 skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
                 skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
             }
             getAttrs(skillFieldNames, function(skillValues) {
-                for(var i = 0; i < sidarray.length; i++) {
-                    var skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                for(let i = 0; i < sidarray.length; i++) {
+                    let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
                     if(!skillName) {
                         skillName = 'customSkill';
                     }
-                    var skillLevel = 1;
+                    let skillLevel = 1;
                     if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
                         skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
                     }
@@ -1008,10 +1074,10 @@ function calculateBonuses() {
                     }
                 }
                 
-                var atkBonusDisp = ' ';
+                let atkBonusDisp = ' ';
                 if(atkBonus > 0) atkBonusDisp = '+' + atkBonus;
                 if(atkBonus < 0) atkBonusDisp = atkBonus;
-                var defBonusDisp = ' ';
+                let defBonusDisp = ' ';
                 if(defBonus > 0) defBonusDisp = '+' + defBonus;
                 if(defBonus < 0) defBonusDisp = defBonus;
                 
@@ -1202,11 +1268,11 @@ function calculateFlawsAndSkills() {
 function calculateTP() {
     log('VALOR - Recalculating Unspent TP');
     getAttrs(['level', 'type'], function(values) {
-        var level = parseInt(values.level);
+        let level = parseInt(values.level);
         
-        var unspentTP = 8 + 4 * level;
-        var flunkyTP = 2 + level;
-        var soldierTP = 4 + 2 * level;
+        let unspentTP = 8 + 4 * level;
+        let flunkyTP = 2 + level;
+        let soldierTP = 4 + 2 * level;
         if(level > 5) {
             unspentTP += level - 5;
             flunkyTP += level - 5;
@@ -1220,7 +1286,7 @@ function calculateTP() {
             soldierTP += level - 15;
         }
         
-        var hasUlt = false;
+        let hasUlt = false;
         
         switch(values.type) {
             case 'flunky':
@@ -1237,19 +1303,19 @@ function calculateTP() {
         }
 
         // Apply Skills
-        var skillFieldNames = [];
+        let skillFieldNames = [];
         getSectionIDs('repeating_skills', function(sidarray) {
-            for(var i = 0; i < sidarray.length; i++) {
+            for(let i = 0; i < sidarray.length; i++) {
                 skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
                 skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
             }
             getAttrs(skillFieldNames, function(skillValues) {
-                for(var i = 0; i < sidarray.length; i++) {
-                    var skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                for(let i = 0; i < sidarray.length; i++) {
+                    let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
                     if(!skillName) {
                         skillName = 'customSkill';
                     }
-                    var skillLevel = 1;
+                    let skillLevel = 1;
                     if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
                         skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
                     }
@@ -1265,9 +1331,9 @@ function calculateTP() {
                 }
                 
                 // Apply techs
-                var techFieldNames = [];
+                let techFieldNames = [];
                 getSectionIDs('repeating_techs', function(tidarray) {
-                    for(var i = 0; i < tidarray.length; i++) {
+                    for(let i = 0; i < tidarray.length; i++) {
                         techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_core_level');
                         techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_mod_level');
                         techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_core');
@@ -1275,7 +1341,7 @@ function calculateTP() {
                     
                     getAttrs(techFieldNames, function(techValues) {
                         
-                        var ults = [];
+                        let ults = [];
                         if(level >= 5) {
                             ults.push(8);
                         }
@@ -1292,21 +1358,21 @@ function calculateTP() {
                             ults.push(level);
                         }
                         
-                        for(var i = 0; i < tidarray.length; i++) {
+                        for(let i = 0; i < tidarray.length; i++) {
                             techCore = techValues['repeating_techs_' + tidarray[i] + '_tech_core'];
-                            var techCoreLevel = 1;
+                            let techCoreLevel = 1;
                             if(techValues['repeating_techs_' + tidarray[i] + '_tech_core_level']) {
                                 techCoreLevel = parseInt(techValues['repeating_techs_' + tidarray[i] + '_tech_core_level']);
                             }
-                            var techModsLevel = 0;
+                            let techModsLevel = 0;
                             if(techValues['repeating_techs_' + tidarray[i] + '_tech_mod_level']) {
                                 techModsLevel = parseInt(techValues['repeating_techs_' + tidarray[i] + '_tech_mod_level']);
                             }
                             
-                            var spentTP = techModsLevel + techCoreLevel;
+                            let spentTP = techModsLevel + techCoreLevel;
                             
                             // Set the tech's total level
-                            var techAttrs = {};
+                            let techAttrs = {};
                             techAttrs['repeating_techs_' + tidarray[i] + '_tech_level'] = spentTP;
                             setAttrs(techAttrs);
                             
@@ -1336,7 +1402,7 @@ function calculateTP() {
 function calculateTechCommand(techId) {
     log('VALOR - Recalculating Technique Command ID ' + techId);
     
-    var techFieldNames = [];
+    let techFieldNames = [];
 
     techFieldNames.push('repeating_techs_' + techId + '_tech_name');
     techFieldNames.push('repeating_techs_' + techId + '_tech_core');
@@ -1347,32 +1413,32 @@ function calculateTechCommand(techId) {
     
     getAttrs(techFieldNames, function(techValues) {
         log(techValues);
-        var techName = techValues['repeating_techs_' + techId + '_tech_name'];
-        var techCore = 'damage';
+        let techName = techValues['repeating_techs_' + techId + '_tech_name'];
+        let techCore = 'damage';
         if(techValues['repeating_techs_' + techId + '_tech_core']) {
             techCore = techValues['repeating_techs_' + techId + '_tech_core'];
         }
-        var techMods = '';
+        let techMods = '';
         if(techValues['repeating_techs_' + techId + '_tech_mods']) {
             techMods = techValues['repeating_techs_' + techId + '_tech_mods'].toLowerCase();
         }
-        var techLimits = '';
+        let techLimits = '';
         if(techValues['repeating_techs_' + techId + '_tech_limits']) {
             techLimits = techValues['repeating_techs_' + techId + '_tech_limits'].toLowerCase();
         }
-        var techTargets = 1;
+        let techTargets = 1;
         if(techValues['repeating_techs_' + techId + '_tech_targets']) {
             techTargets = parseInt(techValues['repeating_techs_' + techId + '_tech_targets']);
         }
         if(techTargets > 20) {
             techTargets = 20;
         }
-        var techBonus = 0;
+        let techBonus = 0;
         if(techValues['repeating_techs_' + techId + '_tech_bonus']) {
             techBonus = parseInt(techValues['repeating_techs_' + techId + '_tech_bonus']);
         }
         
-        var hasTargets = true;
+        let hasTargets = true;
         
         if(techCore == 'barrier' || techCore == 'summoning' ||
            techCore == 'ultTransform' || techCore == 'domain') {
@@ -1387,19 +1453,19 @@ function calculateTechCommand(techId) {
             hasTargets = false;
         }
         
-        var techCommand = '!t --as "@{character_id}" "@{tech_name}"';
+        let techCommand = '!t --as "@{character_id}" "@{tech_name}"';
         if(techBonus) {
              techCommand += ' +@{tech_bonus}';
         }
         if(techTargets > 0 && hasTargets) {
             techCommand += ' --targets'
-            for(var j = 0; j < techTargets; j++) {
-                var targetId = 'Target #' + (j + 1);
+            for(let j = 0; j < techTargets; j++) {
+                let targetId = 'Target #' + (j + 1);
                 techCommand += ' @{target|' + targetId + '|token_id}'
             }
         }
         
-        var attrs = {};
+        let attrs = {};
         attrs['repeating_techs_' + techId + '_tech_command'] = techCommand;
         setAttrs(attrs, { silent: true });
     });
@@ -1408,7 +1474,7 @@ function calculateTechCommand(techId) {
 function calculateTech(techId) {
     log('VALOR - Recalculating Technique ID ' + techId);
     
-    var techFieldNames = ['str', 'agi', 'spr', 'mnd', 'gut', 
+    let techFieldNames = ['str', 'agi', 'spr', 'mnd', 'gut', 
                           'mus', 'dex', 'aur', 'int', 'res', 
                           'strAtk', 'agiAtk', 'sprAtk', 'mndAtk',
                           'level', 'hp_max', 'di', 'type',
@@ -1426,37 +1492,37 @@ function calculateTech(techId) {
     techFieldNames.push('repeating_techs_' + techId + '_tech_targets');
     
     getAttrs(techFieldNames, function(techValues) {
-        var level = parseInt(techValues.level);
-        var hp = parseInt(techValues.hp_max);
-        var di = parseInt(techValues.di);
-        var str = parseInt(techValues.str);
-        var agi = parseInt(techValues.agi);
-        var spr = parseInt(techValues.spr);
-        var mnd = parseInt(techValues.mnd);
-        var gut = parseInt(techValues.gut);
+        let level = parseInt(techValues.level);
+        let hp = parseInt(techValues.hp_max);
+        let di = parseInt(techValues.di);
+        let str = parseInt(techValues.str);
+        let agi = parseInt(techValues.agi);
+        let spr = parseInt(techValues.spr);
+        let mnd = parseInt(techValues.mnd);
+        let gut = parseInt(techValues.gut);
         
-        var techName = techValues['repeating_techs_' + techId + '_tech_name'];
-        var techStat = techValues['repeating_techs_' + techId + '_tech_stat'];
-        var techGrantedSkills = techValues['repeating_techs_' + techId + '_tech_granted_skills'];
-        var techInflictedFlaws = techValues['repeating_techs_' + techId + '_tech_inflicted_flaws'];
-        var techDescription = techValues['repeating_techs_' + techId + '_tech_description'];
-        var techCore = 'damage';
+        let techName = techValues['repeating_techs_' + techId + '_tech_name'];
+        let techStat = techValues['repeating_techs_' + techId + '_tech_stat'];
+        let techGrantedSkills = techValues['repeating_techs_' + techId + '_tech_granted_skills'];
+        let techInflictedFlaws = techValues['repeating_techs_' + techId + '_tech_inflicted_flaws'];
+        let techDescription = techValues['repeating_techs_' + techId + '_tech_description'];
+        let techCore = 'damage';
         if(techValues['repeating_techs_' + techId + '_tech_core']) {
             techCore = techValues['repeating_techs_' + techId + '_tech_core'];
         }
-        var techMods = '';
+        let techMods = '';
         if(techValues['repeating_techs_' + techId + '_tech_mods']) {
             techMods = techValues['repeating_techs_' + techId + '_tech_mods'].toLowerCase();
         }
-        var techLimits = '';
+        let techLimits = '';
         if(techValues['repeating_techs_' + techId + '_tech_limits']) {
             techLimits = techValues['repeating_techs_' + techId + '_tech_limits'].toLowerCase();
         }
-        var techCoreLevel = 1;
+        let techCoreLevel = 1;
         if(techValues['repeating_techs_' + techId + '_tech_core_level']) {
             techCoreLevel = parseInt(techValues['repeating_techs_' + techId + '_tech_core_level']);
         }
-        var techTargets = 1;
+        let techTargets = 1;
         if(techValues['repeating_techs_' + techId + '_tech_targets']) {
             techTargets = parseInt(techValues['repeating_techs_' + techId + '_tech_targets']);
         }
@@ -1465,13 +1531,13 @@ function calculateTech(techId) {
         }
         
         // Build tech summary
-        var summary = '';
-        var warnings = ' ';
+        let summary = '';
+        let warnings = ' ';
 		
-		var hasSkills = false;
-		var hasFlaws = false;
-        var barrierFreebie = false;
-        var isPersistent = false;
+		let hasSkills = false;
+		let hasFlaws = false;
+        let barrierFreebie = false;
+        let isPersistent = false;
         
         if(techCoreLevel < 1) {
             warnings += 'WARNING: Core Power cannot be less than 1. ';
@@ -1484,7 +1550,7 @@ function calculateTech(techId) {
         }
         
         // Display required action
-        var action = 'Attack';
+        let action = 'Attack';
         if(techCore == 'barrier' || techCore == 'boost' || 
            techCore == 'healing' || techCore == 'weaken' ||
            techCore == 'ultTransform') {
@@ -1501,7 +1567,7 @@ function calculateTech(techId) {
         }
         
         // Display core functionality
-        var rollStat = techStat;
+        let rollStat = techStat;
         if(techMods.indexOf('muscular') > -1) {
             rollStat = 'str';
         }
@@ -1519,32 +1585,33 @@ function calculateTech(techId) {
            techCore == 'ultDamage' ||
            techCore == 'weaken' ||
            techCore == 'custom') {
-            var hitBonus = 0;
+            let hitBonus = 0;
             if(techMods.indexOf('accurate') > -1) {
                 hitBonus += 2;
             }
             if(techLimits.indexOf('final') > -1) {
                 hitBonus += 5;
             }
+            let toHit = 0;
             switch(rollStat) {
                 case 'str':
-                    var toHit = techValues.mus + hitBonus;
+                    toHit = techValues.mus + hitBonus;
                     summary += 'Roll Muscle (1d10+' + toHit + ') to hit. '
                     break;
                 case 'agi':
-                    var toHit = techValues.dex + hitBonus;
+                    toHit = techValues.dex + hitBonus;
                     summary += 'Roll Dexterity (1d10+' + toHit + ') to hit. '
                     break;
                 case 'spr':
-                    var toHit = techValues.aur + hitBonus;
+                    toHit = techValues.aur + hitBonus;
                     summary += 'Roll Aura (1d10+' + toHit + ') to hit. '
                     break;
                 case 'mnd':
-                    var toHit = techValues.int + hitBonus;
+                    toHit = techValues.int + hitBonus;
                     summary += 'Roll Intuition (1d10+' + toHit + ') to hit. '
                     break;
                 case 'gut':
-                    var toHit = techValues.res + hitBonus;
+                    toHit = techValues.res + hitBonus;
                     summary += 'Roll Resolve (1d10+' + toHit + ') to hit. '
                     break;
             }
@@ -1554,14 +1621,14 @@ function calculateTech(techId) {
             case 'ultDamage':
                 
                 // Get damage and stat for description
-                var specialAttack =
+                let specialAttack =
                     techMods.indexOf('sapping') > -1 ||
                     techMods.indexOf('piercing') > -1 ||
                     techMods.indexOf('drain') > -1 ||
                     techMods.indexOf('persistent') > -1 ||
                     techMods.indexOf('debilitating') > -1 ||
                     techMods.indexOf('boosting') > -1;
-                var damage = 0;
+                let damage = 0;
                 switch(techStat) {
                     case 'str':
                         if(specialAttack && techCore == 'damage') {
@@ -1606,7 +1673,7 @@ function calculateTech(techId) {
                 }
                 break;
             case 'healing':
-                var healing = 0;
+                let healing = 0;
                 switch(techStat) {
                     case 'spr':
                         healing = Math.ceil(spr / 2); // ERRATA - Reduced Healing power
@@ -1643,7 +1710,7 @@ function calculateTech(techId) {
                 summary += 'Summons a Level ' + techCoreLevel + ' ally. Command it with a Support Action. ';
                 break;
             case 'ultTransform':
-                var bonusHp = level * 10;
+                let bonusHp = level * 10;
                 if(techValues.type == 'master') {
                     bonusHp *= 2;
                 }
@@ -1707,12 +1774,12 @@ function calculateTech(techId) {
         summary += '\n';
         
         // Display mods
-        var totalModLevel = 0;
-        var mods = techMods.split('\n');
+        let totalModLevel = 0;
+        let mods = techMods.split('\n');
         mods.forEach(function(mod) {
             // Try to get the level
-            var split = mod.split(' ');
-            var modLevel = parseInt(split[split.length - 1]);
+            let split = mod.split(' ');
+            let modLevel = parseInt(split[split.length - 1]);
             if(modLevel != modLevel) {
                 // NaN, so there's no level listed - assume 1
                 modLevel = 1;
@@ -1721,7 +1788,7 @@ function calculateTech(techId) {
             if(mod.indexOf('custom') == 0) {
                 totalModLevel += modLevel;
             } else if(mod.indexOf('range') == 0) {
-                var range = 3 * modLevel;
+                let range = 3 * modLevel;
                 switch(techStat) {
                     case 'str':
                         range = 2 * modLevel;
@@ -1734,7 +1801,7 @@ function calculateTech(techId) {
                 summary += 'Range ' + range + '. ';
                 totalModLevel += modLevel;
             } else if(mod.indexOf('blast') == 0) {
-                var rushMod = mods.find(function(m) {
+                let rushMod = mods.find(function(m) {
                   return m.indexOf('line') > -1;
                 });
                 if(rushMod) {
@@ -1742,7 +1809,7 @@ function calculateTech(techId) {
                 } else {
                     summary += 'Blast Radius ' + modLevel + '. ';
                 }
-                var blastCost = 0;
+                let blastCost = 0;
                 if(techStat == 'spr') {
                     blastCost = 2 * modLevel - 1;
                 } else {
@@ -1766,7 +1833,7 @@ function calculateTech(techId) {
                 }
                 totalModLevel += modLevel;
             } else if(mod.indexOf('line') == 0 && mod.indexOf('line var') != 0) {
-                var line = 3 * modLevel;
+                let line = 3 * modLevel;
                 switch(techStat) {
                     case 'str':
                     case 'agi':
@@ -1777,13 +1844,13 @@ function calculateTech(techId) {
                         break;
                 }
                 
-                var blastMod = mods.find(function(m) {
+                let blastMod = mods.find(function(m) {
                   return m.indexOf('blast') == 0;
                 });
                 if(blastMod) {
                     // Incorporate blast radius into line attack
-                    var blastSplit = blastMod.split(' ');
-                    var blastRadius = parseInt(blastSplit[blastSplit.length - 1]);
+                    let blastSplit = blastMod.split(' ');
+                    let blastRadius = parseInt(blastSplit[blastSplit.length - 1]);
                     if(blastRadius != blastRadius) {
                         // NaN, so there's no level listed - assume 1
                         blastRadius = 1;
@@ -1798,7 +1865,7 @@ function calculateTech(techId) {
                     barrierFreebie = false;
                 }
             } else if(mod.indexOf('line var') == 0) {
-                var variations = modLevel;
+                let variations = modLevel;
                 if(techStat == 'mnd') {
                     variations++;
                 }
@@ -1809,7 +1876,7 @@ function calculateTech(techId) {
                 }
                 totalModLevel += modLevel;
             } else if(mod.indexOf('multiple') == 0) {
-                var targets = 1 + modLevel;
+                let targets = 1 + modLevel;
                 if(techStat == 'agi') {
                     targets++;
                 }
@@ -1820,13 +1887,13 @@ function calculateTech(techId) {
                 totalModLevel += 3;
             } else if(mod.indexOf('rush') == 0) {
                 summary += 'Take a Move Action, then target everyone you moved through. ';
-                var dashMod = mods.find(function(m) {
+                let dashMod = mods.find(function(m) {
                   return m.indexOf('dash') > -1;
                 });
                 if(dashMod) {
                   // Incorporate dash mod into rush attack
-                  var dashSplit = dashMod.split(' ');
-                  var bonusMove = parseInt(dashSplit[dashSplit.length - 1]);
+                  let dashSplit = dashMod.split(' ');
+                  let bonusMove = parseInt(dashSplit[dashSplit.length - 1]);
                   if(bonusMove != bonusMove) {
                       // NaN, so there's no level listed - assume 1
                       bonusMove = 1;
@@ -1911,13 +1978,13 @@ function calculateTech(techId) {
                 summary += 'Target area is filled with darkness. ';
                 totalModLevel += 2;
             } else if(mod.indexOf('dash') == 0) {
-                var rushMod = mods.find(function(m) {
+                let rushMod = mods.find(function(m) {
                   return m.indexOf('rush') > -1;
                 });
                 if(rushMod) {
                     // Say nothing - this'll get incorporated into the rush mod
                 } else {
-                    var distance = modLevel;
+                    let distance = modLevel;
                     if(techStat == 'agi') {
                         distance++;
                     }
@@ -1929,7 +1996,7 @@ function calculateTech(techId) {
                 }
                 totalModLevel += modLevel;
             } else if(mod.indexOf('destruction') == 0) {
-                var destroy = 2 * modLevel;
+                let destroy = 2 * modLevel;
                 summary += '+' + destroy + ' Durability damage to objects. ';
                 totalModLevel++;
             } else if(mod.indexOf('dexterous') == 0 ||
@@ -1976,7 +2043,7 @@ function calculateTech(techId) {
                     totalModLevel += 2;
                 }
             } else if(mod.indexOf('repo') == 0) {
-                var distance = 1 + modLevel;
+                let distance = 1 + modLevel;
                 if(techStat == 'str') {
                     distance++;
                 }
@@ -2078,24 +2145,24 @@ function calculateTech(techId) {
             totalModLevel = Math.ceil(totalModLevel / 2);
         }
         
-        var techLevel = techCoreLevel + totalModLevel;
+        let techLevel = techCoreLevel + totalModLevel;
         if(techLevel > level + 3 || (techCoreLevel > level && techCore == 'summoning')) {
             warnings += 'WARNING: Technique Level is too high for current Character Level. '
         }
         
         summary += '\n';
         // Display the technique cost and limits
-        var core = coreLibrary.find(function(c) {
+        let core = coreLibrary.find(function(c) {
             return c.id == techCore;
         });
         
-        var limitSummary = '';
-        var limitSt = 0;
-        var limits = techLimits.split('\n');
+        let limitSummary = '';
+        let limitSt = 0;
+        let limits = techLimits.split('\n');
         limits.forEach(function(limit) {
             // Try to get the level
-            var split = limit.split(' ');
-            var limitLevel = parseInt(split[split.length - 1]);
+            let split = limit.split(' ');
+            let limitLevel = parseInt(split[split.length - 1]);
             if(limitLevel != limitLevel) {
                 // NaN, so there's no level listed - assume 1
                 limitLevel = 1;
@@ -2104,7 +2171,7 @@ function calculateTech(techId) {
             if(limit.indexOf('custom') == 0) {
                 limitSt += limitLevel;
             } else if(limit.indexOf('health') == 0) {
-                var healthLost = 5 * limitLevel;
+                let healthLost = 5 * limitLevel;
                 limitSummary += 'Costs ' + healthLost + ' Health. ';
                 limitSt += 2 * limitLevel;
                 if(limitLevel > 5) {
@@ -2115,7 +2182,7 @@ function calculateTech(techId) {
                 limitSt++;
             } else if(limit.indexOf('ammo') == 0 ||
                       limit.indexOf('ammunition') == 0) {
-                var ammo = 4 - limitLevel;
+                let ammo = 4 - limitLevel;
                 if(ammo == 1) {
                     limitSummary += 'Can only be used once per scene. ';
                 } else {
@@ -2160,7 +2227,7 @@ function calculateTech(techId) {
                 limitSummary += "Can't be used if you've already moved this turn. ";
                 limitSt += 3;
             } else if(limit.indexOf('injury') == 0) {
-                var threshold = hp - Math.ceil(hp / 5) * limitLevel;
+                let threshold = hp - Math.ceil(hp / 5) * limitLevel;
                 limitSummary += 'Your Health must be ' + threshold + ' or lower to use this Technique. ';
                 limitSt += 2 * limitLevel;
             } else if(limit.indexOf('landbound') == 0) {
@@ -2200,7 +2267,7 @@ function calculateTech(techId) {
             } else if(limit.indexOf('setup') == 0 ||
                       limit.indexOf('set-up') == 0 ||
                       limit.indexOf('set up') == 0) {
-                var turn = 1 + limitLevel;
+                let turn = 1 + limitLevel;
                 limitSummary += "Can't be used until turn " + turn + ' or later. ';
                 limitSt += limitLevel;
             } else if(limit.indexOf('single companion') == 0) {
@@ -2218,7 +2285,7 @@ function calculateTech(techId) {
                 limitSummary += 'Must spent ' + limitLevel + ' Stamina at the start of each turn to keep active. ';
                 limitSt += 4 * limitLevel;
             } else if(limit.indexOf('vitality') == 0) {
-                var threshold = Math.ceil(hp * 0.4);
+                let threshold = Math.ceil(hp * 0.4);
                 limitSummary += "Can't be used if you are at or below " + threshold + ' Health. ';
                 limitSt += 3 * limitLevel;
             } else if(limit.indexOf('valor') == 0) {
@@ -2239,7 +2306,7 @@ function calculateTech(techId) {
                 limitSummary += 'Must pass through a Refraction Point to take effect. ';
                 limitSt += 2;
             } else if(limit.indexOf('time') == 0) {
-                var time = 5 - limitLevel;
+                let time = 5 - limitLevel;
                 limitSummary += 'Transformation ends after ' + time + ' turns. ';
                 limitSt += 5 * limitLevel;
             } else if(limit.indexOf('airborne') == 0) {
@@ -2320,8 +2387,9 @@ function calculateTech(techId) {
             }
         });
         
+        let cost = 0;
         if(core && techCore != 'mimic' && techCore != 'ultMimic' && techCore != 'custom') {
-            var cost = core.cost + core.levelUp * (techCoreLevel + totalModLevel) - limitSt;
+            cost = core.cost + core.levelUp * (techCoreLevel + totalModLevel) - limitSt;
             if(cost < 0) {
                 cost = 0;
             }
@@ -2330,7 +2398,7 @@ function calculateTech(techId) {
         }
         summary += limitSummary;
         
-        var attrs = {};
+        let attrs = {};
         attrs['repeating_techs_' + techId + '_tech_summary'] = summary;
         attrs['repeating_techs_' + techId + '_tech_warnings'] = warnings;
         attrs['repeating_techs_' + techId + '_tech_mod_level'] = totalModLevel;
@@ -2429,6 +2497,10 @@ on('change:repeating_techs:tech_mods change:repeating_techs:tech_targets change:
    'change:repeating_techs:tech_core change:repeating_techs:tech_limits change:repeating_techs:tech_name', function(eventInfo) {
     var techId = eventInfo.sourceAttribute.substring(16, 36);
     calculateTechCommand(techId);
+});
+
+on('change:repeating_skills remove:repeating_skills', function(eventInfo) {
+    calculateBoostVisibility();
 });
 
 on('sheet:opened', function() {
@@ -2545,6 +2617,11 @@ on('sheet:opened', function() {
             <td nowrap="nowrap">
                 <span class="derived-value" name="attr_mus"></span>
                 <button type="roll" value='!roll-as @{character_id} "1d10+@{mus}+@{rollbonus}" "Muscle"' name="roll_mus"></button>
+                <input type="checkbox" class="conditional-check" name="attr_can_boost_mus">
+                <div class="conditional-block">
+                    <input type="checkbox" name="attr_boostmus">
+                    <span class="arrow">↑</span>
+                </div>
             </td>
         </tr>
         <tr>
@@ -2552,6 +2629,11 @@ on('sheet:opened', function() {
             <td nowrap="nowrap">
                 <span class="derived-value" name="attr_dex"></span>
                 <button type="roll" value='!roll-as @{character_id} "1d10+@{dex}+@{rollbonus}" "Dexterity"' name="roll_dex"></button>
+                <input type="checkbox" class="conditional-check" name="attr_can_boost_dex">
+                <div class="conditional-block">
+                    <input type="checkbox" name="attr_boostdex">
+                    <span class="arrow">↑</span>
+                </div>
             </td>
         </tr>
         <tr>
@@ -2559,6 +2641,11 @@ on('sheet:opened', function() {
             <td nowrap="nowrap">
                 <span class="derived-value" name="attr_aur"></span>
                 <button type="roll" value='!roll-as @{character_id} "1d10+@{aur}+@{rollbonus}" "Aura"' name="roll_aur"></button>
+                <input type="checkbox" class="conditional-check" name="attr_can_boost_aur">
+                <div class="conditional-block">
+                    <input type="checkbox" name="attr_boostaur">
+                    <span class="arrow">↑</span>
+                </div>
             </td>
         </tr>
         <tr>
@@ -2566,6 +2653,11 @@ on('sheet:opened', function() {
             <td nowrap="nowrap">
                 <span class="derived-value" name="attr_int"></span>
                 <button type="roll" value='!roll-as @{character_id} "1d10+@{int}+@{rollbonus}" "Intuition"' name="roll_int"></button>
+                <input type="checkbox" class="conditional-check" name="attr_can_boost_int">
+                <div class="conditional-block">
+                    <input type="checkbox" name="attr_boostint">
+                    <span class="arrow">↑</span>
+                </div>
             </td>
         </tr>
         <tr>
@@ -2573,6 +2665,11 @@ on('sheet:opened', function() {
             <td nowrap="nowrap">
                 <span class="derived-value" name="attr_res"></span>
                 <button type="roll" value='!roll-as @{character_id} "1d10+@{res}+@{rollbonus}" "Resolve"' name="roll_res"></button>
+                <input type="checkbox" class="conditional-check" name="attr_can_boost_res">
+                <div class="conditional-block">
+                    <input type="checkbox" name="attr_boostint">
+                    <span class="arrow">↑</span>
+                </div>
             </td>
         </tr>
     </table>
@@ -2807,7 +2904,7 @@ on('sheet:opened', function() {
                     <option value="fearTheDarkness">Fear the Darkness (+3)</option>
                     <option value="immobile">Immobile (+7)</option>
                     <option value="insubstantial">Insubstantial (+3)</option>
-                    <option value="situationalCompanion">Situational Companion (+2)</option>
+                    <option value="situationalCompulsion">Situational Compulsion (+2)</option>
                     <option value="sunlightWeakness">Sunlight Weakness (+5)</option>
                     <option value="thresheld">Thresheld (+3)</option>
                     <option value="weakGuard">Weak Guard (+2)</option>

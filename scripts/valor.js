@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.2.2
+ * v1.2.3
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -11,17 +11,20 @@
  **/
 
 // Settings for optional functions - 'true' for on, 'false' for off.
-state.statusTrackerEnabled = true; // Erase statuses on the turn order when they reach 0.
-state.valorUpdaterEnabled = true; // Add Valor for all Elites and Masters when a new round starts.
-state.maxValueSyncEnabled = true; // Move HP and ST to match when max HP and max ST change.
-state.ongoingEffectProcessor = true; // Parse regen and ongoing damage as they happen.
-state.ignoreLimitsOnMinions = true; // Disables limit blocking for Flunkies and Soldiers.
-state.showTechAlerts = true; // Send alerts for when ammo changes and when techs come off of cooldown.
-state.showHealthAlerts = true; // Send alerts when characters enter or leave critical health.
-state.houseRulesEnabled = true; // Enables various unsupported house rules.
-state.autoResolveTechBenefits = true; // Enables automatic adjustment of HP for Healing and Transformations.
-state.hideNpcTechEffects = false; // For non-player characters, don't show players the tech effect when using !t.
-state.rollBehindScreen = false; // Hide NPC rolls from the players.
+state.statusTrackerEnabled = true;      // Erase statuses on the turn order when they reach 0.
+state.valorUpdaterEnabled = true;       // Add Valor for all Elites and Masters when a new round starts.
+state.maxValueSyncEnabled = true;       // Move HP and ST to match when max HP and max ST change.
+state.ongoingEffectProcessor = true;    // Parse regen and ongoing damage as they happen.
+state.ignoreLimitsOnMinions = true;     // Disables limit blocking for Flunkies and Soldiers.
+state.showTechAlerts = true;            // Send alerts for when ammo changes and when techs come off of cooldown.
+state.showHealthAlerts = true;          // Send alerts when characters enter or leave critical health.
+state.houseRulesEnabled = true;         // Enables various unsupported house rules.
+state.autoResolveTechBenefits = true;   // Enables automatic adjustment of HP for Healing and Transformations.
+state.hideNpcTechEffects = false;       // For non-player characters, don't show players the tech effect when using !t.
+state.rollBehindScreen = false;         // Hide NPC rolls from the players.
+state.autoInitiativeUpdate = true;      // If a character's initiative changes during play, move them accordingly.
+state.autoInitiativeReport = true;      // If a character's initiative changes during play, send a whisper to the GM.
+state.confirmAutoInitiative = true;     // Confirm whether or not to auto-update initiative before each scene.
 
 // Status Tracker
 // While this is active, the system will send an alert when an effect ends.
@@ -2931,6 +2934,7 @@ on('chat:message', function(msg) {
         
         state.techData = {};
         state.techHistory = [];
+        state.autoInitiativeForScene = false;
         
         endEvent('!rest');
     }
@@ -3072,8 +3076,24 @@ on('chat:message', function(msg) {
         
         state.techData = {};
         state.techHistory = [];
+        state.autoInitiativeForScene = false;
         
         endEvent('!fullrest');
+    }
+});
+
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!autoinit') == 0
+        && state.confirmAutoInitiative
+        && playerIsGM(msg.playerid)) {
+        let split = msg.content.match(/(".*?")|(\S+)/g);
+        if(split.length == 2 && split[1] == '--off') {
+            sendChat('Valor', '/w gm Auto-initiative disabled for this scene.');
+            state.autoInitiativeForScene = false;
+        } else {
+            sendChat('Valor', '/w gm Auto-initiative enabled for this scene.');
+            state.autoInitiativeForScene = true;
+        }
     }
 });
 
@@ -3099,6 +3119,8 @@ on('chat:message', function(msg) {
         }
         
         log('Initiative roll commencing');
+        
+        turnOrder = [];
         
         // Get list of tokens
         let page = Campaign().get('playerpageid');
@@ -3195,6 +3217,12 @@ on('chat:message', function(msg) {
         resetBonuses();
         
         sendChat('Valor', message);
+        
+        if(state.confirmAutoInitiative) {
+            sendChat('Valor', '/w gm Enable automatic initiative updating?' +
+                '[Yes](!autoinit --on)' +
+                '[No](!autoinit --off)');
+        }
         endEvent('!init');
     }
 });
@@ -4250,12 +4278,12 @@ on('change:attribute', function(obj, prev) {
 });
 
 function criticalHealthWarning(obj, oldHp) {
-    let newHp = parseInt(obj.get('bar1_value'));
-    let maxHp = parseInt(obj.get('bar1_max'));
+    var newHp = parseInt(obj.get('bar1_value'));
+    var maxHp = parseInt(obj.get('bar1_max'));
     
     if(oldHp == oldHp && newHp == newHp && maxHp == maxHp && oldHp != newHp) {
-        let critical = Math.ceil(maxHp * 0.4);
-        let message;
+        var critical = Math.ceil(maxHp * 0.4);
+        var message;
         if(oldHp > critical && newHp <= critical) {
             message = ' is now at critical health.';
         } else if (oldHp <= critical && newHp >= critical) {
@@ -4324,13 +4352,12 @@ on('change:graphic', function(obj, prev) {
 // "Ongoing X" - lose X HP
 // "Regen X" - gain X HP
 // "SRegen X" - gain X ST
-function processOngoingEffects(obj) {
+function processOngoingEffects(turnOrder) {
     if(!state.ongoingEffectProcessor) {
         // Settings check
         return;
     }
     
-    let turnOrder = JSON.parse(obj.get('turnorder'));
     if(!turnOrder || turnOrder.length === 0) {
         // Do nothing if the init tracker is empty
         return;
@@ -4385,6 +4412,93 @@ function processOngoingEffects(obj) {
     }
 }
 
+function getNextUp(turnOrder, character) {
+    let id = turnOrder.indexOf(character);
+    if(id == -1) {
+        id = turnOrder.length - 1;
+    } else {
+        id--;
+    }
+    
+    while(id > -1) {
+        const nextChar = turnOrder[id];
+        if(nextChar.id == '-1') {
+            if(nextChar.custom == 'Round') {
+                // We made it to the top of the round
+                return null;
+            }
+        } else {
+            return nextChar;
+        }
+        id--;
+    }
+}
+function updateInitiative(turnOrder) {
+    if((!state.autoInitiativeUpdate && !state.autoInitiativeReport) ||
+        (state.confirmAutoInitiative && !state.autoInitiativeForScene)) {
+        return;
+    }
+    
+    if(!turnOrder || turnOrder.length == 0 || turnOrder[0].id == '-1') {
+        return;
+    }
+    
+    let last = getNextUp(turnOrder, null);
+    let nextToLast = getNextUp(turnOrder, last);
+    let initiativeJumps = 0;
+    
+    while(nextToLast && parseInt(last.pr) > parseInt(nextToLast.pr)) {
+        // Swap nextToLast and last in the turnOrder, along with all their statuses
+        initiativeJumps++;
+        const lastIndex = turnOrder.indexOf(last);
+        let lastEffects = 0;
+        while(lastIndex + lastEffects + 1 < turnOrder.length &&
+            turnOrder[lastIndex + lastEffects + 1].id == '-1' &&
+            turnOrder[lastIndex + lastEffects + 1].custom != 'Round') {
+            lastEffects++;
+        }
+        const nextToLastIndex = turnOrder.indexOf(nextToLast);
+        let nextToLastEffects = 0;
+        while(nextToLastIndex + nextToLastEffects + 1 < turnOrder.length &&
+            turnOrder[nextToLastIndex + nextToLastEffects + 1].id == '-1' &&
+            turnOrder[nextToLastIndex + nextToLastEffects + 1].custom != 'Round') {
+            nextToLastEffects++;
+        }
+        
+        log(`Swapping ${last.custom} and ${nextToLast.custom}`);
+        log(`First slice: 0-${nextToLastIndex}`);
+        log(`Second slice: ${lastIndex}-${lastIndex + lastEffects}`);
+        log(`Third slice: ${nextToLastIndex}-${nextToLastIndex + nextToLastEffects}`);
+        
+        turnOrder = turnOrder.slice(0, nextToLastIndex)
+            .concat(turnOrder.slice(lastIndex, lastIndex + lastEffects + 1))
+            .concat(turnOrder.slice(nextToLastIndex, nextToLastIndex + nextToLastEffects + 1))
+            .concat(turnOrder.slice(lastIndex + lastEffects + 1));
+        nextToLast = getNextUp(turnOrder, last);
+    }
+    //if((!state.autoInitiativeUpdate && !state.autoInitiativeReport) ||
+    
+    if(initiativeJumps > 0) {
+        // Initiative was updated!
+        if(state.autoInitiativeUpdate) {
+            Campaign().set('turnorder', JSON.stringify(turnOrder));
+        }
+        if(state.autoInitiativeReport) {
+            const token = getObj('graphic', last.id);
+            actor = getObj('character', token.get('represents'));
+            let name = actor ? actor.get('name') : token.get('name');
+            if(!name) name == last.custom;
+            
+            if(name) {
+                sendChat('Valor', `/w gm ${name} advanced by ${initiativeJumps} ${initiativeJumps == 1 ? 'position' : 'positions'} in the initiative order.`);
+            } else {
+                sendChat('Valor', `/w gm Someone advanced by ${initiativeJumps} ${initiativeJumps == 1 ? 'position' : 'positions'} in the initiative order.`);
+            }
+        }
+    }
+    
+}
+
 // Master Init Loop
 // Only triggers on-init-change events when the person at the top of the
 // initiative list changes.
@@ -4417,8 +4531,9 @@ on('change:campaign:turnorder', function(obj) {
         // If the top actor changed, the turn order advanced - do stuff
         if(state.lastActor !== nextActor) {
             state.lastActor = nextActor;
-            processOngoingEffects(obj);
+            processOngoingEffects(turnOrder);
             trackStatuses(turnOrder);
+            updateInitiative(turnOrder);
         }
     } else {
         if(topChar.custom) {

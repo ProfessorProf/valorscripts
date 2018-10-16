@@ -305,3 +305,7 @@ v1.2.1 (9/5/18):
 v1.2.2 (9/6/18):
 - Bugfix: Boosts and Heals with stats associated with them no longer show a die roll.
 - Bugfix: I hecked up critical health warnings REAL bad.
+
+v1.2.3 (10/16/2018):
+- Automatically move characters forward and backwards as their initiative changes.
+- Bugfix: Various minor crash states
