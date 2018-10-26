@@ -2,7 +2,7 @@
 
 /**
  * VALOR CHARACTER SHEET
- * v1.1.1
+ * v1.1.2
  * 
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -3339,3 +3339,22 @@ on('sheet:opened', function() {
         <button type='roll' value='!duplicate @{character_id}' name='roll_duplicate'>Create Level-up Sheet</button>
     </div>
 </div>
+
+<rolltemplate class="sheet-rolltemplate-valor">
+    <div class="outer">
+        <div class="header">
+            {{name}}
+        </div>
+        {{#roll}}
+        <br />
+        <div class="roll">
+            {{roll}}
+        </div>
+        {{/roll}}
+        {{#summary}}
+        <div>
+            {{summary}}
+        </div>
+        {{/summary}}
+    </div>
+</rolltemplate>

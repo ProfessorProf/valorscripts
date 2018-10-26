@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.2.3
+ * v1.2.4
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -1282,7 +1282,6 @@ on('chat:message', function(msg) {
         const stat = msg.content.indexOf('st') > -1 ? 'st' : 'hp';
         let tokens = [];
         if(msg.selected) {
-            log(msg.selected);
             for(const s of msg.selected) {
                 const selectedToken = getObj('graphic', s._id);
                 if(selectedToken.get('represents')) {
@@ -2415,7 +2414,7 @@ on('chat:message', function(msg) {
             techQualifiers.push('Empowered');
         }
         
-        let hp = getHp(token.get('_id'), actor.get('_id'));
+        let hp = getHp(token ? token.get('_id') : null, actor ? actor.get('_id') : null);
         
         if(hp.val / hp.max <= 0.4 && tech.core == 'damage' || tech.core == 'ultDamage') {
             let crisis = getSkill(actor.get('_id'), 'crisis');
@@ -2427,32 +2426,20 @@ on('chat:message', function(msg) {
                 techQualifiers.push('Berserker');
             }
         }
-        
-        let message = '<div style="font-family: Segoe UI,Frutiger,Frutiger Linotype,Dejavu Sans,Helvetica Neue,Arial,sans-serif;color:#730A18;' +
-            'background-color:#FCECD8;margin-left:8px;padding-left:5px;padding-bottom:3px">';
         if(tech.persist) {
             techQualifiers.push('Persisting');
         }
         
-        message += '<div style="position:relative;border:3px solid #F2AC63;color:black;left:-11px;' +
-            'font-weight:bold;font-size:11pt;background-color:white;padding:3px;display:inline-block;border-radius:3px">' + tech.name;
+        let messageName = tech.name;
+        
         if(techQualifiers.length > 0) {
-            message += ' (' + techQualifiers.join(', ') + ')';
-        }
-        message += '</div><br>';
-        
-        if(rollText) {
-            message += '<div style="line-height:170%">' + rollText + '</div>';
+            messageName += ' (' + techQualifiers.join(', ') + ')';
         }
         
-        let showSummary = tech.summary && (!state.hideNpcTechEffects || actor.get('controlledby'));
+        const showSummary = tech.summary && (!state.hideNpcTechEffects || actor.get('controlledby'));
+        const messageSummary = showSummary ? tech.summary : '';
         
-        if(showSummary) {
-            message += '<div>' + tech.summary + '</div>';
-        }
-        message += '</div>';
-        
-        sendChat('character|' + actor.get('_id'), message);
+        sendChat('character|' + actor.get('_id'), `&{template:valor} {{name=${messageName}}} {{roll=${rollText}}} {{summary=${messageSummary}}}`);
         
         if(token && !overrideLimits) {
             // Add used tech to the technique usage history
@@ -2461,7 +2448,8 @@ on('chat:message', function(msg) {
             }
             
             state.techHistory.push({
-                id: token.get('_id'),
+                tokenId: token.get('_id'),
+                actorId: actor.get('_id'),
                 techName: tech.name,
                 hpCost: hpCost,
                 stCost: stCost,
@@ -2636,12 +2624,12 @@ on('chat:message', function(msg) {
         let turnOrder = JSON.parse(Campaign().get('turnorder'));
         
         // Refund lost resources
-        updateValue(techLog.id, 'hp', techLog.hpCost);
-        updateValue(techLog.id, 'st', techLog.stCost);
-        updateValue(techLog.id, 'valor', techLog.valorCost);
+        updateValue(techLog.tokenId, 'hp', techLog.hpCost);
+        updateValue(techLog.tokenId, 'st', techLog.stCost);
+        updateValue(techLog.tokenId, 'valor', techLog.valorCost);
         if(turnOrder && techLog.initCost) {
             turnOrder.forEach(function(turn) {
-                if(turn && turn.id === techLog.id) {
+                if(turn && turn.id === techLog.tokenId) {
                     turn.pr += techLog.initCost;
                 }
             });
@@ -2652,7 +2640,7 @@ on('chat:message', function(msg) {
         // Remove tech from history
         state.techHistory = state.techHistory.slice(0, state.techHistory.length - 1);
         
-        let token = getObj('graphic', techLog.id);
+        let token = getObj('graphic', techLog.tokenId);
         
         let techDataId = token.get('represents') + '.' + techLog.techName;
         if(state.techData[techDataId]) {
@@ -3344,8 +3332,8 @@ on('chat:message', function(msg) {
         
         // Get tech data
         let techHistory = state.techHistory[state.techHistory.length - lookback];
-        let actorToken = getObj('graphic', techHistory.id);
-        let tech = getTechByName(techHistory.techName, actorToken.get('represents'));
+        let actorToken = getObj('graphic', techHistory.tokenId);
+        let tech = getTechByName(techHistory.techName, actorToken ? actorToken.get('represents') : techHistory.actorId);
         
         if(tech.core != 'damage' && tech.core != 'ultDamage') {
             sendChat('Valor', '/w gm ' + techHistory.techName + ' is not a damage technique.');
@@ -3372,7 +3360,7 @@ on('chat:message', function(msg) {
                 }
                 
                 // Get crit damage
-                let damage = getTechDamage(tech, actorToken.get('represents'), true);
+                let damage = getTechDamage(tech, actorToken ? actorToken.get('represents') : techHistory.actorId, true);
                 
                 // Get def/res
                 let defRes = 0;
@@ -3406,7 +3394,7 @@ on('chat:message', function(msg) {
             });
         } else {
             // Get crit damage
-            let damage = getTechDamage(tech, actorToken.get('represents'), true);
+            let damage = getTechDamage(tech, actorToken ? actorToken.get('represents') : techHistory.actorId, true);
             
             if(tech.mods && tech.mods.find(function(m) {
                 return m.toLowerCase().indexOf('shift') > -1
@@ -4254,6 +4242,7 @@ on('chat:message', function(msg) {
             label = label.substring(1, label.length - 1);
         }
         
+        log(`Sending message as ${'character|' + as}: [[${roll}]]`);
         sendChat('character|' + as, '[[' + roll + ']] ' + label);
     }
 });

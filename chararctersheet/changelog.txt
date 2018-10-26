@@ -205,3 +205,6 @@ v1.1.0 (9/4/2018):
 v1.1.1 (10/16/2018):
 - Added checkboxes for Overdrive Skills.
 - Fixed a few mistakes in the skill library.
+
+v1.1.2 (10/26/2018):
+- Added a roll20 roll template for techniques.

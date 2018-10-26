@@ -352,3 +352,29 @@ hr {
 .sheet-conditional-check:checked ~ .sheet-conditional-block-inverse {
     display: none;
 }
+
+.sheet-rolltemplate-valor .sheet-outer {
+    font-family:"Segoe UI",Frutiger,"Frutiger Linotype","Dejavu Sans","Helvetica Neue",Arial,sans-serif;
+    color:#730A18;
+    background-color:#FCECD8;
+    margin-left:8px;
+    padding-left:5px;
+    padding-bottom:3px;
+}
+    
+.sheet-rolltemplate-valor .sheet-header {
+    position:relative;
+    border:3px solid #F2AC63;
+    color:black;
+    left:-11px;
+    font-weight:bold;
+    font-size:11pt;
+    background-color:white;
+    padding:3px;
+    display:inline-block;
+    border-radius:3px;
+}
+
+.sheet-rolltemplate-valor .sheet-roll {
+    line-height: 170%
+}
