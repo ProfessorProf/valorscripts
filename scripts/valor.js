@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.2.4
+ * v1.2.5
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -107,9 +107,6 @@ function getSt(tokenId, charId) {
         // Get HP by token
         st = parseInt(token.get('bar2_value'));
         stMax = parseInt(token.get('bar2_max'));
-        log('A');
-        log(st);
-        log(stMax);
         if(st != st || stMax != stMax) {
             st = null;
             stMax = null;
@@ -626,13 +623,16 @@ function getTechDescription(tech, charId, suppressDamageDisplay) {
                 }
             }
             
+            const actorClass = getAttrByName(charId, 'type');
             if(regen) {
                 healing = (tech.coreLevel + 3) * 2 + Math.ceil(power / 2);
                 if(healerLevel) healing += (healerLevel + 1) * 2;
+                if(actorClass == 'flunky' || actorClass == 'soldier') healing = Math.ceil(healing / 2);
                 summary = 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP per turn';
             } else {
                 healing = (tech.coreLevel + 3) * 3 + Math.ceil(power / 2);
                 if(healerLevel) healing += (healerLevel + 1) * 2;
+                if(actorClass == 'flunky' || actorClass == 'soldier') healing = Math.ceil(healing / 2);
                 summary = 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP';
             }
             break;
@@ -1550,6 +1550,7 @@ on('chat:message', function(msg) {
     msg.content.indexOf('!tech') == 0 ||
     msg.content == '!t')) {
         startEvent('!tech');
+        
         // Get params
         let split = msg.content.match(/(".*?")|(\S+)/g);
         // Figure out who's using a tech
@@ -2181,6 +2182,8 @@ on('chat:message', function(msg) {
             }
         }
         
+        let hp = getHp(token ? token.get('_id') : null, actor ? actor.get('_id') : null);
+        
         // Pay costs
         let hpCost = 0;
         let stCost = tech.cost;
@@ -2224,7 +2227,7 @@ on('chat:message', function(msg) {
                         ultimateHealthLimitLevel = 1;
                     }
                     
-                    hpCost += Math.ceil(hpMax / 5);
+                    hpCost += Math.ceil(hp.max / 5);
                 }
                 
                 let valorLimit = tech.limits.find(function(l) {
@@ -2414,8 +2417,6 @@ on('chat:message', function(msg) {
             techQualifiers.push('Empowered');
         }
         
-        let hp = getHp(token ? token.get('_id') : null, actor ? actor.get('_id') : null);
-        
         if(hp.val / hp.max <= 0.4 && tech.core == 'damage' || tech.core == 'ultDamage') {
             let crisis = getSkill(actor.get('_id'), 'crisis');
             if(crisis && crisis.level) {
@@ -2506,7 +2507,7 @@ on('chat:message', function(msg) {
             }
         }
         
-        if(!tech.overloadLimits) {
+        if(tech.overloadLimits) {
             log('Overload Limits was enabled.');
             let techAttrs = filterObjs(function(obj) {
                 if(obj.get('_type') == 'attribute' &&

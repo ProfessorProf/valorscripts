@@ -208,3 +208,9 @@ v1.1.1 (10/16/2018):
 
 v1.1.2 (10/26/2018):
 - Added a roll20 roll template for techniques.
+
+v1.2.5 (11/12/2018):
+- Unified version numbering for scripts and sheet.
+- Flunkies, Soldiers, and Swarms now get half power from Attack skills.
+- Flunkies, Soldiers, and Swarms now get reduced TP from Versatile Fighter.
+- Flunkies and Soldiers now get half power on healing techniques.
