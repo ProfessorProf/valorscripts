@@ -1,6 +1,6 @@
 /**
  * VALOR API SCRIPTS
- * v1.2.5
+ * v1.3.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -423,6 +423,16 @@ function getTechs(charId) {
                 oldTech.persist = persist;
             } else {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), persist: persist});
+            }
+        } else if(techName.indexOf('custom_cost') > -1) {
+            let customCost = parseInt(rawTech.get('current'));
+            if(customCost != customCost) {
+                customCost = 0;
+            }
+            if(oldTech) {
+                oldTech.customCost = customCost;
+            } else {
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), customCost: customCost});
             }
         }
     });
@@ -2186,7 +2196,7 @@ on('chat:message', function(msg) {
         
         // Pay costs
         let hpCost = 0;
-        let stCost = tech.cost;
+        let stCost = tech.core == 'custom' ? tech.customCost : tech.cost;
         let valorCost = 0;
         let initCost = 0;
         if(token && !tech.persist) {
@@ -2334,7 +2344,7 @@ on('chat:message', function(msg) {
                     let regen = tech.mods && tech.mods.find(function(m) {
                         return m.toLowerCase().indexOf('continuous r') > -1;
                     });
-                    let power = getAttrByName(actor.get('_id'), tech.stat);
+                    let power = tech.stat ? getAttrByName(actor.get('_id'), tech.stat) : 0;
                     if(regen) {
                         hpGain = (tech.coreLevel + 3) * 2 + Math.ceil(power / 2);
                     } else {

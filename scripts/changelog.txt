@@ -314,3 +314,12 @@ v1.2.4 (10/26/18):
 - Techs now use a roll20 roll template.
 - Bugfix: Crash when using techniques without a character token.
 - Bugfix: Crash when using !crit if the original user's token was deleted.
+
+v1.2.5 (11/12/18):
+- Flunkies and Soldiers now get reduced power on Healing techs.
+- Bugfix: Crash when using a technique with Ultimate Health Limit.
+- Bugfix: Overload Limits button not unchecking itself after use.
+
+v1.3.0 (12/10/18):
+- Bugfixes.
+- Added support for custom ST cost on custom core techniques.

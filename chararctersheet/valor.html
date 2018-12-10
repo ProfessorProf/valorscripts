@@ -2,7 +2,7 @@
 
     /**
      * VALOR CHARACTER SHEET
-     * v1.2.5
+     * v1.3.0
      * 
      * Installation Instructions:
      * - Be a Roll20 Pro user.
@@ -430,7 +430,6 @@
             getAttrs(skillFieldNames, function(skillValues) {
                 for(let i = 0; i < sidarray.length; i++) {
                     let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
-                    log(skillName);
                     
                     switch(skillName) {
                         case 'acceleration':
@@ -1501,6 +1500,7 @@
         techFieldNames.push('repeating_techs_' + techId + '_tech_granted_skills');
         techFieldNames.push('repeating_techs_' + techId + '_tech_inflicted_flaws');
         techFieldNames.push('repeating_techs_' + techId + '_tech_targets');
+        techFieldNames.push('repeating_techs_' + techId + '_tech_custom_cost');
         
         getAttrs(techFieldNames, function(techValues) {
             let level = parseInt(techValues.level);
@@ -1539,6 +1539,10 @@
             }
             if(techTargets > 20) {
                 techTargets = 20;
+            }
+            let techCustomCost = 0;
+            if(techValues['repeating_techs_' + techId + '_tech_custom_cost']) {
+                techCustomCost = parseInt(techValues['repeating_techs_' + techId + '_tech_custom_cost']);
             }
             
             // Build tech summary
@@ -2401,8 +2405,12 @@
             });
             
             let cost = 0;
-            if(core && techCore != 'mimic' && techCore != 'ultMimic' && techCore != 'custom') {
-                cost = core.cost + core.levelUp * (techCoreLevel + totalModLevel) - limitSt;
+            if((core || techCore == 'custom') && techCore != 'mimic' && techCore != 'ultMimic') {
+                if(techCore == 'custom') {
+                    cost = techCustomCost;
+                } else {
+                    cost = core.cost + core.levelUp * (techCoreLevel + totalModLevel) - limitSt;
+                }
                 if(cost < 0) {
                     cost = 0;
                 }
@@ -2410,6 +2418,7 @@
                 summary += 'Costs ' + cost + ' Stamina. '
             }
             summary += limitSummary;
+            log(summary);
             
             let attrs = {};
             attrs['repeating_techs_' + techId + '_tech_summary'] = summary;
@@ -2436,6 +2445,7 @@
                 techCore == 'ultMimic' || techCore == 'weaken'))
                 ? 'on' : 'off';
             attrs['repeating_techs_' + techId + '_tech_can_persist'] = isPersistent ? 'on' : 'off';
+            attrs['repeating_techs_' + techId + '_tech_can_edit_cost'] = techCore == 'custom' ? 'on' : 'off';
             setAttrs(attrs, { silent: true });
         });
     }
@@ -2501,7 +2511,8 @@
        'change:repeating_techs:tech_core change:repeating_techs:tech_stat ' +
        'change:repeating_techs:tech_mods change:repeating_techs:tech_targets change:repeating_techs:tech_bonus ' +
        'change:repeating_techs:tech_limits change:repeating_techs:tech_description ' +
-       'change:repeating_techs:tech_granted_skills change:repeating_techs:tech_inflicted_flaws', function(eventInfo) {
+       'change:repeating_techs:tech_granted_skills change:repeating_techs:tech_inflicted_flaws ' +
+       'change:repeating_techs:tech_custom_cost', function(eventInfo) {
         var techId = eventInfo.sourceAttribute.substring(16, 36);
         calculateTech(techId);
     });
@@ -2542,677 +2553,565 @@
     
 </script>
 
-
-<!-- Sheet header -->
-<table class="header">
-    <tr>
-        <td class="label">
-            <div>Level:</div>
-        </td>
-        <td>
-            <input type="number" class="short-number" name="attr_level" value="1">
-        </td>
-    </tr>
-    <tr>
-        <td class="label">
-            <div>Experience:</div>
-        </td>
-        <td>
-            <input type="number" class="long-number" name="attr_exp" value="0">
-        </td>
-    </tr>
-    <tr>
-        <td class="label">
-            <div>Type:</div>
-        </td>
-        <td>
-            <select name="attr_type">
-                <option value="flunky">Flunky</option>
-                <option value="soldier">Summon/Soldier</option>
-                <option value="swarm">Swarm</option>
-                <option value="elite" selected="selected">PC/Elite</option>
-                <option value="master">Master</option>
-            </select>
-        </td>
-    </tr>
-</table>
-
-<br />
-
-<!-- Main statblock -->
-<div class="stats">
-    <table class="stats-1">
-        <tr>
-            <td class="label stats-header stats-text" colspan="2">
-                BASE
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Strength:</td>
-            <td>
-                <input type="number" class="short-number" name="attr_str" value="5">
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Agility:</td>
-            <td>
-                <input type="number" class="short-number" name="attr_agi" value="5">
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Spirit:</td>
-            <td>
-                <input type="number" class="short-number" name="attr_spr" value="5">
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Mind:</td>
-            <td>
-                <input type="number" class="short-number" name="attr_mnd" value="5">
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text stats-last-row">Guts:</td>
-            <td>
-                <input type="number" class="short-number" name="attr_gut" value="5">
-            </td>
-        </tr>
-    </table>
-
-    <table class="stats-2">
-        <tr>
-            <td class="label stats-header stats-text" colspan="2">
-                ACTIVE
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Muscle:</td>
-            <td nowrap="nowrap">
-                <span class="derived-value" name="attr_mus"></span>
-                <button type="roll" value='!roll-as @{character_id} "1d10+@{mus}+@{rollbonus}" "Muscle"' name="roll_mus"></button>
-                <input type="checkbox" class="conditional-check" name="attr_can_boost_mus">
-                <div class="conditional-block">
-                    <input type="checkbox" name="attr_boostmus">
-                    <span class="arrow">↑</span>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Dexterity:</td>
-            <td nowrap="nowrap">
-                <span class="derived-value" name="attr_dex"></span>
-                <button type="roll" value='!roll-as @{character_id} "1d10+@{dex}+@{rollbonus}" "Dexterity"' name="roll_dex"></button>
-                <input type="checkbox" class="conditional-check" name="attr_can_boost_dex">
-                <div class="conditional-block">
-                    <input type="checkbox" name="attr_boostdex">
-                    <span class="arrow">↑</span>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Aura:</td>
-            <td nowrap="nowrap">
-                <span class="derived-value" name="attr_aur"></span>
-                <button type="roll" value='!roll-as @{character_id} "1d10+@{aur}+@{rollbonus}" "Aura"' name="roll_aur"></button>
-                <input type="checkbox" class="conditional-check" name="attr_can_boost_aur">
-                <div class="conditional-block">
-                    <input type="checkbox" name="attr_boostaur">
-                    <span class="arrow">↑</span>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Intuition:</td>
-            <td nowrap="nowrap">
-                <span class="derived-value" name="attr_int"></span>
-                <button type="roll" value='!roll-as @{character_id} "1d10+@{int}+@{rollbonus}" "Intuition"' name="roll_int"></button>
-                <input type="checkbox" class="conditional-check" name="attr_can_boost_int">
-                <div class="conditional-block">
-                    <input type="checkbox" name="attr_boostint">
-                    <span class="arrow">↑</span>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text stats-last-row">Resolve:</td>
-            <td nowrap="nowrap">
-                <span class="derived-value" name="attr_res"></span>
-                <button type="roll" value='!roll-as @{character_id} "1d10+@{res}+@{rollbonus}" "Resolve"' name="roll_res"></button>
-                <input type="checkbox" class="conditional-check" name="attr_can_boost_res">
-                <div class="conditional-block">
-                    <input type="checkbox" name="attr_boostint">
-                    <span class="arrow">↑</span>
-                </div>
-            </td>
-        </tr>
-    </table>
-
-    <table class="stats-3">
-        <tr>
-            <td class="label stats-header stats-text" colspan="2">
-                ATTACK
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Strength:</td>
-            <td class="derived-value">
-                <span name="attr_strAtk" />
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Agility:</td>
-            <td class="derived-value">
-                <span name="attr_agiAtk" />
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Spirit:</td>
-            <td class="derived-value">
-                <span name="attr_sprAtk" />
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Mind:</td>
-            <td class="derived-value">
-                <span name="attr_mndAtk" />
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-last-row" colspan="2"></td> <!-- No Guts attack -->
-        </tr>
-    </table>
-
-    <table class="stats-4">
-        <tr>
-            <td class="label stats-header stats-text" colspan="2">
-                STATISTICS
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Health:</td>
-            <td class="derived-value">
-                <span name="attr_hp_max" />
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Stamina:</td>
-            <td class="derived-value">
-                <span name="attr_st_max" />
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Defense:</td>
-            <td class="derived-value">
-                <span name="attr_defense" />
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Resistance:</td>
-            <td class="derived-value">
-                <span name="attr_resistance" />
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text stats-last-row">Move:</td>
-            <td class="derived-value">
-                <span name="attr_speed" />
-            </td>
-        </tr>
-    </table>
-
-    <table class="stats-5">
-        <tr>
-            <td class="label stats-header stats-text" colspan="2">
-                INCREMENTS
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">HP Inc:</td>
-            <td class="derived-value">
-                <span name="attr_hpInc" />
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">ST Inc:</td>
-            <td class="derived-value">
-                <span name="attr_stInc" />
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Critical HP:</td>
-            <td class="derived-value">
-                <span name="attr_hpCrit" />
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text">Damage Inc:</td>
-            <td class="derived-value">
-                <span name="attr_di" />
-            </td>
-        </tr>
-        <tr>
-            <td class="stats-text stats-last-row">Initiative:</td>
-            <td nowrap="nowrap">
-                <span class="derived-value" name="attr_init"></span>
-                <button type="roll" value="[[1d10+@{init}+@{rollbonus} &{tracker} &{noerror}]] Initiative" name="roll_res"></button>
-            </td>
-        </tr>
-    </table>
+<div class="sheet-container">
+    <!-- Tabs -->
+    <input type="radio" name="attr_tab" class="sheet-tab sheet-tab1" value="1" checked="checked"><span title="Attributes"></span>
+    <input type="radio" name="attr_tab" class="sheet-tab sheet-tab2" value="2"><span title="Skills & Flaws"></span>
+    <input type="radio" name="attr_tab" class="sheet-tab sheet-tab3" value="3"><span title="Techniques"></span>
     
-    <div class="unspent-ap"><span name="attr_unspentAP"></span> AP UNSPENT</div>
-    <div class="section-header">BONUSES</div>
-    
-    <div class="bonuses-table">
-        <table class="stats-2">
-            <tr>
-                <td>All Rolls</td>
-                <td nowrap="nowrap" colspan="2">
-                    <input type="number" class="short-number" name="attr_rollbonus" value="0">
-                </td>
-            </tr>
-            <tr>
-                <td>Atk. Rolls</td>
-                <td nowrap="nowrap">
-                    <input type="number" class="short-number" name="attr_atkrollbonus" value="0">
-                </td>
-                <td class="derived-value">
-                    <span name="attr_iatkrollbonusdisp"></span>
-                </td>
-            </tr>
-            <tr>
-                <td nowrap="nowrap" class="stats-last-row">Def. Rolls</td>
-                <td nowrap="nowrap">
-                    <input type="number" class="short-number" name="attr_defrollbonus" value="0">
-                </td>
-                <td class="derived-value">
-                    <span name="attr_idefrollbonusdisp"></span>
-                </td>
-            </tr>
-        </table>
-        <table class="stats-3">
-            <tr>
-                <td>Phys. Attack</td>
-                <td nowrap="nowrap">
-                    <input type="number" class="short-number" name="attr_patkbonus" value="0">
-                </td>
-            </tr>
-            <tr>
-                <td>En. Attack</td>
-                <td nowrap="nowrap">
-                    <input type="number" class="short-number" name="attr_eatkbonus" value="0">
-                </td>
-            </tr>
-            <tr>
-                <td class="stats-last-row" colspan="2"></td> <!-- No Guts attack -->
-            </tr>
-        </table>
-        <table class="stats-4b">
-            <tr>
-                <td>Defense</td>
-                <td nowrap="nowrap">
-                    <input type="number" class="short-number" name="attr_defensebonus" value="0">
-                </td>
-            </tr>
-            <tr>
-                <td>Resistance</td>
-                <td nowrap="nowrap">
-                    <input type="number" class="short-number" name="attr_resistancebonus" value="0">
-                </td>
-            </tr>
-            <tr>
-                <td class="stats-last-row" colspan="2"></td> <!-- No Guts attack -->
-            </tr>
-        </table>
-    </div>
-    
-    <div class="section-header">ROLL DEFENSE</div>
-    <div class="defense-buttons">
-        <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{mus}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Muscle Defense"' name="roll_mus_def">Muscle</button>
-        <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{dex}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Dexterity Defense"' name="roll_dex_def">Dexterity</button>
-        <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{aur}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Aura Defense"' name="roll_aur_def">Aura</button>
-        <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{int}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Intuition Defense"' name="roll_int_def">Intuition</button>
-        <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{res}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Resolve Defense"' name="roll_res_def">Resolve</button>
-    </div>
-</div>
-
-<br />
-
-<div class="flaws-header">FLAWS</div>
-<fieldset class="repeating_flaws">
-    <div class="flaw">
-        <div class="flaw-upper">
-            <select class="flaw-picker" name="attr_flawname" selected="customFlaw">
-                <option value="customFlaw">Custom Flaw</option>
-                <option value="aggravatedWounds">Aggravated Wounds (+2)</option>
-                <option value="berserker">Berserker (+5)</option>
-                <option value="compulsion">Compulsion (+4)</option>
-                <option value="despair">Despair (+4)</option>
-                <option value="energyVulnerability">Energy Vulnerability (+2/+1)</option>
-                <option value="feeble">Feeble (+3)</option>
-                <option value="fragile">Fragile (+3/+2)</option>
-                <option value="lackOfControl">Lack of Control (+2/+1)</option>
-                <option value="malevolentEntity">Malevolent Entity (+5)</option>
-                <option value="nonProficient">Non-Proficient (+1)</option>
-                <option value="oblivious">Oblivious (+3)</option>
-                <option value="slow">Slow (+2/+1)</option>
-                <option value="slowHealing">Slow Healing (+2)</option>
-                <option value="slowToAct">Slow to Act (+1)</option>
-                <option value="unthreatening">Unthreatening (+3)</option>
-                <option value="uncoordinated">Uncoordinated (+3)</option>
-                <option value="violent">Violent (+3)</option>
-                <option value="weakAura">Weak Aura (+3)</option>
-                <option value="weakDefender">Weak Defender (+2/+1)</option>
-                <option value="weakWilled">Weak Willed (+4/+3)</option>
-                <optgroup label="Optional Rules">
-                    <option value="armorReliant">Armor Reliant (+2/+1)</option>
-                    <option value="elementalVulnerability">Elemental Vulnerability (+2/+1)</option>
-                    <option value="unprincipled">Unprincipled (+1)</option>
-                    <option value="wardReliant">Ward Reliant (+2/+1)</option>
-                </optgroup>
-                <optgroup label="NPC Only">
-                    <option value="battleDamage">Battle Damage (+3)</option>
-                </optgroup>
-                <optgroup label="Villains, Creatures and Foes (BETA)">
-                    <option value="broadForm">Broad Form (+4)</option>
-                    <option value="fearTheDarkness">Fear the Darkness (+3)</option>
-                    <option value="immobile">Immobile (+7)</option>
-                    <option value="insubstantial">Insubstantial (+3)</option>
-                    <option value="situationalCompulsion">Situational Compulsion (+2)</option>
-                    <option value="sunlightWeakness">Sunlight Weakness (+5)</option>
-                    <option value="thresheld">Thresheld (+3)</option>
-                    <option value="weakGuard">Weak Guard (+2)</option>
-                    <option value="malevolentPossession">Malevolent Possession (+10)</option>
-                </optgroup>
-            </select>
-            <span class="label">Level <input class="flaw-level" type="number" name="attr_flawlevel" value="1" /></span>
-            <span name="attr_warning"></span>
-        </div>
-        <div><span class="label notes-label">Notes</span> <input class="notes" type="text" name="attr_skillnotes" /></div>
-    </div>
-    <div class="flaw-background"></div>
-</fieldset>
-
-<div class="skills-header">SKILLS</div>
-
-<fieldset class="repeating_skills">
-    <div class="skill">
-        <div class="skill-upper">
-            <select class="skill-picker" name="attr_skillname" selected="customSkill">
-                <option value="customSkill">Custom Skill</option>
-                <optgroup label="Season 1 Skills">
-                    <option value="acceleration">Acceleration (5)</option>
-                    <option value="analysis">Analysis (5)</option>
-                    <option value="asset">Asset (3)</option>
-                    <option value="attackNode">Attack Node (5/2)</option>
-                    <option value="balancedFighter">Balanced Fighter (8)</option>
-                    <option value="blazingMight">Blazing Might (6/3)</option>
-                    <option value="bounceBack">Bounce Back (6)</option>
-                    <option value="bravado">Bravado (6/6)</option>
-                    <option value="burningPassion">Burning Passion (5)</option>
-                    <option value="challengeTechnique">Challenge Technique (3)</option>
-                    <option value="combinationAttack">Combination Attack (6)</option>
-                    <option value="companion">Companion (6/4)</option>
-                    <option value="counterattack">Counterattack (6)</option>
-                    <option value="cover">Cover (6/2)</option>
-                    <option value="crisis">Crisis (4/2)</option>
-                    <option value="dangerSense">Danger Sense (3)</option>
-                    <option value="darkHealing">Dark Healing (5)</option>
-                    <option value="darksight">Darksight (4)</option>
-                    <option value="desperation">Desperation (5)</option>
-                    <option value="digDeep">Dig Deep (5)</option>
-                    <option value="dirtyTrick">Dirty Trick (5)</option>
-                    <option value="discreetAura">Discreet Aura (3)</option>
-                    <option value="discretion">Discretion (2)</option>
-                    <option value="duel">Duel (2)</option>
-                    <option value="effectTransfer">Effect Transfer (4/3)</option>
-                    <option value="empowerAttack">Empower Attack (6/3)</option>
-                    <option value="energyAttacker">Energy Attacker (6/3)</option>
-                    <option value="fastCompanion">Fast Companion (2/1)</option>
-                    <option value="fastHealing">Fast Healing (4)</option>
-                    <option value="favorableInsight">Favorable Insight (3)</option>
-                    <option value="feint">Feint (6)</option>
-                    <option value="fightingSpirit">Fighting Spirit (6/3)</option>
-                    <option value="hardenedDefense">Hardened Defense (6/3)</option>
-                    <option value="hardenedResistance">Hardened Resistance (6/3)</option>
-                    <option value="hiddenCompanion">Hidden Companion (4/2)</option>
-                    <option value="ignoreEffect">Ignore Effect (5)</option>
-                    <option value="improvedDamageIncrement">Improved Damage Inc. (4/2)</option>
-                    <option value="improvedSwimming">Improved Swimming (4)</option>
-                    <option value="increasedSize">Increased Size (2/1)</option>
-                    <option value="inspire">Inspire (5)</option>
-                    <option value="interruptAttack">Interrupt Attack (3/2)</option>
-                    <option value="intimidate">Intimidate (5/3)</option>
-                    <option value="ironDefense">Iron Defense (4/2)</option>
-                    <option value="Jump">Jump (4)</option>
-                    <option value="mount">Mount (3/1)</option>
-                    <option value="nimbleMovement">Nimble Movement (4)</option>
-                    <option value="nullify">Nullify (5/3)</option>
-                    <option value="overloadLimits">Overload Limits (6)</option>
-                    <option value="passiveHealing">Passive Healing (4)</option> (6)
-                    <option value="physicalAttacker">Physical Attacker (6/3)</option>
-                    <option value="proficiency">Proficiency (2)</option>
-                    <option value="protector">Protector (5)</option>
-                    <option value="provoke">Provoke (4/2)</option>
-                    <option value="quickToAct">Quick to Act (3)</option>
-                    <option value="recharge">Recharge (5/3)</option>
-                    <option value="recklessAttack">Reckless Attack (5/3)</option>
-                    <option value="recovery">Recovery (3)</option>
-                    <option value="resistant">Resistant (4/2)</option>
-                    <option value="resoluteAura">Resolute Aura (5)</option>
-                    <option value="resoluteStrike">Resolute Strike (5)</option>
-                    <option value="revenge">Revenge (5)</option>
-                    <option value="rollingRecovery">Rolling Recovery (4)</option>
-                    <option value="senseMalice">Sense Malice (2)</option>
-                    <option value="sizeUp">Size Up (3/1)</option>
-                    <option value="spiritSight">Spirit Sight (5)</option>
-                    <option value="sprinter">Sprinter (4/2)</option>
-                    <option value="strengthOfWill">Strength of Will (5)</option>
-                    <option value="teamTactics">Team Tactics (6)</option>
-                    <option value="tireless">Tireless (5/2)</option>
-                    <option value="tough">Tough (6/3)</option>
-                    <option value="toss">Toss (5/2)</option>
-                    <option value="underhanded">Underhanded (5)</option>
-                    <option value="unmovable">Unmovable (4/2)</option>
-                    <option value="versatileFighter">Versatile Fighter (6/3)</option>
-                </optgroup>
-                <optgroup label="Season 2 Skills">
-                    <option value="abundantCreation">Abundant Creation (5)</option>
-                    <option value="afterimage">Afterimage (4)</option>
-                    <option value="allyMount">Ally Mount (3/1)</option>
-                    <option value="areaShield">Area Shield (4)</option>
-                    <option value="battleAnalysis">Battle Analysis (6)</option>
-                    <option value="clash">Clash (3)</option>
-                    <option value="clone">Clone (6/3)</option>
-                    <option value="cloneTactics">Clone Tactics (5)</option>
-                    <option value="combatToss">Combat Toss (4)</option>
-                    <option value="companionZoneOfControl">Companion ZOC (4/4)</option>
-                    <option value="damageFeedback">Damage Feedback (5)</option>
-                    <option value="daredevil">Daredevil (4)</option>
-                    <option value="divingEscape">Diving Escape (5/2)</option>
-                    <option value="effectCapture">Effect Capture (4)</option>
-                    <option value="extendedRevival">Extended Revival (4)</option>
-                    <option value="favorableSuccess">Favorable Success (4)</option>
-                    <option value="finalAttack">Final Attack (6)</option>
-                    <option value="flankAttack">Flank Attack (4)</option>
-                    <option value="healthTransference">Health Transference (4)</option>
-                    <option value="lineDeflect">Line Deflect (5)</option>v
-                    <option value="mobileCover">Mobile Cover (5)</option>
-                    <option value="mobileDodge">Mobile Dodge (4)</option>
-                    <option value="opportunisticDodge">Opportunistic Dodge (6)</option>
-                    <option value="phasing">Phasing (5)</option>
-                    <option value="portal">Portal (6/3)</option>
-                    <option value="protectAlly">Protect Ally (2)</option>
-                    <option value="protectMaster">Protect Master (3)</option>
-                    <option value="pushAway">Push Away (4/2)</option>
-                    <option value="rangedInterrupt">Ranged Interrupt (4)</option>
-                    <option value="rangedRevival">Ranged Revival (3)</option>
-                    <option value="refractionPoint">Refraction Point (4/2)</option>
-                    <option value="risingAttack">Rising Attack (6)</option>
-                    <option value="seal">Seal (6/3)</option>
-                    <option value="shadowMeld">Shadow Meld (6)</option>
-                    <option value="shrugOff">Shrug Off (6)</option>
-                    <option value="splitMove">Split Move (6)</option>
-                    <option value="staminaTransference">Stamina Transference (6)</option>
-                    <option value="swiftStep">Swift Step (5/2)</option>
-                    <option value="tossingCompanion">Tossing Companion (3/1)</option>
-                    <option value="transposition">Transposition (4)</option>
-                    <option value="trustingCompanion">Trusting Companion (4)</option>
-                    <option value="wallWalk">Wall Walk (4)</option>
-                    <option value="waterAdaptation">Water Adaptation (6)</option>
-                    <option value="waterWalk">Water Walk (4)</option>
-                    <option value="xRayVision">X-Ray Vision (4)</option>
-                </optgroup>
-                <optgroup label="Season 3 Skills">
-                    <option value="attackNodeNetwork">Attack Node Network (4)</option>
-                    <option value="companionSense">Companion Sense (2)</option>
-                    <option value="defensiveClash">Defensive Clash (4)</option>
-                    <option value="deflectingShield">Deflecting Shield (4)</option>
-                    <option value="exploitWeakness">Exploit Weakness (6)</option>
-                    <option value="flunkyDomination">Flunky Domination (5)</option>
-                    <option value="fly">Fly (6/2)</option>
-                    <option value="flyingCompanion">Flying Companion (3/3)</option>
-                    <option value="instantMonut">Instant Mount (3)</option>
-                    <option value="prepared">Prepared (6)</option>
-                    <option value="reactiveCompanion">Reactive Companion (4)</option>
-                    <option value="refractionChain">Refraction Chain (6)</option>
-                    <option value="swiftJump">Swift Jump (3)</option>
-                    <option value="unshakeable">Unshakeable (6)</option>
-                    <option value="unstoppable">Unstoppable (6)</option>
-                </optgroup>
-                <optgroup label="Season 4 Skills">
-                    <option value="breakValorLimit">Break Valor Limit (6)</option>
-                    <option value="expandedReach">Expanded Reach (8)</option>
-                    <option value="extendedRange">Extended Range (4)</option>
-                    <option value="extraAction">Extra Action (12)</option>
-                    <option value="freeFlight">Free Flight (3)</option>
-                    <option value="freeSwiftStep">Free Swift Step (5)</option>
-                    <option value="regeneration">Regeneration (6/4)</option>
-                    <option value="staminaRecovery">Stamina Recovery (4/2)</option>
-                    <option value="teleportation">Teleportation (6)</option>
-                    <option value="unyieldingDetermination">Unyielding Determination (6)</option>
-                    <option value="violentAura">Violent Aura (4)</option>
-                </optgroup>
-                <optgroup label="Season 1 (Optional Rules)">
-                    <option value="elementalResistance">Elemental Resistance (4/2)</option>
-                    <option value="elementalAttunement">Elemental Attunement (3)</option>
-                    <option value="illusoryDisguise">Illusory Disguise (3)</option>
-                    <option value="illusoryTerrain">Illusory Terrain (4/2)</option>
-                    <option value="pierceIllusion">Pierce Illusion (4)</option>
-                    <option value="principled">Principled (2)</option>
-                    <option value="polearmWielder">Polearm Wielder (5)</option>
-                    <option value="rangedWeaponWielder">Ranged Weapon Wielder (4/2)</option>
-                </optgroup>
-                <optgroup label="Season 2 (Optional Rules)">
-                    <option value="illusoryAssailant">Illusory Assailant (6/3)</option>
-                </optgroup>
-                <optgroup label="Season 1 (NPC Only)">
-                    <option value="invisibility">Invisibility (8)</option>
-                </optgroup>
-                <optgroup label="Season 2 (NPC Only)">
-                    <option value="revive">Revive (8/3)</option>
-                </optgroup>
-                <optgroup label="Season 4 (NPC Only)">
-                    <option value="limitlessPower">Valiant (12)</option>
-                </optgroup>
-                <optgroup label="Villains, Creatures and Foes (BETA)">
-                </optgroup>
-                <optgroup label="Traits">
-                    <option value="aquatic">Aquatic (1)</option>
-                    <option value="construct">Construct (8)</option>
-                    <option value="elemental">Elemental (5)</option>
-                    <option value="undead">Undead (8)</option>
-                </optgroup>
-                <optgroup label="Season 1">
-                    <option value="diminuitive">Diminuitive (6)</option>
-                    <option value="healer">Healer (4/2)</option>
-                    <option value="increasedLength">Increased Length (1/1)</option>
-                    <option value="morale">Morale (6)</option>
-                    <option value="hardenedResolve">Hardened Resolve (6)</option>
-                    <option value="amphibious">Amphibious (3)</option>
-                    <option value="toweringPresence">Towering Presence (6)</option>
-                    <option value="humanshape">Humanshape (3)</option>
-                    <option value="limitedFlight">Limited Flight (4/2)</option>
-                    <option value="pressingSwarm">Pressing Swarm (6)</option>
-                    <option value="skillCopy">Skill Copy (?)</option>
-                    <option value="swiftStance">Swift Stance (3/1)</option>
-                    <option value="increasedCompanionSize">Increased Companion Size (1/1)</option>
-                </optgroup>
-                <optgroup label="Season 2">
-                    <option value="largeHead">Large Head (1)</option>
-                    <option value="limitedRegeneration">Limited Regeneration (4/3)</option>
-                    <option value="longTail">Long Tail (1)</option>
-                    <option value="trample">Trample (8)</option>
-                    <option value="ultimateAttack">Ultimate Attack (12)</option>
-                    <option value="victorAtAnyCost">Victor At Any Cost (8)</option>
-                </optgroup>
-                <optgroup label="Season 3">
-                    <option value="alteredDurability">Altered Durability (3)</option>
-                    <option value="burrow">Burrow (6)</option>
-                    <option value="durableFlunky">Durable Flunky (6/3)</option>
-                    <option value="resurrectingFlunky">Resurrecting Flunky (8)</option>
-                    <option value="standTall">Stand Tall (6)</option>
-                    <option value="terrainAdaptation">Terrain Adaptation (6)</option>
-                </optgroup>
-                <optgroup label="Season 4">
-                    <option value="destructiveBurrow">Destructive Burrow (6)</option>
-                    <option value="freeBurrow">Free Burrow (3)</option>
-                    <option value="landAdaptation">Land Adaptation (4)</option>
-                    <option value="shapeshifter">Shapeshifter (12)</option>
-                    <option value="unscrupulous">Unscrupulous (6)</option>
-                </optgroup>
-            </select>
-            <span class="label">Level</span> <input class="skill-level" type="number" name="attr_skilllevel" value="1" />
-            <span name="attr_warning"></span>
-        </div>
-        <span class="label">Notes</span> <input class="notes" type="text" name="attr_skillnotes" />
-    </div>
-</fieldset>
-
-<div class="unspent-sp"><span name="attr_unspentSP"></span> SP UNSPENT</div>
-
-<div class="techs-header">TECHNIQUES</div>
-
-<fieldset class="repeating_techs">
-    <div class="tech">
-        <div class="sheet-2colrow">
-            <div class="sheet-col">
-                <table class="tech-top-table">
-                    <tr>
-                        <td>
-                            <input type="text" class="tech-field tech-name" name="attr_tech_name" value="New Technique" />
-                        </td>
-                        <td><span class="label">Tech Level</span></td>
-                        <td><span class="derived-value" name="attr_tech_level"></span></td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <select class="tech-field" name="attr_tech_core">
-                                <option value="barrier">Barrier Core</option>
-                                <option value="boost">Boost Core</option>
-                                <option value="damage" selected="selected">Damage Core</option>
-                                <option value="healing">Healing Core</option>
-                                <option value="mimic">Mimic Core</option>
-                                <option value="summoning">Summoning Core</option>
-                                <option value="weaken">Weaken Core</option>
-                                <optgroup label="Ultimate Cores">
-                                    <option value="domain">Domain</option>
-                                    <option value="ultDamage">Ultimate Attack</option>
-                                    <option value="ultMimic">Ultimate Mimic</option>
-                                    <option value="ultTransform">Transformation</option>
-                                </optgroup>
-                                <option value="custom">Custom Core</option>
-                            </select>
-                        </td>
-                        <td><span class="label">Core Power</span></td>
-                        <td>
-                            <input class="tech-field" type="number" name="attr_tech_core_level" value="1" />
-                        </td>
-                    </tr>
-                </table>
+    <div class="sheet-tab-content sheet-tab1">
+        <!-- Sheet header -->
+        <div class="attributes-header">
+            <div class="attributes-header-label">
+                <span class="label">Level:</span>
             </div>
-            <div class="sheet-col">
-                <button class="valor-button" type='roll' name='attr_tech_command'> Use Technique</button>
-                <span class="label">Targets</span>
+            <div>
+                <input class="attributes-header-input" type="number" name="attr_level" value="1">
+            </div>
+            <div class="attributes-header-label">
+                <span class="label">Experience:</span>
+            </div>
+            <div>
+                <input type="number" class="long-number attributes-header-input" name="attr_exp" value="0">
+            </div>
+            <div class="attributes-header-label">
+                <span class="label">Type:</span>
+            </div>
+            <div>
+                <select name="attr_type" class="attributes-header-input">
+                    <option value="flunky">Flunky</option>
+                    <option value="soldier">Summon/Soldier</option>
+                    <option value="swarm">Swarm</option>
+                    <option value="elite" selected="selected">PC/Elite</option>
+                    <option value="master">Master</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Attributes -->
+        <div class="section-header">ATTRIBUTES</div>
+        <div class="stats-container">
+            <div class="stats">
+                <div class="stats-column stats-orange">
+                    <div class="label stats-column-header">BASE</div>
+                    <div>Strength:</div>
+                    <div>
+                        <input type="number" class="number-input-orange" name="attr_str" value="5">
+                    </div>
+                    <div>Agility:</div>
+                    <div>
+                        <input type="number" class="number-input-orange" name="attr_agi" value="5">
+                    </div>
+                    <div>Spirit:</div>
+                    <div>
+                        <input type="number" class="number-input-orange" name="attr_spr" value="5">
+                    </div>
+                    <div>Mind:</div>
+                    <div>
+                        <input type="number" class="number-input-orange" name="attr_mnd" value="5">
+                    </div>
+                    <div>Guts:</div>
+                    <div>
+                        <input type="number" class="number-input-orange" name="attr_gut" value="5">
+                    </div>
+                </div>
+                <div class="stats-column stats-green">
+                    <div class="label stats-column-header">ACTIVE</div>
+                    <div>Muscle:</div>
+                    <div>
+                        <span class="derived-value" name="attr_mus"></span>
+                        <button type="roll" value='!roll-as @{character_id} "1d10+@{mus}+@{rollbonus}" "Muscle"' name="roll_mus"></button>
+                        <input type="checkbox" class="conditional-check" name="attr_can_boost_mus">
+                        <div class="conditional-block">
+                            <input type="checkbox" name="attr_boostmus">
+                            <span class="arrow">↑</span>
+                        </div>
+                    </div>
+                    <div>Dexterity:</div>
+                    <div>
+                        <span class="derived-value" name="attr_mus"></span>
+                        <button type="roll" value='!roll-as @{character_id} "1d10+@{dex}+@{rollbonus}" "Dexterity"' name="roll_dex"></button>
+                        <input type="checkbox" class="conditional-check" name="attr_can_boost_dex">
+                        <div class="conditional-block">
+                            <input type="checkbox" name="attr_boostdex">
+                            <span class="arrow">↑</span>
+                        </div>
+                    </div>
+                    <div>Aura:</div>
+                    <div>
+                        <span class="derived-value" name="attr_aur"></span>
+                        <button type="roll" value='!roll-as @{character_id} "1d10+@{aur}+@{rollbonus}" "Aura"' name="roll_aur"></button>
+                        <input type="checkbox" class="conditional-check" name="attr_can_boost_aur">
+                        <div class="conditional-block">
+                            <input type="checkbox" name="attr_boostaur">
+                            <span class="arrow">↑</span>
+                        </div>
+                    </div>
+                    <div>Intuition:</div>
+                    <div>
+                        <span class="derived-value" name="attr_int"></span>
+                        <button type="roll" value='!roll-as @{character_id} "1d10+@{int}+@{rollbonus}" "Intuition"' name="roll_int"></button>
+                        <input type="checkbox" class="conditional-check" name="attr_can_boost_int">
+                        <div class="conditional-block">
+                            <input type="checkbox" name="attr_boostint">
+                            <span class="arrow">↑</span>
+                        </div>
+                    </div>
+                    <div>Resolve:</div>
+                    <div>
+                        <span class="derived-value" name="attr_res"></span>
+                        <button type="roll" value='!roll-as @{character_id} "1d10+@{mus}+@{rollbonus}" "Resolve"' name="roll_res"></button>
+                        <input type="checkbox" class="conditional-check" name="attr_can_boost_res">
+                        <div class="conditional-block">
+                            <input type="checkbox" name="attr_boostres">
+                            <span class="arrow">↑</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-column stats-orange">
+                    <div class="label stats-column-header">ATTACK</div>
+                    <div>Strength:</div>
+                    <div class="derived-value">
+                        <span name="attr_strAtk" />
+                    </div>
+                    <div>Agility:</div>
+                    <div class="derived-value">
+                        <span name="attr_agiAtk" />
+                    </div>
+                    <div>Spirit:</div>
+                    <div class="derived-value">
+                        <span name="attr_sprAtk" />
+                    </div>
+                    <div>Mind:</div>
+                    <div class="derived-value">
+                        <span name="attr_mndAtk" />
+                    </div>
+                    <div>
+                        <!-- No guts attack -->
+                    </div>
+                </div>
+                <div class="stats-column stats-green">
+                    <div class="label stats-column-header">STATISTICS</div>
+                    <div>Health:</div>
+                    <div class="derived-value">
+                        <span name="attr_hp_max" />
+                    </div>
+                    <div>Stamina:</div>
+                    <div class="derived-value">
+                        <span name="attr_st_max" />
+                    </div>
+                    <div>Defense:</div>
+                    <div class="derived-value">
+                        <span name="attr_defense" />
+                    </div>
+                    <div>Resistance:</div>
+                    <div class="derived-value">
+                        <span name="attr_resistance" />
+                    </div>
+                    <div>Move:</div>
+                    <div class="derived-value">
+                        <span name="attr_speed" />
+                    </div>
+                </div>
+                <div class="stats-column stats-orange">
+                    <div class="label stats-column-header">INCREMENTS</div>
+                    <div>HP Increment:</div>
+                    <div class="derived-value">
+                        <span name="attr_hpInc" />
+                    </div>
+                    <div>ST Increment:</div>
+                    <div class="derived-value">
+                        <span name="attr_stInc" />
+                    </div>
+                    <div>Critical HP:</div>
+                    <div class="derived-value">
+                        <span name="attr_hpCrit" />
+                    </div>
+                    <div>Dmg Increment:</div>
+                    <div class="derived-value">
+                        <span name="attr_di" />
+                    </div>
+                    <div>Initiative:</div>
+                    <div class="derived-value">
+                        <span name="attr_init" />
+                        <button type="roll" value="[[1d10+@{init}+@{rollbonus} &{tracker} &{noerror}]] Initiative" name="roll_init"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="unspent-ap"><span name="attr_unspentAP"></span> AP UNSPENT</div>
+        <div class="section-header">BONUSES</div>
+        <div class="stats-container">
+            <div class="stats">
+                <div class="stats-wide-column stats-green stats-short">
+                    <div>All Rolls:</div>
+                    <div>
+                        <input type="number" class="number-input-green" name="attr_rollbonus" value="0">
+                    </div>
+                    <div></div>
+                    <div>Attack Rolls:</div>
+                    <div>
+                        <input type="number" class="number-input-green" name="attr_atkrollbonus" value="0">
+                    </div>
+                    <div>
+                        <span name="attr_iatkrollbonusdisp"></span>
+                    </div>
+                    <div>Defense Rolls:</div>
+                    <div>
+                        <input type="number" class="number-input-green" name="attr_defrollbonus" value="0">
+                    </div>
+                    <div>
+                        <span name="attr_idefrollbonusdisp"></span>
+                    </div>
+                </div>
+                <div class="stats-column stats-orange stats-short">
+                    <div>Phys. Attack:</div>
+                    <div>
+                        <input type="number" class="number-input-orange" name="attr_patkbonus" value="0">
+                    </div>
+                    <div>En. Attack:</div>
+                    <div>
+                        <input type="number" class="number-input-orange" name="attr_eatkbonus" value="0">
+                    </div>
+                </div>
+                <div class="stats-column stats-green stats-short">
+                    <div>Defense:</div>
+                    <div>
+                        <input type="number" class="number-input-green" name="attr_defensebonus" value="0">
+                    </div>
+                    <div>Resistance:</div>
+                    <div>
+                        <input type="number" class="number-input-green" name="attr_resistancebonus" value="0">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="section-header roll-defense">ROLL DEFENSE</div>
+        <div class="defense-buttons">
+            <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{mus}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Muscle Defense"' name="roll_mus_def">Muscle</button>
+            <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{dex}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Dexterity Defense"' name="roll_dex_def">Dexterity</button>
+            <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{aur}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Aura Defense"' name="roll_aur_def">Aura</button>
+            <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{int}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Intuition Defense"' name="roll_int_def">Intuition</button>
+            <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{res}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Resolve Defense"' name="roll_res_def">Resolve</button>
+        </div>
+    </div>
+    
+    <div class="sheet-tab-content sheet-tab2">
+        <div class="flaws-header">FLAWS</div>
+        <fieldset class="repeating_flaws">
+            <div class="flaw">
+                <div class="flaw-upper">
+                    <select class="flaw-picker" name="attr_flawname" selected="customFlaw">
+                        <option value="customFlaw">Custom Flaw</option>
+                        <option value="aggravatedWounds">Aggravated Wounds (+2)</option>
+                        <option value="berserker">Berserker (+5)</option>
+                        <option value="compulsion">Compulsion (+4)</option>
+                        <option value="despair">Despair (+4)</option>
+                        <option value="energyVulnerability">Energy Vulnerability (+2/+1)</option>
+                        <option value="feeble">Feeble (+3)</option>
+                        <option value="fragile">Fragile (+3/+2)</option>
+                        <option value="lackOfControl">Lack of Control (+2/+1)</option>
+                        <option value="malevolentEntity">Malevolent Entity (+5)</option>
+                        <option value="nonProficient">Non-Proficient (+1)</option>
+                        <option value="oblivious">Oblivious (+3)</option>
+                        <option value="slow">Slow (+2/+1)</option>
+                        <option value="slowHealing">Slow Healing (+2)</option>
+                        <option value="slowToAct">Slow to Act (+1)</option>
+                        <option value="unthreatening">Unthreatening (+3)</option>
+                        <option value="uncoordinated">Uncoordinated (+3)</option>
+                        <option value="violent">Violent (+3)</option>
+                        <option value="weakAura">Weak Aura (+3)</option>
+                        <option value="weakDefender">Weak Defender (+2/+1)</option>
+                        <option value="weakWilled">Weak Willed (+4/+3)</option>
+                        <optgroup label="Optional Rules">
+                            <option value="armorReliant">Armor Reliant (+2/+1)</option>
+                            <option value="elementalVulnerability">Elemental Vulnerability (+2/+1)</option>
+                            <option value="unprincipled">Unprincipled (+1)</option>
+                            <option value="wardReliant">Ward Reliant (+2/+1)</option>
+                        </optgroup>
+                        <optgroup label="NPC Only">
+                            <option value="battleDamage">Battle Damage (+3)</option>
+                        </optgroup>
+                        <optgroup label="Villains, Creatures and Foes (BETA)">
+                            <option value="broadForm">Broad Form (+4)</option>
+                            <option value="fearTheDarkness">Fear the Darkness (+3)</option>
+                            <option value="immobile">Immobile (+7)</option>
+                            <option value="insubstantial">Insubstantial (+3)</option>
+                            <option value="situationalCompulsion">Situational Compulsion (+2)</option>
+                            <option value="sunlightWeakness">Sunlight Weakness (+5)</option>
+                            <option value="thresheld">Thresheld (+3)</option>
+                            <option value="weakGuard">Weak Guard (+2)</option>
+                            <option value="malevolentPossession">Malevolent Possession (+10)</option>
+                        </optgroup>
+                    </select>
+                    <span class="label">
+                        Level <input class="flaw-level number-input-round" type="number" name="attr_flawlevel" value="1" />
+                    </span>
+                    <span name="attr_warning"></span>
+                </div>
+                <div><span class="label notes-label">Notes</span> <input class="notes" type="text" name="attr_skillnotes" /></div>
+            </div>
+            <div class="flaw-background"></div>
+        </fieldset>
+        
+        <div class="skills-header">SKILLS</div>
+        
+        <fieldset class="repeating_skills">
+            <div class="skill">
+                <div class="skill-upper">
+                    <select class="skill-picker" name="attr_skillname" selected="customSkill">
+                        <option value="customSkill">Custom Skill</option>
+                        <optgroup label="Season 1 Skills">
+                            <option value="acceleration">Acceleration (5)</option>
+                            <option value="analysis">Analysis (5)</option>
+                            <option value="asset">Asset (3)</option>
+                            <option value="attackNode">Attack Node (5/2)</option>
+                            <option value="balancedFighter">Balanced Fighter (8)</option>
+                            <option value="blazingMight">Blazing Might (6/3)</option>
+                            <option value="bounceBack">Bounce Back (6)</option>
+                            <option value="bravado">Bravado (6/6)</option>
+                            <option value="burningPassion">Burning Passion (5)</option>
+                            <option value="challengeTechnique">Challenge Technique (3)</option>
+                            <option value="combinationAttack">Combination Attack (6)</option>
+                            <option value="companion">Companion (6/4)</option>
+                            <option value="counterattack">Counterattack (6)</option>
+                            <option value="cover">Cover (6/2)</option>
+                            <option value="crisis">Crisis (4/2)</option>
+                            <option value="dangerSense">Danger Sense (3)</option>
+                            <option value="darkHealing">Dark Healing (5)</option>
+                            <option value="darksight">Darksight (4)</option>
+                            <option value="desperation">Desperation (5)</option>
+                            <option value="digDeep">Dig Deep (5)</option>
+                            <option value="dirtyTrick">Dirty Trick (5)</option>
+                            <option value="discreetAura">Discreet Aura (3)</option>
+                            <option value="discretion">Discretion (2)</option>
+                            <option value="duel">Duel (2)</option>
+                            <option value="effectTransfer">Effect Transfer (4/3)</option>
+                            <option value="empowerAttack">Empower Attack (6/3)</option>
+                            <option value="energyAttacker">Energy Attacker (6/3)</option>
+                            <option value="fastCompanion">Fast Companion (2/1)</option>
+                            <option value="fastHealing">Fast Healing (4)</option>
+                            <option value="favorableInsight">Favorable Insight (3)</option>
+                            <option value="feint">Feint (6)</option>
+                            <option value="fightingSpirit">Fighting Spirit (6/3)</option>
+                            <option value="hardenedDefense">Hardened Defense (6/3)</option>
+                            <option value="hardenedResistance">Hardened Resistance (6/3)</option>
+                            <option value="hiddenCompanion">Hidden Companion (4/2)</option>
+                            <option value="ignoreEffect">Ignore Effect (5)</option>
+                            <option value="improvedDamageIncrement">Improved Damage Inc. (4/2)</option>
+                            <option value="improvedSwimming">Improved Swimming (4)</option>
+                            <option value="increasedSize">Increased Size (2/1)</option>
+                            <option value="inspire">Inspire (5)</option>
+                            <option value="interruptAttack">Interrupt Attack (3/2)</option>
+                            <option value="intimidate">Intimidate (5/3)</option>
+                            <option value="ironDefense">Iron Defense (4/2)</option>
+                            <option value="Jump">Jump (4)</option>
+                            <option value="mount">Mount (3/1)</option>
+                            <option value="nimbleMovement">Nimble Movement (4)</option>
+                            <option value="nullify">Nullify (5/3)</option>
+                            <option value="overloadLimits">Overload Limits (6)</option>
+                            <option value="passiveHealing">Passive Healing (4)</option> (6)
+                            <option value="physicalAttacker">Physical Attacker (6/3)</option>
+                            <option value="proficiency">Proficiency (2)</option>
+                            <option value="protector">Protector (5)</option>
+                            <option value="provoke">Provoke (4/2)</option>
+                            <option value="quickToAct">Quick to Act (3)</option>
+                            <option value="recharge">Recharge (5/3)</option>
+                            <option value="recklessAttack">Reckless Attack (5/3)</option>
+                            <option value="recovery">Recovery (3)</option>
+                            <option value="resistant">Resistant (4/2)</option>
+                            <option value="resoluteAura">Resolute Aura (5)</option>
+                            <option value="resoluteStrike">Resolute Strike (5)</option>
+                            <option value="revenge">Revenge (5)</option>
+                            <option value="rollingRecovery">Rolling Recovery (4)</option>
+                            <option value="senseMalice">Sense Malice (2)</option>
+                            <option value="sizeUp">Size Up (3/1)</option>
+                            <option value="spiritSight">Spirit Sight (5)</option>
+                            <option value="sprinter">Sprinter (4/2)</option>
+                            <option value="strengthOfWill">Strength of Will (5)</option>
+                            <option value="teamTactics">Team Tactics (6)</option>
+                            <option value="tireless">Tireless (5/2)</option>
+                            <option value="tough">Tough (6/3)</option>
+                            <option value="toss">Toss (5/2)</option>
+                            <option value="underhanded">Underhanded (5)</option>
+                            <option value="unmovable">Unmovable (4/2)</option>
+                            <option value="versatileFighter">Versatile Fighter (6/3)</option>
+                        </optgroup>
+                        <optgroup label="Season 2 Skills">
+                            <option value="abundantCreation">Abundant Creation (5)</option>
+                            <option value="afterimage">Afterimage (4)</option>
+                            <option value="allyMount">Ally Mount (3/1)</option>
+                            <option value="areaShield">Area Shield (4)</option>
+                            <option value="battleAnalysis">Battle Analysis (6)</option>
+                            <option value="clash">Clash (3)</option>
+                            <option value="clone">Clone (6/3)</option>
+                            <option value="cloneTactics">Clone Tactics (5)</option>
+                            <option value="combatToss">Combat Toss (4)</option>
+                            <option value="companionZoneOfControl">Companion ZOC (4/4)</option>
+                            <option value="damageFeedback">Damage Feedback (5)</option>
+                            <option value="daredevil">Daredevil (4)</option>
+                            <option value="divingEscape">Diving Escape (5/2)</option>
+                            <option value="effectCapture">Effect Capture (4)</option>
+                            <option value="extendedRevival">Extended Revival (4)</option>
+                            <option value="favorableSuccess">Favorable Success (4)</option>
+                            <option value="finalAttack">Final Attack (6)</option>
+                            <option value="flankAttack">Flank Attack (4)</option>
+                            <option value="healthTransference">Health Transference (4)</option>
+                            <option value="lineDeflect">Line Deflect (5)</option>v
+                            <option value="mobileCover">Mobile Cover (5)</option>
+                            <option value="mobileDodge">Mobile Dodge (4)</option>
+                            <option value="opportunisticDodge">Opportunistic Dodge (6)</option>
+                            <option value="phasing">Phasing (5)</option>
+                            <option value="portal">Portal (6/3)</option>
+                            <option value="protectAlly">Protect Ally (2)</option>
+                            <option value="protectMaster">Protect Master (3)</option>
+                            <option value="pushAway">Push Away (4/2)</option>
+                            <option value="rangedInterrupt">Ranged Interrupt (4)</option>
+                            <option value="rangedRevival">Ranged Revival (3)</option>
+                            <option value="refractionPoint">Refraction Point (4/2)</option>
+                            <option value="risingAttack">Rising Attack (6)</option>
+                            <option value="seal">Seal (6/3)</option>
+                            <option value="shadowMeld">Shadow Meld (6)</option>
+                            <option value="shrugOff">Shrug Off (6)</option>
+                            <option value="splitMove">Split Move (6)</option>
+                            <option value="staminaTransference">Stamina Transference (6)</option>
+                            <option value="swiftStep">Swift Step (5/2)</option>
+                            <option value="tossingCompanion">Tossing Companion (3/1)</option>
+                            <option value="transposition">Transposition (4)</option>
+                            <option value="trustingCompanion">Trusting Companion (4)</option>
+                            <option value="wallWalk">Wall Walk (4)</option>
+                            <option value="waterAdaptation">Water Adaptation (6)</option>
+                            <option value="waterWalk">Water Walk (4)</option>
+                            <option value="xRayVision">X-Ray Vision (4)</option>
+                        </optgroup>
+                        <optgroup label="Season 3 Skills">
+                            <option value="attackNodeNetwork">Attack Node Network (4)</option>
+                            <option value="companionSense">Companion Sense (2)</option>
+                            <option value="defensiveClash">Defensive Clash (4)</option>
+                            <option value="deflectingShield">Deflecting Shield (4)</option>
+                            <option value="exploitWeakness">Exploit Weakness (6)</option>
+                            <option value="flunkyDomination">Flunky Domination (5)</option>
+                            <option value="fly">Fly (6/2)</option>
+                            <option value="flyingCompanion">Flying Companion (3/3)</option>
+                            <option value="instantMonut">Instant Mount (3)</option>
+                            <option value="prepared">Prepared (6)</option>
+                            <option value="reactiveCompanion">Reactive Companion (4)</option>
+                            <option value="refractionChain">Refraction Chain (6)</option>
+                            <option value="swiftJump">Swift Jump (3)</option>
+                            <option value="unshakeable">Unshakeable (6)</option>
+                            <option value="unstoppable">Unstoppable (6)</option>
+                        </optgroup>
+                        <optgroup label="Season 4 Skills">
+                            <option value="breakValorLimit">Break Valor Limit (6)</option>
+                            <option value="expandedReach">Expanded Reach (8)</option>
+                            <option value="extendedRange">Extended Range (4)</option>
+                            <option value="extraAction">Extra Action (12)</option>
+                            <option value="freeFlight">Free Flight (3)</option>
+                            <option value="freeSwiftStep">Free Swift Step (5)</option>
+                            <option value="regeneration">Regeneration (6/4)</option>
+                            <option value="staminaRecovery">Stamina Recovery (4/2)</option>
+                            <option value="teleportation">Teleportation (6)</option>
+                            <option value="unyieldingDetermination">Unyielding Determination (6)</option>
+                            <option value="violentAura">Violent Aura (4)</option>
+                        </optgroup>
+                        <optgroup label="Season 1 (Optional Rules)">
+                            <option value="elementalResistance">Elemental Resistance (4/2)</option>
+                            <option value="elementalAttunement">Elemental Attunement (3)</option>
+                            <option value="illusoryDisguise">Illusory Disguise (3)</option>
+                            <option value="illusoryTerrain">Illusory Terrain (4/2)</option>
+                            <option value="pierceIllusion">Pierce Illusion (4)</option>
+                            <option value="principled">Principled (2)</option>
+                            <option value="polearmWielder">Polearm Wielder (5)</option>
+                            <option value="rangedWeaponWielder">Ranged Weapon Wielder (4/2)</option>
+                        </optgroup>
+                        <optgroup label="Season 2 (Optional Rules)">
+                            <option value="illusoryAssailant">Illusory Assailant (6/3)</option>
+                        </optgroup>
+                        <optgroup label="Season 1 (NPC Only)">
+                            <option value="invisibility">Invisibility (8)</option>
+                        </optgroup>
+                        <optgroup label="Season 2 (NPC Only)">
+                            <option value="revive">Revive (8/3)</option>
+                        </optgroup>
+                        <optgroup label="Season 4 (NPC Only)">
+                            <option value="limitlessPower">Valiant (12)</option>
+                        </optgroup>
+                        <optgroup label="Villains, Creatures and Foes (BETA)">
+                        </optgroup>
+                        <optgroup label="Traits">
+                            <option value="aquatic">Aquatic (1)</option>
+                            <option value="construct">Construct (8)</option>
+                            <option value="elemental">Elemental (5)</option>
+                            <option value="undead">Undead (8)</option>
+                        </optgroup>
+                        <optgroup label="Season 1">
+                            <option value="diminuitive">Diminuitive (6)</option>
+                            <option value="healer">Healer (4/2)</option>
+                            <option value="increasedLength">Increased Length (1/1)</option>
+                            <option value="morale">Morale (6)</option>
+                            <option value="hardenedResolve">Hardened Resolve (6)</option>
+                            <option value="amphibious">Amphibious (3)</option>
+                            <option value="toweringPresence">Towering Presence (6)</option>
+                            <option value="humanshape">Humanshape (3)</option>
+                            <option value="limitedFlight">Limited Flight (4/2)</option>
+                            <option value="pressingSwarm">Pressing Swarm (6)</option>
+                            <option value="skillCopy">Skill Copy (?)</option>
+                            <option value="swiftStance">Swift Stance (3/1)</option>
+                            <option value="increasedCompanionSize">Increased Companion Size (1/1)</option>
+                        </optgroup>
+                        <optgroup label="Season 2">
+                            <option value="largeHead">Large Head (1)</option>
+                            <option value="limitedRegeneration">Limited Regeneration (4/3)</option>
+                            <option value="longTail">Long Tail (1)</option>
+                            <option value="trample">Trample (8)</option>
+                            <option value="ultimateAttack">Ultimate Attack (12)</option>
+                            <option value="victorAtAnyCost">Victor At Any Cost (8)</option>
+                        </optgroup>
+                        <optgroup label="Season 3">
+                            <option value="alteredDurability">Altered Durability (3)</option>
+                            <option value="burrow">Burrow (6)</option>
+                            <option value="durableFlunky">Durable Flunky (6/3)</option>
+                            <option value="resurrectingFlunky">Resurrecting Flunky (8)</option>
+                            <option value="standTall">Stand Tall (6)</option>
+                            <option value="terrainAdaptation">Terrain Adaptation (6)</option>
+                        </optgroup>
+                        <optgroup label="Season 4">
+                            <option value="destructiveBurrow">Destructive Burrow (6)</option>
+                            <option value="freeBurrow">Free Burrow (3)</option>
+                            <option value="landAdaptation">Land Adaptation (4)</option>
+                            <option value="shapeshifter">Shapeshifter (12)</option>
+                            <option value="unscrupulous">Unscrupulous (6)</option>
+                        </optgroup>
+                    </select>
+                    <span class="label">Level</span> <input class="skill-level" type="number" name="attr_skilllevel" value="1" />
+                    <span name="attr_warning"></span>
+                </div>
+                <span class="label">Notes</span> <input class="notes" type="text" name="attr_skillnotes" />
+            </div>
+        </fieldset>
+        
+        <div class="unspent-sp"><span name="attr_unspentSP"></span> SP UNSPENT</div>
+    </div>
+    
+    <div class="sheet-tab-content sheet-tab3">
+        <div class="techs-header">TECHNIQUES</div>
+        
+        <fieldset class="repeating_techs">
+            <div class="tech">
+                <div class="tech-name">
+                    <div class="tech-header">
+                        <input type="text" class="tech-field tech-name" name="attr_tech_name" value="New Technique" />
+                    </div>
+                </div>
+                <div class="tech-level">
+                    <div class="tech-header">
+                        <span class="label">Tech Level</span>
+                        <span class="derived-value" name="attr_tech_level">
+                    </div>
+                </div>
+                <div class="tech-button">
+                    <button class="valor-button" type='roll' name='attr_tech_command'> Use Technique</button>
+                    <span class="label">Targets</span>
                     <select name="attr_tech_targets" class="number-select tech-field">
                         <option value="1">1</option>
                         <option value="2">2</option>
@@ -3235,48 +3134,68 @@
                         <option value="19">19</option>
                         <option value="20">20</option>
                     </select>
-                <span class="label">Bonus</span> <input class="tech-field" type='number' value='0' name='attr_tech_bonus'>
-                <div>
-                    <input type="checkbox" class="conditional-check" name="attr_tech_can_dig_deep">
-                    <div class="conditional-block">
-                        <input type="checkbox" name="attr_tech_digDeep">
-                        <span class="label">Use Dig Deep</span>
+                    <span class="label">Bonus</span> <input class="tech-field" type='number' value='0' name='attr_tech_bonus'>
+                    <div>
+                        <input type="checkbox" class="conditional-check" name="attr_tech_can_dig_deep">
+                        <div class="conditional-block">
+                            <input type="checkbox" name="attr_tech_digDeep">
+                            <span class="label">Use Dig Deep</span>
+                        </div>
+                    </div>
+                    <div>
+                        <input type="checkbox" class="conditional-check" name="attr_tech_can_overload_limits">
+                        <div class="conditional-block">
+                            <input type="checkbox" name="attr_tech_overloadLimits">
+                            <span class="label">Use Overload Limits</span>
+                        </div>
+                    </div>
+                    <div>
+                        <input type="checkbox" class="conditional-check" name="attr_tech_can_empower">
+                        <div class="conditional-block">
+                            <input type="checkbox" name="attr_tech_empowerAttack">
+                            <span class="label">Use Empower Attack</span>
+                        </div>
+                    </div>
+                    <div>
+                        <input type="checkbox" class="conditional-check" name="attr_tech_can_resolute_strike">
+                        <div class="conditional-block">
+                            <input type="checkbox" name="attr_tech_resoluteStrike">
+                            <span class="label">Use Resolute Strike</span>
+                        </div>
+                    </div>
+                    <div>
+                        <input type="checkbox" class="conditional-check" name="attr_tech_can_persist">
+                        <div class="conditional-block">
+                            <input type="checkbox" name="attr_tech_persist">
+                            <span class="label">Persistent Reroll</span>
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <input type="checkbox" class="conditional-check" name="attr_tech_can_overload_limits">
-                    <div class="conditional-block">
-                        <input type="checkbox" name="attr_tech_overloadLimits">
-                        <span class="label">Use Overload Limits</span>
-                    </div>
+                <div class="tech-core">
+                    <select class="tech-field" name="attr_tech_core">
+                        <option value="barrier">Barrier Core</option>
+                        <option value="boost">Boost Core</option>
+                        <option value="damage" selected="selected">Damage Core</option>
+                        <option value="healing">Healing Core</option>
+                        <option value="mimic">Mimic Core</option>
+                        <option value="summoning">Summoning Core</option>
+                        <option value="weaken">Weaken Core</option>
+                        <optgroup label="Ultimate Cores">
+                            <option value="domain">Domain</option>
+                            <option value="ultDamage">Ultimate Attack</option>
+                            <option value="ultMimic">Ultimate Mimic</option>
+                            <option value="ultTransform">Transformation</option>
+                        </optgroup>
+                        <option value="custom">Custom Core</option>
+                    </select>
                 </div>
-                <div>
-                    <input type="checkbox" class="conditional-check" name="attr_tech_can_empower">
-                    <div class="conditional-block">
-                        <input type="checkbox" name="attr_tech_empowerAttack">
-                        <span class="label">Use Empower Attack</span>
-                    </div>
+                <div class="tech-core-level">
+                    <span class="label">Core Power</span>
+                    <input class="tech-field" type="number" name="attr_tech_core_level" value="1" />
                 </div>
-                <div>
-                    <input type="checkbox" class="conditional-check" name="attr_tech_can_resolute_strike">
-                    <div class="conditional-block">
-                        <input type="checkbox" name="attr_tech_resoluteStrike">
-                        <span class="label">Use Resolute Strike</span>
-                    </div>
-                </div>
-                <div>
-                    <input type="checkbox" class="conditional-check" name="attr_tech_can_persist">
-                    <div class="conditional-block">
-                        <input type="checkbox" name="attr_tech_persist">
-                        <span class="label">Persistent Reroll</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="sheet-2colrow">
-            <div class="sheet-col">
-                <div class="tech-row">
-                    <span class="label">Attribute</span> <select class="tech-field" name="attr_tech_stat">
+                <div class="tech-attribute">
+                    <span class="label">Attribute</span>
+                    <select class="tech-field" name="attr_tech_stat">
                         <option value="none" selected="selected">None</option>
                         <option value="str">Strength</option>
                         <option value="agi">Agility</option>
@@ -3285,63 +3204,73 @@
                         <option value="gut">Guts</option>
                     </select>
                 </div>
-                <div class="label tech-row">Description</div>
-                <div>
-                    <textarea class="smallertext tech-field" name="attr_tech_description"></textarea>
-                </div>
-                <div>
-                    <input type="checkbox" class="conditional-check" name="attr_tech_has_skills">
-                    <div class="tech-block conditional-block">
-                        <span class="label">Granted Skills</span>
-                        <input type="text" class="tech-field" name="attr_tech_granted_skills" />
+                <div class="tech-cost">
+                    <span class="label">ST Cost</span>
+                    <input type="checkbox" class="conditional-check" name="attr_tech_can_edit_cost">
+                    <div class="conditional-block">
+                        <input class="tech-field" type="number" name="attr_tech_custom_cost" value="0" />
+                    </div>
+                    <div class="conditional-block-inverse">
+                        <span class="derived-value" name="attr_tech_cost">
                     </div>
                 </div>
-                <div>
-                    <input type="checkbox" class="conditional-check" name="attr_tech_has_flaws">
-                    <div class="tech-block conditional-block">
-                        <span class="label">Inflicted Flaws</span>
-                        <input type="text" class="tech-field" name="attr_tech_inflicted_flaws" />
+                <div class="tech-summary">
+                    <div><span name="attr_tech_description"></span></div>
+                    <div><span name="attr_tech_summary"></span></div>
+                </div>
+                <div class="tech-description">
+                    <div class="label">Description</div>
+                    <div>
+                        <textarea class="smallertext tech-field" name="attr_tech_description"></textarea>
+                    </div>
+                    <div>
+                        <input type="checkbox" class="conditional-check" name="attr_tech_has_skills">
+                        <div class="tech-block conditional-block">
+                            <span class="label">Granted Skills</span>
+                            <input type="text" class="tech-field" name="attr_tech_granted_skills" />
+                        </div>
+                    </div>
+                    <div>
+                        <input type="checkbox" class="conditional-check" name="attr_tech_has_flaws">
+                        <div class="tech-block conditional-block">
+                            <span class="label">Inflicted Flaws</span>
+                            <input type="text" class="tech-field" name="attr_tech_inflicted_flaws" />
+                        </div>
+                    </div>
+                    <div>
+                        <input type="checkbox" class="conditional-check" name="attr_tech_is_mimic">
+                        <div class="tech-block conditional-block">
+                            <span class="label">Mimicked Tech</span>
+                            <input class="tech-field" type="text" name="attr_tech_mimic_target" />
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <input type="checkbox" class="conditional-check" name="attr_tech_is_mimic">
-                    <div class="tech-block conditional-block">
-                        <span class="label">Mimicked Tech</span>
-                        <input class="tech-field" type="text" name="attr_tech_mimic_target" />
+                <div class="tech-modifiers">
+                    <div class="label">Modifiers (one per line)</div>
+                    <div>
+                        <textarea class="smalltext tech-field" name="attr_tech_mods" rows="3" cols="40"></textarea>
+                    </div>
+                    <div>
+                        Total Mod Levels <span name="attr_tech_mod_level" class="derived-value"></span>
+                    </div>
+                </div>
+                <div class="tech-limits">
+                    <div class="label">Limits (one per line)</div>
+                    <div>
+                        <textarea class="smalltext tech-field" name="attr_tech_limits" rows="3" cols="40"></textarea>
+                    </div>
+                    <div>
+                        Total Cost Reduction <span name="attr_tech_limit_st" class="derived-value"></span>
                     </div>
                 </div>
             </div>
-            <div class="sheet-col">
-                <div><span class="label" name="attr_tech_name"></span></div>
-                <div><span name="attr_tech_description"></span></div>
-                <div><span name="attr_tech_summary"></span></div>
-                <div><span name="attr_tech_warnings"></span></div>
-            </div>
-        </div>
-        <div class="sheet-2colrow tech-block">
-            <div class="sheet-col">
-                <div class="label tech-row">Modifiers (one per line)</div>
-                <div>
-                    <textarea class="smalltext tech-field" name="attr_tech_mods" rows="3" cols="40"></textarea>
-                </div>
-                <div>
-                    Total Mod Levels <span name="attr_tech_mod_level" class="derived-value"></span>
-                </div>
-            </div>
-            <div class="sheet-col">
-                <div class="label tech-row">Limits (one per line)</div>
-                <div>
-                    <textarea class="smalltext tech-field" name="attr_tech_limits" rows="3" cols="40"></textarea>
-                </div>
-                <div>
-                    Total Cost Reduction <span name="attr_tech_limit_st" class="derived-value"></span>
-                </div>
-            </div>
-        </div>
+        </fieldset>
+        <div class="unspent-tp"><span name="attr_unspentTP"></span> TP UNSPENT</div>
     </div>
-</fieldset>
+    
+</div>
 
-<div class="unspent-tp"><span name="attr_unspentTP"></span> TP UNSPENT</div>
+<br />
 
 <div>
     <input type="checkbox" class="conditional-check" name="attr_is_duplicate">
