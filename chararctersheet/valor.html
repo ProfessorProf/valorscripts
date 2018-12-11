@@ -2,7 +2,6 @@
 
     /**
      * VALOR CHARACTER SHEET
-     * v1.3.0
      * 
      * Installation Instructions:
      * - Be a Roll20 Pro user.
@@ -22,236 +21,246 @@
      **/
     
     let flawLibrary = [
-        { cost: 1, levelUp: 1, speed: 3, id: 'customFlaw' },
-        { cost: 2, levelUp: 0, speed: 0, id: 'aggravatedWounds' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'berserker' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'compulsion' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'despair' },
-        { cost: 2, levelUp: 1, speed: 2, id: 'energyVulnerability' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'feeble' },
-        { cost: 3, levelUp: 2, speed: 2, id: 'fragile' },
-        { cost: 2, levelUp: 1, speed: 2, id: 'lackOfControl' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'malevolentEntity' },
-        { cost: 1, levelUp: 0, speed: 0, id: 'nonProficient' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'oblivious' },
-        { cost: 2, levelUp: 1, speed: 1, id: 'slow' },
-        { cost: 2, levelUp: 0, speed: 0, id: 'slowHealing' },
-        { cost: 1, levelUp: 0, speed: 0, id: 'slowToAct' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'unthreatening' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'uncoordinated' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'violent' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'weakAura' },
-        { cost: 2, levelUp: 1, speed: 2, id: 'weakDefender' },
-        { cost: 4, levelUp: 3, speed: 1, id: 'weakWilled' },
-        { cost: 1, levelUp: 0, speed: 0, id: 'unprincipled' },
-        { cost: 2, levelUp: 1, speed: 1, id: 'elementalVulnerability' },
-        { cost: 2, levelUp: 1, speed: 1, id: 'armorReliant' },
-        { cost: 2, levelUp: 1, speed: 1, id: 'wardReliant' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'broadForm' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'fearTheDarkness' },
-        { cost: 7, levelUp: 0, speed: 0, id: 'immobile' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'insubstantial' },
-        { cost: 2, levelUp: 0, speed: 0, id: 'situationalCompulsion' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'sunlightWeakness' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'thresheld' },
-        { cost: 2, levelUp: 0, speed: 0, id: 'weakGuard' },
-        { cost: 10, levelUp: 0, speed: 0, id: 'malevolentPossession' }
+        { cost: 1, levelUp: 1, speed: 3, id: 'customFlaw', namePattern: '^custom' },
+        { cost: 2, levelUp: 0, speed: 0, id: 'aggravatedWounds', namePattern: '^aggravated' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'berserker', namePattern: '^berserk' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'compulsion', namePattern: '^compulsion' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'despair', namePattern: '^despair' },
+        { cost: 2, levelUp: 1, speed: 2, id: 'energyVulnerability', namePattern: '^energy vuln' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'feeble', namePattern: '^feeble' },
+        { cost: 3, levelUp: 2, speed: 2, id: 'fragile', namePattern: '^fragile' },
+        { cost: 2, levelUp: 1, speed: 2, id: 'lackOfControl', namePattern: '^lack ' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'malevolentEntity', namePattern: '^malevolent entity' },
+        { cost: 1, levelUp: 0, speed: 0, id: 'nonProficient', namePattern: '^non[ -]?proficient' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'oblivious', namePattern: '^oblivious' },
+        { cost: 2, levelUp: 1, speed: 1, id: 'slow', namePattern: '^slow$' },
+        { cost: 2, levelUp: 0, speed: 0, id: 'slowHealing', namePattern: '^slow heal' },
+        { cost: 1, levelUp: 0, speed: 0, id: 'slowToAct', namePattern: '^slow to act' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'unthreatening', namePattern: '^unthreatening' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'uncoordinated', namePattern: '^uncoordinated' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'violent', namePattern: '^violent' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'weakAura', namePattern: '^weak aura' },
+        { cost: 2, levelUp: 1, speed: 2, id: 'weakDefender', namePattern: '^weak defend' },
+        { cost: 4, levelUp: 3, speed: 1, id: 'weakWilled', namePattern: '^weak will' },
+        { cost: 1, levelUp: 0, speed: 0, id: 'unprincipled', namePattern: '^unprincipled' },
+        { cost: 2, levelUp: 1, speed: 1, id: 'elementalVulnerability', namePattern: '^elemental vuln' },
+        { cost: 2, levelUp: 1, speed: 1, id: 'armorReliant', namePattern: '^armor reliant' },
+        { cost: 2, levelUp: 1, speed: 1, id: 'wardReliant', namePattern: '^ward reliant' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'broadForm', namePattern: '^broad form' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'fearTheDarkness', namePattern: '^fear the dark' },
+        { cost: 7, levelUp: 0, speed: 0, id: 'immobile', namePattern: '^immobile' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'insubstantial', namePattern: '^insubstantial' },
+        { cost: 2, levelUp: 0, speed: 0, id: 'situationalCompulsion', namePattern: '^situational compulsion' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'sunlightWeakness', namePattern: '^sunlight' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'thresheld', namePattern: '^thresheld' },
+        { cost: 2, levelUp: 0, speed: 0, id: 'weakGuard', namePattern: '^weak guard' },
+        { cost: 10, levelUp: 0, speed: 0, id: 'malevolentPossession', namePattern: '^malevolent possess' },
+        { cost: 3, levelUp: 2, speed: 0, id: 'weakPhysicalAttacker', namePattern: '^weak phys(ical)? attack' },
+        { cost: 3, levelUp: 2, speed: 0, id: 'weakEnergyAttacker', namePattern: '^weak en(ergy)? attack' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'impairedAccuracy', namePattern: '^impaired acc' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'impairedEvasion', namePattern: '^impaired (evd|eva)' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'flightless', namePattern: '^malevolent possess' }
     ];
     let skillLibrary = [
-        { cost: 1, levelUp: 1, speed: 3, id: 'customSkill' },
-        { cost: 8, levelUp: 0, speed: 0, id: 'balancedFighter' },
-        { cost: 6, levelUp: 6, speed: 0, id: 'bravado' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'discreetAura' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'darksight' },
-        { cost: 6, levelUp: 3, speed: 1, id: 'energyAttacker' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'fastHealing' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'improvedDamageIncrement' }, // ERRATA: Reduced cost for IDI
-        { cost: 2, levelUp: 1, speed: 2, id: 'increasedSize' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'ironDefense' },
-        { cost: 6, levelUp: 3, speed: 1, id: 'physicalAttacker' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'resistant' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'sprinter' },
-        { cost: 5, levelUp: 2, speed: 2, id: 'tireless' },
-        { cost: 6, levelUp: 3, speed: 2, id: 'tough' },
-        { cost: 6, levelUp: 3, speed: 2, id: 'versatileFighter' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'skyAttack' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'breakValorLimit' },
-        { cost: 8, levelUp: 0, speed: 0, id: 'expandedReach' },
-        { cost: 12, levelUp: 0, speed: 0, id: 'extraAction' },
-        { cost: 6, levelUp: 4, speed: 1, id: 'regeneration' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'staminaRecovery' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'teleportation' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'unyieldingDetermination' }, // ERRATA: Reduced cost, different effect
-        { cost: 4, levelUp: 0, speed: 0, id: 'violentAura' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'bounceBack' },
-        { cost: 4, levelUp: 2, speed: 2, id: 'crisis' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'dangerSense' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'desperation' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'digDeep' },
-        { cost: 2, levelUp: 0, speed: 0, id: 'discretion' },
-        { cost: 6, levelUp: 3, speed: 2, id: 'empowerAttack' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'improvedSwimming' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'nimbleMovement' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'overloadLimits' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'passiveHealing' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'protector' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'quickToAct' },
-        { cost: 5, levelUp: 3, speed: 1, id: 'recklessAttack' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'resoluteStrike' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'revenge' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'rollingRecovery' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'teamTactics' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'unmovable' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'abundantCreation' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'cloneTactics' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'combatToss' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'daredevil' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'phasing' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'risingAttack' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'safeStride' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'splitMove' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'transposition' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'underhanded' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'wallWalk' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'waterAdaptation' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'waterWalk' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'xRayVision' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'unshakeable' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'unstoppable' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'extendedRange' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'freeFlight' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'freeSwiftStep' },
-        { cost: 5, levelUp: 2, speed: 2, id: 'attackNode' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'darkHealing' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'dirtyTrick' },
-        { cost: 2, levelUp: 0, speed: 0, id: 'duel' },
-        { cost: 4, levelUp: 3, speed: 1, id: 'effectTransfer' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'feint' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'inspire' }, // ERRATA: Fixed level on Inspire
-        { cost: 5, levelUp: 3, speed: 1, id: 'intimidate' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'jump' },
-        { cost: 5, levelUp: 2, speed: 1, id: 'nullify' },
-        { cost: 4, levelUp: 2, speed: 2, id: 'provoke' },
-        { cost: 5, levelUp: 3, speed: 1, id: 'recharge' },
-        { cost: 3, levelUp: 1, speed: 2, id: 'sizeUp' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'spiritSight' },
-        { cost: 5, levelUp: 2, speed: 1, id: 'toss' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'battleAnalysis' },
-        { cost: 6, levelUp: 0, speed: 1, id: 'clone' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'effectCapture' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'healthTransference' },
-        { cost: 6, levelUp: 3, speed: 2, id: 'portal' },
-        { cost: 4, levelUp: 2, speed: 2, id: 'refractionPoint' },
-        { cost: 6, levelUp: 3, speed: 1, id: 'seal' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'shadowMeld' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'staminaTransference' },
-        { cost: 5, levelUp: 2, speed: 1, id: 'swiftStep' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'attackNodeNetwork' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'exploitWeakness' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'flunkyDomination' },
-        { cost: 6, levelUp: 2, speed: 1, id: 'fly' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'refractionChain' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'swiftJump' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'combinationAttack' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'counterattack' },
-        { cost: 6, levelUp: 2, speed: 2, id: 'cover' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'ignoreEffect' },
-        { cost: 3, levelUp: 2, speed: 1, id: 'interruptAttack' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'afterimage' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'areaShield' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'clash' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'damageFeedback' },
-        { cost: 5, levelUp: 2, speed: 1, id: 'divingEscape' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'finalAttack' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'lineDeflect' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'mobileCover' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'mobileDodge' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'opportunisticDodge' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'pushAway' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'rangedInterrupt' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'shrugOff' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'defensiveClash' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'deflectingShield' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'prepared' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'acceleration' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'analysis' },
-        { cost: 6, levelUp: 3, speed: 1, id: 'blazingMight' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'burningPassion' },
-        { cost: 6, levelUp: 3, speed: 1, id: 'fightingSpirit' },
-        { cost: 6, levelUp: 3, speed: 1, id: 'hardenedDefense' },
-        { cost: 6, levelUp: 3, speed: 1, id: 'hardenedResistance' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'resoluteAura' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'strengthOfWill' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'asset' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'challengeTechnique' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'favorableInsight' },
-        { cost: 2, levelUp: 0, speed: 0, id: 'proficiency' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'recovery' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'favorableSuccess' },
-        { cost: 6, levelUp: 4, speed: 1, id: 'companion' },
-        { cost: 2, levelUp: 1, speed: 2, id: 'fastCompanion' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'hiddenCompanion' },
-        { cost: 3, levelUp: 1, speed: 1, id: 'mount' },
-        { cost: 2, levelUp: 0, speed: 0, id: 'senseMalice' },
-        { cost: 3, levelUp: 1, speed: 1, id: 'allyMount' },
-        { cost: 4, levelUp: 4, speed: 1, id: 'companionZoneOfControl' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'extendedRevival' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'flankAttack' },
-        { cost: 2, levelUp: 0, speed: 0, id: 'protectAlly' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'protectMaster' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'rangedRevival' },
-        { cost: 3, levelUp: 1, speed: 1, id: 'tossingCompanion' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'trustingCompanion' },
-        { cost: 2, levelUp: 0, speed: 0, id: 'companionSense' },
-        { cost: 3, levelUp: 3, speed: 1, id: 'flyingCompanion' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'instantMount' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'reactiveCompanion' },
-        { cost: 12, levelUp: 0, speed: 0, id: 'limitlessPower' },
-        { cost: 8, levelUp: 0, speed: 0, id: 'invisibility' },
-        { cost: 8, levelUp: 3, speed: 1, id: 'revive' },
-        { cost: 2, levelUp: 0, speed: 0, id: 'principled' },
-        { cost: 6, levelUp: 3, speed: 2, id: 'illusoryAssailant' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'illusoryDisguise' },
-        { cost: 4, levelUp: 2, speed: 2, id: 'illusoryTerrain' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'pierceIllusion' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'elementalResistance' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'elementalAttunement' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'polearmWielder' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'rangedWeaponWielder' },
-        { cost: 4, levelUp: 2, speed: 0, id: 'aquatic' },
-        { cost: 4, levelUp: 2, speed: 0, id: 'construct' },
-        { cost: 4, levelUp: 2, speed: 0, id: 'elemental' },
-        { cost: 4, levelUp: 2, speed: 0, id: 'undead' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'diminuitive' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'healer' },
-        { cost: 1, levelUp: 1, speed: 0, id: 'increasedLength' },
-        { cost: 1, levelUp: 0, speed: 0, id: 'largeHead' },
-        { cost: 4, levelUp: 3, speed: 0, id: 'limitedRegeneration' },
-        { cost: 1, levelUp: 0, speed: 0, id: 'longTail' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'morale' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'hardenedResolve' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'standTall' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'terrainAdaptation' },
-        { cost: 12, levelUp: 0, speed: 0, id: 'ultimateAttack' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'unscrupulous' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'alteredDurability' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'amphibious' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'destructiveBurrow' },
-        { cost: 6, levelUp: 3, speed: 1, id: 'durableFlunky' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'freeBurrow' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'landAdaptation' },
-        { cost: 8, levelUp: 0, speed: 0, id: 'resurrectingFlunky' },
-        { cost: 8, levelUp: 0, speed: 0, id: 'trample' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'toweringPresence' },
-        { cost: 2, levelUp: 2, speed: 0, id: 'burrow' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'humanshape' },
-        { cost: 4, levelUp: 2, speed: 0, id: 'limitedFlight' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'pressingSwarm' },
-        { cost: 12, levelUp: 0, speed: 0, id: 'shapeshifter' },
-        { cost: 1, levelUp: 1, speed: 0, id: 'skillCopy' },
-        { cost: 3, levelUp: 1, speed: 0, id: 'swiftStance' },
-        { cost: 8, levelUp: 0, speed: 0, id: 'victorAtAnyCost' },
-        { cost: 1, levelUp: 1, speed: 0, id: 'increasedCompanionSize' }
+        { cost: 1, levelUp: 1, speed: 3, id: 'customSkill', namePattern: '^custom' },
+        { cost: 8, levelUp: 0, speed: 0, id: 'balancedFighter', namePattern: '^balanced' },
+        { cost: 6, levelUp: 6, speed: 0, id: 'bravado', namePattern: '^bravado' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'discreetAura', namePattern: '^discreet' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'darksight', namePattern: '^dark( )?sight' },
+        { cost: 6, levelUp: 3, speed: 1, id: 'energyAttacker', namePattern: '^en(ergy)? attack' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'fastHealing', namePattern: '^fast heal' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'improvedDamageIncrement', namePattern: '^improved damage inc' }, // ERRATA: Reduced cost for IDI
+        { cost: 2, levelUp: 1, speed: 2, id: 'increasedSize', namePattern: '^increased size' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'ironDefense', namePattern: '^iron def' },
+        { cost: 6, levelUp: 3, speed: 1, id: 'physicalAttacker', namePattern: '^phys(ical)? attack' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'resistant', namePattern: '^resistan' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'sprinter', namePattern: '^sprint' },
+        { cost: 5, levelUp: 2, speed: 2, id: 'tireless', namePattern: '^tireless' },
+        { cost: 6, levelUp: 3, speed: 2, id: 'tough', namePattern: '^tough$' },
+        { cost: 6, levelUp: 3, speed: 2, id: 'versatileFighter', namePattern: '^versatile' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'skyAttack', namePattern: '^sky attack' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'breakValorLimit', namePattern: '^break valor' },
+        { cost: 8, levelUp: 0, speed: 0, id: 'expandedReach', namePattern: '^expanded reach' },
+        { cost: 12, levelUp: 0, speed: 0, id: 'extraAction', namePattern: '^extra action' },
+        { cost: 6, levelUp: 4, speed: 1, id: 'regeneration', namePattern: '^regen' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'staminaRecovery', namePattern: '^stamina recover' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'teleportation', namePattern: '^teleport' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'unyieldingDetermination', namePattern: '^unyielding' }, // ERRATA: Reduced cost, different effect
+        { cost: 4, levelUp: 0, speed: 0, id: 'violentAura', namePattern: '^violent aura' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'bounceBack', namePattern: '^bounce back' },
+        { cost: 4, levelUp: 2, speed: 2, id: 'crisis', namePattern: '^crisis$' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'dangerSense', namePattern: '^danger sense' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'desperation', namePattern: '^desperation' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'digDeep', namePattern: '^dig deep' },
+        { cost: 2, levelUp: 0, speed: 0, id: 'discretion', namePattern: '^discretion' },
+        { cost: 6, levelUp: 3, speed: 2, id: 'empowerAttack', namePattern: '^empower' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'improvedSwimming', namePattern: '^improved swim' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'nimbleMovement', namePattern: '^nimble move' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'overloadLimits', namePattern: '^overload limit' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'passiveHealing', namePattern: '^passive heal' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'protector', namePattern: '^protector' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'quickToAct', namePattern: '^quick to act' },
+        { cost: 5, levelUp: 3, speed: 1, id: 'recklessAttack', namePattern: '^reckless' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'resoluteStrike', namePattern: '^resolute strike' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'revenge', namePattern: '^revenge' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'rollingRecovery', namePattern: '^rolling recover' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'teamTactics', namePattern: '^team tactic' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'unmovable', namePattern: '^unmovable' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'abundantCreation', namePattern: '^abundant creat' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'cloneTactics', namePattern: '^clone tactic' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'combatToss', namePattern: '^combat toss' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'daredevil', namePattern: '^daredevil' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'phasing', namePattern: '^phasing' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'risingAttack', namePattern: '^rising attack' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'safeStride', namePattern: '^safe stride' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'splitMove', namePattern: '^split move' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'transposition', namePattern: '^transposition' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'underhanded', namePattern: '^underhanded' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'wallWalk', namePattern: '^wall walk' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'waterAdaptation', namePattern: '^water adaptation' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'waterWalk', namePattern: '^water walk' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'xRayVision', namePattern: '^x[ -]?ray' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'unshakeable', namePattern: '^unshakeable' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'unstoppable', namePattern: '^unstoppable' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'extendedRange', namePattern: '^extended range' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'freeFlight', namePattern: '^free flight' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'freeSwiftStep', namePattern: '^free swift step' },
+        { cost: 5, levelUp: 2, speed: 2, id: 'attackNode', namePattern: '^attack node$' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'darkHealing', namePattern: '^dark heal' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'dirtyTrick', namePattern: '^dirty trick' },
+        { cost: 2, levelUp: 0, speed: 0, id: 'duel', namePattern: '^duel' },
+        { cost: 4, levelUp: 3, speed: 1, id: 'effectTransfer', namePattern: '^effect transfer' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'feint', namePattern: '^feint' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'inspire', namePattern: '^inspire' }, // ERRATA: Fixed level on Inspire
+        { cost: 5, levelUp: 3, speed: 1, id: 'intimidate', namePattern: '^intimidate' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'jump', namePattern: '^jump' },
+        { cost: 5, levelUp: 2, speed: 1, id: 'nullify', namePattern: '^nullify' },
+        { cost: 4, levelUp: 2, speed: 2, id: 'provoke', namePattern: '^provoke' },
+        { cost: 5, levelUp: 3, speed: 1, id: 'recharge', namePattern: '^recharge' },
+        { cost: 3, levelUp: 1, speed: 2, id: 'sizeUp', namePattern: '^size up' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'spiritSight', namePattern: '^spirit sight' },
+        { cost: 5, levelUp: 2, speed: 1, id: 'toss', namePattern: '^toss' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'battleAnalysis', namePattern: '^battle analysis' },
+        { cost: 6, levelUp: 0, speed: 1, id: 'clone', namePattern: '^clone$' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'effectCapture', namePattern: '^effect capture' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'healthTransference', namePattern: '^health transfer' },
+        { cost: 6, levelUp: 3, speed: 2, id: 'portal', namePattern: '^portal$' },
+        { cost: 4, levelUp: 2, speed: 2, id: 'refractionPoint', namePattern: '^refraction point' },
+        { cost: 6, levelUp: 3, speed: 1, id: 'seal', namePattern: '^seal$' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'shadowMeld', namePattern: '^shadow( )?meld' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'staminaTransference', namePattern: '^stamina transfer' },
+        { cost: 5, levelUp: 2, speed: 1, id: 'swiftStep', namePattern: '^swift step' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'attackNodeNetwork', namePattern: '^attack node network' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'exploitWeakness', namePattern: '^exploit weakness' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'flunkyDomination', namePattern: '^flunky domination' },
+        { cost: 6, levelUp: 2, speed: 1, id: 'fly', namePattern: '^fly$' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'refractionChain', namePattern: '^refraction chain' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'swiftJump', namePattern: '^swift jump' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'combinationAttack', namePattern: '^comb(o|ination) attack' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'counterattack', namePattern: '^counter( )?attack' },
+        { cost: 6, levelUp: 2, speed: 2, id: 'cover', namePattern: '^cover$' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'ignoreEffect', namePattern: '^ignore effect' },
+        { cost: 3, levelUp: 2, speed: 1, id: 'interruptAttack', namePattern: '^interrupt attack' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'afterimage', namePattern: '^after( )?image' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'areaShield', namePattern: '^area shield' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'clash', namePattern: '^clash$' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'damageFeedback', namePattern: '^damage feedback' },
+        { cost: 5, levelUp: 2, speed: 1, id: 'divingEscape', namePattern: '^diving escape' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'finalAttack', namePattern: '^final attack' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'lineDeflect', namePattern: '^line deflect' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'mobileCover', namePattern: '^mobile cover' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'mobileDodge', namePattern: '^mobile dodge' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'opportunisticDodge', namePattern: '^opportunistic dodge' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'pushAway', namePattern: '^push away' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'rangedInterrupt', namePattern: '^ranged interrupt' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'shrugOff', namePattern: '^shrug off' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'defensiveClash', namePattern: '^defensive clash' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'deflectingShield', namePattern: '^deflecting shield' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'prepared', namePattern: '^prepared' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'acceleration', namePattern: '^acceleration' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'analysis', namePattern: '^analysis' },
+        { cost: 6, levelUp: 3, speed: 1, id: 'blazingMight', namePattern: '^blazing might' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'burningPassion', namePattern: '^burning passion' },
+        { cost: 6, levelUp: 3, speed: 1, id: 'fightingSpirit', namePattern: '^fighting spirit' },
+        { cost: 6, levelUp: 3, speed: 1, id: 'hardenedDefense', namePattern: '^hardened def' },
+        { cost: 6, levelUp: 3, speed: 1, id: 'hardenedResistance', namePattern: '^hardened res' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'resoluteAura', namePattern: '^resolute aura' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'strengthOfWill', namePattern: '^strength of will' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'asset', namePattern: '^asset' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'challengeTechnique', namePattern: '^challenge tech' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'favorableInsight', namePattern: '^favo(u)?rable insight' },
+        { cost: 2, levelUp: 0, speed: 0, id: 'proficiency', namePattern: '^proficiency' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'recovery', namePattern: '^recovery' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'favorableSuccess', namePattern: '^favorable success' },
+        { cost: 6, levelUp: 4, speed: 1, id: 'companion', namePattern: '^companion$' },
+        { cost: 2, levelUp: 1, speed: 2, id: 'fastCompanion', namePattern: '^fast companion' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'hiddenCompanion', namePattern: '^hidden companion' },
+        { cost: 3, levelUp: 1, speed: 1, id: 'mount', namePattern: '^mount$' },
+        { cost: 2, levelUp: 0, speed: 0, id: 'senseMalice', namePattern: '^sense malice' },
+        { cost: 3, levelUp: 1, speed: 1, id: 'allyMount', namePattern: '^ally mount' },
+        { cost: 4, levelUp: 4, speed: 1, id: 'companionZoneOfControl', namePattern: '^companion z' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'extendedRevival', namePattern: '^extended reviv' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'flankAttack', namePattern: '^flank' },
+        { cost: 2, levelUp: 0, speed: 0, id: 'protectAlly', namePattern: '^protect ally' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'protectMaster', namePattern: '^protect master' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'rangedRevival', namePattern: '^ranged reviv' },
+        { cost: 3, levelUp: 1, speed: 1, id: 'tossingCompanion', namePattern: '^tossing companion' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'trustingCompanion', namePattern: '^trusting companion' },
+        { cost: 2, levelUp: 0, speed: 0, id: 'companionSense', namePattern: '^companion sense' },
+        { cost: 3, levelUp: 3, speed: 1, id: 'flyingCompanion', namePattern: '^flying companion' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'instantMount', namePattern: '^instant mount' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'reactiveCompanion', namePattern: '^reactive companion' },
+        { cost: 12, levelUp: 0, speed: 0, id: 'limitlessPower', namePattern: '^valiant' },
+        { cost: 8, levelUp: 0, speed: 0, id: 'invisibility', namePattern: '^invisibility' },
+        { cost: 8, levelUp: 3, speed: 1, id: 'revive', namePattern: '^revive$' },
+        { cost: 2, levelUp: 0, speed: 0, id: 'principled', namePattern: '^principled' },
+        { cost: 6, levelUp: 3, speed: 2, id: 'illusoryAssailant', namePattern: '^illusory assailant' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'illusoryDisguise', namePattern: '^illusory disguise' },
+        { cost: 4, levelUp: 2, speed: 2, id: 'illusoryTerrain', namePattern: '^illusory terrain' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'pierceIllusion', namePattern: '^pierce illusion' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'elementalResistance', namePattern: '^elemental resist' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'elementalAttunement', namePattern: '^elemental attune' },
+        { cost: 5, levelUp: 0, speed: 0, id: 'polearmWielder', namePattern: '^polearm wield' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'rangedWeaponWielder', namePattern: '^ranged weapon wield' },
+        { cost: 4, levelUp: 2, speed: 0, id: 'aquatic', namePattern: '^aquatic$' },
+        { cost: 4, levelUp: 2, speed: 0, id: 'construct', namePattern: '^construct$' },
+        { cost: 4, levelUp: 2, speed: 0, id: 'elemental', namePattern: '^elemental$' },
+        { cost: 4, levelUp: 2, speed: 0, id: 'undead', namePattern: '^undead$' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'diminuitive', namePattern: '^diminuitive' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'healer', namePattern: '^healer' },
+        { cost: 1, levelUp: 1, speed: 0, id: 'increasedLength', namePattern: '^increased length' },
+        { cost: 1, levelUp: 0, speed: 0, id: 'largeHead', namePattern: '^large head' },
+        { cost: 4, levelUp: 3, speed: 0, id: 'limitedRegeneration', namePattern: '^limited regen' },
+        { cost: 1, levelUp: 0, speed: 0, id: 'longTail', namePattern: '^long tail' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'morale', namePattern: '^morale' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'hardenedResolve', namePattern: '^hardened resolve' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'standTall', namePattern: '^stand tall' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'terrainAdaptation', namePattern: '^terrain adapt' },
+        { cost: 12, levelUp: 0, speed: 0, id: 'ultimateAttack', namePattern: '^ultimate attack' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'unscrupulous', namePattern: '^unscrupulous' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'alteredDurability', namePattern: '^altered durability' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'amphibious', namePattern: '^amphibious' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'destructiveBurrow', namePattern: '^destructive burrow' },
+        { cost: 6, levelUp: 3, speed: 1, id: 'durableFlunky', namePattern: '^durable flunky' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'freeBurrow', namePattern: '^free burrow' },
+        { cost: 4, levelUp: 0, speed: 0, id: 'landAdaptation', namePattern: '^land adapt' },
+        { cost: 8, levelUp: 0, speed: 0, id: 'resurrectingFlunky', namePattern: '^resurrecting flunky' },
+        { cost: 8, levelUp: 0, speed: 0, id: 'trample', namePattern: '^trample' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'toweringPresence', namePattern: '^towering presence' },
+        { cost: 2, levelUp: 2, speed: 0, id: 'burrow', namePattern: '^burrow' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'humanshape', namePattern: '^human( )?shape' },
+        { cost: 4, levelUp: 2, speed: 0, id: 'limitedFlight', namePattern: '^limited flight' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'pressingSwarm', namePattern: '^pressing swarm' },
+        { cost: 12, levelUp: 0, speed: 0, id: 'shapeshifter', namePattern: '^shapeshifter' },
+        { cost: 1, levelUp: 1, speed: 0, id: 'skillCopy', namePattern: '^skill copy' },
+        { cost: 3, levelUp: 1, speed: 0, id: 'swiftStance', namePattern: '^swift stance' },
+        { cost: 8, levelUp: 0, speed: 0, id: 'victorAtAnyCost', namePattern: '^victor(y)? at any cost' },
+        { cost: 1, levelUp: 1, speed: 0, id: 'increasedCompanionSize', namePattern: '^increased companion size' },
+        { cost: 2, levelUp: 0, speed: 0, id: 'changeAttributes', namePattern: '^change attr' },
+        { cost: 2, levelUp: 2, speed: 0, id: 'enhancedRange', namePattern: '^enhanced range' },
+        { cost: 8, levelUp: 0, speed: 0, id: 'greatAccuracy', namePattern: '^great acc' },
+        { cost: 8, levelUp: 0, speed: 0, id: 'greatEvasion', namePattern: '^great (evd|eva)' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'powerfulBlow', namePattern: '^powerful blow' }
     ];
     let coreLibrary = [
         { cost: 2, levelUp: 1, id: 'damage' },
@@ -456,8 +465,6 @@
                 attrs['can_boost_aur'] = canBoostAur ? 'on' : 0;;
                 attrs['can_boost_int'] = canBoostInt ? 'on' : 0;;
                 attrs['can_boost_res'] = canBoostRes ? 'on' : 0;;
-                
-                log(attrs);
                 
                 // Set values
                 setAttrs(attrs);
@@ -1422,7 +1429,6 @@
         techFieldNames.push('repeating_techs_' + techId + '_tech_bonus');
         
         getAttrs(techFieldNames, function(techValues) {
-            log(techValues);
             let techName = techValues['repeating_techs_' + techId + '_tech_name'];
             let techCore = 'damage';
             if(techValues['repeating_techs_' + techId + '_tech_core']) {
@@ -1547,7 +1553,7 @@
             
             // Build tech summary
             let summary = '';
-            let warnings = ' ';
+            let warnings = [];
             
             let hasSkills = false;
             let hasFlaws = false;
@@ -1555,7 +1561,7 @@
             let isPersistent = false;
             
             if(techCoreLevel < 1) {
-                warnings += 'WARNING: Core Power cannot be less than 1. ';
+                warnings.push('Core Power cannot be less than 1.');
             }
             
             // Is this an ult?
@@ -1784,7 +1790,7 @@
                     hasFlaws = true;
                     break;
                 default:
-                    warnings += "WARNING: Unknown Core '" + techCore + "'. ";
+                    warnings.push(`Unknown Core '${techCore}'.`);
                     break;
             }
             
@@ -2153,7 +2159,7 @@
                 } else if(mod.indexOf('continuous r') == 0) {
                     // Add nothing, already explained in core description
                 } else if(mod.length > 0) {
-                    warnings += "WARNING: Unrecognized Modifier '" + mod + "'. ";
+                    warnings.push(`Unrecognized Modifier '${mod}'.`);
                 }
             });
             if(techCore == 'ultDamage' || techCore == 'domain') {
@@ -2164,7 +2170,7 @@
             
             let techLevel = techCoreLevel + totalModLevel;
             if(techLevel > level + 3 || (techCoreLevel > level && techCore == 'summoning')) {
-                warnings += 'WARNING: Technique Level is too high for current Character Level. '
+                warnings.push('Technique Level is too high for current Character Level.');
             }
             
             summary += '\n';
@@ -2192,7 +2198,7 @@
                     limitSummary += 'Costs ' + healthLost + ' Health. ';
                     limitSt += 2 * limitLevel;
                     if(limitLevel > 5) {
-                        warnings += "WARNING: Health Limit can't be taken above level 5. ";
+                        warnings.push("Health Limit can't be taken above level 5.");
                     }
                 } else if(limit.indexOf('ally') == 0) {
                     limitSummary += 'Cannot target yourself. ';
@@ -2400,7 +2406,7 @@
                 } else if(limit.length > 0 &&
                           limit.indexOf('slow') == -1 &&
                           limit.indexOf('grant') == -1) {
-                    warnings += "WARNING: Unrecognized Limit '" + limit + "'. ";
+                    warnings.push(`Unrecognized Limit '${limit}'.`);
                 }
             });
             
@@ -2418,15 +2424,87 @@
                 summary += 'Costs ' + cost + ' Stamina. '
             }
             summary += limitSummary;
-            log(summary);
+            
+            // Determine Flaw SP
+            let flawSpMax = 0;
+            let flawSp = 0;
+            if(hasFlaws) {
+                switch(techCore) {
+                    case 'weaken':
+                    case 'domain':
+                        flawSpMax = techCoreLevel;
+                        break;
+                }
+                const techFlawList = techInflictedFlaws.toLowerCase()
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(s => s && s.length > 0);
+                for(const flawName of techFlawList) {
+                    const flawData = flawLibrary.find(f => flawName.match(f.namePattern));
+                    if(flawData) {
+                        // Try to get the flaw level
+                        let split = flawName.split(' ');
+                        let flawLevel = parseInt(split[split.length - 1]);
+                        if(flawLevel != flawLevel) {
+                            // NaN, so there's no level listed - assume 1
+                            flawLevel = 1;
+                        }
+                        flawSp += flawData.cost + flawData.levelUp * (flawLevel - 1);
+                    } else {
+                        warnings.push(`Unrecognized Flaw '${flawName}''.`);
+                    }
+                }
+                if(flawSp > flawSpMax && flawSpMax > 0) {
+                    warnings.push('Flaws exceed SP limit.');
+                }
+            }
+            
+            // Determine Skill SP
+            let skillSpMax = 0;
+            let skillSp = 0;
+            if(hasSkills) {
+                switch(techCore) {
+                    case 'boost':
+                    case 'transformation':
+                    case 'domain':
+                        skillSpMax = 2 * techCoreLevel;
+                        break;
+                }
+                const techSkillList = techGrantedSkills.toLowerCase()
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(s => s && s.length > 0);
+                for(const skillName of techSkillList) {
+                    const skillData = skillLibrary.find(s => skillName.match(s.namePattern));
+                    if(skillData) {
+                        // Try to get the flaw level
+                        let split = skillName.split(' ');
+                        let skillLevel = parseInt(split[split.length - 1]);
+                        if(skillLevel != skillLevel) {
+                            // NaN, so there's no level listed - assume 1
+                            skillLevel = 1;
+                        }
+                        skillSp += skillData.cost + skillData.levelUp * (skillLevel - 1);
+                    } else {
+                        warnings.push(`Unrecognized Skill '${skillName}''.`);
+                    }
+                }
+                if(skillSp > skillSpMax && skillSpMax > 0) {
+                    warnings.push('Skills exceed SP limit.');
+                }
+            }
             
             let attrs = {};
             attrs['repeating_techs_' + techId + '_tech_summary'] = summary;
-            attrs['repeating_techs_' + techId + '_tech_warnings'] = warnings;
+            attrs['repeating_techs_' + techId + '_tech_warnings'] = warnings.length > 0 ? `WARNING: ${warnings.join(' ')}` : ' ';
             attrs['repeating_techs_' + techId + '_tech_mod_level'] = totalModLevel;
             attrs['repeating_techs_' + techId + '_tech_level'] = techLevel;
             attrs['repeating_techs_' + techId + '_tech_limit_st'] = limitSt;
             attrs['repeating_techs_' + techId + '_tech_cost'] = cost;
+            attrs['repeating_techs_' + techId + '_tech_flaw_sp'] = flawSp;
+            attrs['repeating_techs_' + techId + '_tech_flaw_sp_max'] = flawSpMax;
+            attrs['repeating_techs_' + techId + '_tech_skill_sp'] = skillSp;
+            attrs['repeating_techs_' + techId + '_tech_skill_sp_max'] = skillSpMax;
             attrs['repeating_techs_' + techId + '_tech_is_mimic'] = techCore == 'mimic' || techCore == 'ultMimic'
                 ? 'on' : 'off';
             attrs['repeating_techs_' + techId + '_tech_has_flaws'] = hasFlaws
@@ -3172,6 +3250,7 @@
                     </div>
                 </div>
                 <div class="tech-core">
+                    <span class="label">Core:</span>
                     <select class="tech-field" name="attr_tech_core">
                         <option value="barrier">Barrier Core</option>
                         <option value="boost">Boost Core</option>
@@ -3190,11 +3269,11 @@
                     </select>
                 </div>
                 <div class="tech-core-level">
-                    <span class="label">Core Power</span>
+                    <span class="label">Core Power:</span>
                     <input class="tech-field" type="number" name="attr_tech_core_level" value="1" />
                 </div>
                 <div class="tech-attribute">
-                    <span class="label">Attribute</span>
+                    <span class="label">Attribute:</span>
                     <select class="tech-field" name="attr_tech_stat">
                         <option value="none" selected="selected">None</option>
                         <option value="str">Strength</option>
@@ -3205,39 +3284,43 @@
                     </select>
                 </div>
                 <div class="tech-cost">
-                    <span class="label">ST Cost</span>
                     <input type="checkbox" class="conditional-check" name="attr_tech_can_edit_cost">
                     <div class="conditional-block">
+                        <span class="label">ST Cost:</span>
                         <input class="tech-field" type="number" name="attr_tech_custom_cost" value="0" />
                     </div>
                     <div class="conditional-block-inverse">
+                        <span class="label">ST Cost</span>
                         <span class="derived-value" name="attr_tech_cost">
                     </div>
                 </div>
                 <div class="tech-summary">
                     <div><span name="attr_tech_description"></span></div>
                     <div><span name="attr_tech_summary"></span></div>
+                    <div><span name="attr_tech_warnings"></span></div>
                 </div>
                 <div class="tech-description">
                     <div class="label">Description</div>
                     <div>
                         <textarea class="smallertext tech-field" name="attr_tech_description"></textarea>
                     </div>
-                    <div>
+                    <div class="tech-conditional-field">
                         <input type="checkbox" class="conditional-check" name="attr_tech_has_skills">
                         <div class="tech-block conditional-block">
                             <span class="label">Granted Skills</span>
                             <input type="text" class="tech-field" name="attr_tech_granted_skills" />
+                            (<span class="sp_label" name="attr_tech_skill_sp"></span>/<span class="sp_label" name="attr_tech_skill_sp_max"></span>)
                         </div>
                     </div>
-                    <div>
+                    <div class="tech-conditional-field">
                         <input type="checkbox" class="conditional-check" name="attr_tech_has_flaws">
                         <div class="tech-block conditional-block">
                             <span class="label">Inflicted Flaws</span>
                             <input type="text" class="tech-field" name="attr_tech_inflicted_flaws" />
+                            (<span class="sp_label" name="attr_tech_flaw_sp"></span>/<span class="sp_label" name="attr_tech_flaw_sp_max"></span>)
                         </div>
                     </div>
-                    <div>
+                    <div class="tech-conditional-field">
                         <input type="checkbox" class="conditional-check" name="attr_tech_is_mimic">
                         <div class="tech-block conditional-block">
                             <span class="label">Mimicked Tech</span>

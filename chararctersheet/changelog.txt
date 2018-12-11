@@ -220,3 +220,8 @@ v1.3.0 (12/10/2018):
 - No longer using !important or <table> anywhere.
 - Made things look nicer.
 - Added field for ST cost of custom core techniques.
+
+v1.4.0 (12/11/2018):
+- Added SP tracking for boosts, weakens, et cetera.
+- Techs now display warnings again.
+- Small adjustments to tech layout.
