@@ -132,6 +132,10 @@ input[type=number].sheet-number-input-orange {
 }
 
 input[type=number].sheet-long-number {
+    width: 4em;
+}
+
+input[type=number].sheet-longer-number {
     width: 5em;
 }
 
@@ -222,7 +226,7 @@ hr {
 
 .sheet-flaw {
     color: #730A18;
-    background-color: #D7BDB4;
+    background-color: #e5d4cf;
     padding-bottom: 10px;
     margin-bottom: 15px;
     margin-left: 8px;
@@ -230,31 +234,31 @@ hr {
     width: 95%;
 }
 
-.sheet-flaw input {
-    color: black;
-}
-
-.sheet-flaw select {
-    color: black;
-}
-
 .sheet-flaw-upper {
     padding-left: -5px;
     padding-bottom: 5px;
+    align-items: center;
 }
 
 .sheet-flaw-picker {
-    border: 2px solid #730A18;
+    border: 3px solid #730A18;
+    border-radius: 0;
     position: relative;
+    color: black;
     top: -8px;
     left: -8px;
 }
 
 .sheet-flaw-level {
-    border: 2px solid #730A18;
-    position: relative;
-    top: -8px;
-    height: 32px;
+    border-color: #730A18;
+    border-width: 2px;
+    border-radius: 0;
+    border-style: solid;
+    background-color: #ece0dd;
+    padding-bottom: 0px;
+    color: #730A18;
+    text-align: right;
+    font-weight: bold;
 }
 
 .sheet-notes {
@@ -283,10 +287,6 @@ hr {
     width: 95%;
 }
 
-.sheet-skill input {
-    color: black;
-}
-
 .sheet-skill select {
     color: black;
 }
@@ -294,20 +294,28 @@ hr {
 .sheet-skill-upper {
     padding-left: -5px;
     padding-bottom: 5px;
+    align-items: center;
 }
 
 .sheet-skill-picker {
-    border: 2px solid #757437;
+    border: 3px solid #757437;
+    border-radius: 0;
     position: relative;
+    color: black;
     top: -8px;
     left: -8px;
 }
 
 .sheet-skill-level {
-    border: 2px solid #757437;
-    position: relative;
-    top: -8px;
-    height: 32px;
+    border-color: #757437;
+    border-width: 2px;
+    border-radius: 0;
+    border-style: solid;
+    background-color: #e3e1d7;
+    padding-bottom: 0px;
+    color: #757437;
+    text-align: right;
+    font-weight: bold;
 }
 
 .sheet-notes {
@@ -337,48 +345,73 @@ hr {
     padding-right: 5px;
     align-items: center;
     display: inline-grid;
-    grid-template-areas:
-        'tech-name tech-level tech-button'
-        'tech-core tech-core-level tech-summary'
-        'tech-attribute tech-cost tech-summary'
-        'tech-description tech-description tech-summary'
-        'tech-modifiers tech-modifiers tech-limits';
+    grid-template-columns: repeat(4, auto);
+    grid-template-rows: repeat(5, auto);
     grid-row-gap: 5px;
-    grid-column-gap: 10px;
+    grid-column-gap: 5px;
 }
 
 .sheet-tech select {
+    border: 2px solid #F2AC63;
+    border-radius: 0;
+    background-color: #fdf5eb;
     width: 190px;
+}
+
+.sheet-tech textarea,input[type=text] {
+    background-color: white;
 }
 
 select.sheet-number-select {
     width: 4em;
     margin-bottom: 0px;
+    font-weight: bold;
 }
 
-.sheet-tech-button { grid-area: tech-button; }
-.sheet-tech-hidden-buttons { grid-area: tech-hidden-buttons; }
-.sheet-tech-buttons { grid-area: tech-buttons; }
-.sheet-tech-core { grid-area: tech-core; }
-.sheet-tech-summary { grid-area: tech-summary; }
-.sheet-tech-description { grid-area: tech-description; }
-.sheet-tech-modifiers { grid-area: tech-modifiers; }
-.sheet-tech-limits { grid-area: tech-limits; }
-
 .sheet-tech-name {
+    grid-column: span 2;
+}
+
+.sheet-tech-summary {
+    grid-row: span 4;
+    align-items: top;
+    height: 100%;
+}
+
+.sheet-tech-description {
+    grid-column: span 3;
+}
+
+.sheet-tech-modifiers {
+    grid-column: span 3;
+}
+
+.sheet-tech-optional-fields {
+    grid-column: span 3;
+}
+
+.sheet-tech-name input {
+    border: 3px solid #F2AC63;
+    border-radius: 0;
     position: relative;
     width: 230px;
     font-weight: bold;
     line-height: 20px;
     font-size: 15px;
-    top: -8px;
-    left: -8px;
+    top: -12px;
+    left: -12px;
 }
 
 .sheet-tech-field {
     border: 2px solid #F2AC63;
+    background-color: #fdf5eb;
+    border-radius: 0;
     margin-left: 2px;
     color: black;
+}
+
+.sheet-tech-small-input {
+    font-weight: bold;
 }
 
 .sheet-tech-cost {
@@ -386,17 +419,14 @@ select.sheet-number-select {
 }
 
 .sheet-tech-level { 
-    grid-area: tech-level;
     text-align: left;
 }
 
 .sheet-tech-core-power { 
-    grid-area: tech-core-power; 
     text-align: left;
 }
 
 .sheet-tech-cost {
-    grid-area: tech-cost; 
     text-align: left;
 }
 

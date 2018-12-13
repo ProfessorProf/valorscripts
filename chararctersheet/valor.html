@@ -2449,9 +2449,25 @@
                             // NaN, so there's no level listed - assume 1
                             flawLevel = 1;
                         }
+                        // Max flaw level
+                        var flawMaxLevel = 1;
+                        switch(flawData.speed) {
+                            case 1:
+                                flawMaxLevel = Math.ceil(level / 5);
+                                break;
+                            case 2:
+                                flawMaxLevel = Math.ceil(level / 3);
+                                break;
+                            case 3:
+                                flawMaxLevel = 100; // Custom Flaw
+                        }
+                        if(flawLevel > flawMaxLevel) {
+                            warnings.push(`Max level for Flaw '${flawName}' is ${flawMaxLevel}.`);
+                        }
+                        
                         flawSp += flawData.cost + flawData.levelUp * (flawLevel - 1);
                     } else {
-                        warnings.push(`Unrecognized Flaw '${flawName}''.`);
+                        warnings.push(`Unrecognized Flaw '${flawName}'.`);
                     }
                 }
                 if(flawSp > flawSpMax && flawSpMax > 0) {
@@ -2465,7 +2481,7 @@
             if(hasSkills) {
                 switch(techCore) {
                     case 'boost':
-                    case 'transformation':
+                    case 'ultTransform':
                     case 'domain':
                         skillSpMax = 2 * techCoreLevel;
                         break;
@@ -2484,6 +2500,23 @@
                             // NaN, so there's no level listed - assume 1
                             skillLevel = 1;
                         }
+                        
+                        // Max skill level
+                        var skillMaxLevel = 1;
+                        switch(skillData.speed) {
+                            case 1:
+                                skillMaxLevel = Math.ceil(level / 5);
+                                break;
+                            case 2:
+                                skillMaxLevel = Math.ceil(level / 3);
+                                break;
+                            case 3:
+                                skillMaxLevel = 100; // Custom Flaw
+                        }
+                        if(skillLevel > skillMaxLevel) {
+                            warnings.push(`Max level for Skill '${skillName}' is ${skillMaxLevel}.`);
+                        }
+                        
                         skillSp += skillData.cost + skillData.levelUp * (skillLevel - 1);
                     } else {
                         warnings.push(`Unrecognized Skill '${skillName}''.`);
@@ -2650,7 +2683,7 @@
                 <span class="label">Experience:</span>
             </div>
             <div>
-                <input type="number" class="long-number attributes-header-input" name="attr_exp" value="0">
+                <input type="number" class="longer-number attributes-header-input" name="attr_exp" value="0">
             </div>
             <div class="attributes-header-label">
                 <span class="label">Type:</span>
@@ -2707,7 +2740,7 @@
                     </div>
                     <div>Dexterity:</div>
                     <div>
-                        <span class="derived-value" name="attr_mus"></span>
+                        <span class="derived-value" name="attr_dex"></span>
                         <button type="roll" value='!roll-as @{character_id} "1d10+@{dex}+@{rollbonus}" "Dexterity"' name="roll_dex"></button>
                         <input type="checkbox" class="conditional-check" name="attr_can_boost_dex">
                         <div class="conditional-block">
@@ -2845,21 +2878,21 @@
                 <div class="stats-column stats-orange stats-short">
                     <div>Phys. Attack:</div>
                     <div>
-                        <input type="number" class="number-input-orange" name="attr_patkbonus" value="0">
+                        <input type="number" class="number-input-orange long-number" name="attr_patkbonus" value="0">
                     </div>
                     <div>En. Attack:</div>
                     <div>
-                        <input type="number" class="number-input-orange" name="attr_eatkbonus" value="0">
+                        <input type="number" class="number-input-orange long-number" name="attr_eatkbonus" value="0">
                     </div>
                 </div>
                 <div class="stats-column stats-green stats-short">
                     <div>Defense:</div>
                     <div>
-                        <input type="number" class="number-input-green" name="attr_defensebonus" value="0">
+                        <input type="number" class="number-input-green long-number" name="attr_defensebonus" value="0">
                     </div>
                     <div>Resistance:</div>
                     <div>
-                        <input type="number" class="number-input-green" name="attr_resistancebonus" value="0">
+                        <input type="number" class="number-input-green long-number" name="attr_resistancebonus" value="0">
                     </div>
                 </div>
             </div>
@@ -2923,7 +2956,7 @@
                         </optgroup>
                     </select>
                     <span class="label">
-                        Level <input class="flaw-level number-input-round" type="number" name="attr_flawlevel" value="1" />
+                        Level <input class="flaw-level" type="number" name="attr_flawlevel" value="1" />
                     </span>
                     <span name="attr_warning"></span>
                 </div>
@@ -3177,9 +3210,7 @@
         <fieldset class="repeating_techs">
             <div class="tech">
                 <div class="tech-name">
-                    <div class="tech-header">
-                        <input type="text" class="tech-field tech-name" name="attr_tech_name" value="New Technique" />
-                    </div>
+                    <input type="text" class = "tech-name" name="attr_tech_name" value="New Technique" />
                 </div>
                 <div class="tech-level">
                     <div class="tech-header">
@@ -3190,7 +3221,7 @@
                 <div class="tech-button">
                     <button class="valor-button" type='roll' name='attr_tech_command'> Use Technique</button>
                     <span class="label">Targets</span>
-                    <select name="attr_tech_targets" class="number-select tech-field">
+                    <select name="attr_tech_targets" class="number-select tech-field tech-small-input">
                         <option value="1">1</option>
                         <option value="2">2</option>
                         <option value="3">3</option>
@@ -3212,7 +3243,7 @@
                         <option value="19">19</option>
                         <option value="20">20</option>
                     </select>
-                    <span class="label">Bonus</span> <input class="tech-field" type='number' value='0' name='attr_tech_bonus'>
+                    <span class="label">Bonus</span> <input class="tech-field tech-small-input" type='number' value='0' name='attr_tech_bonus'>
                     <div>
                         <input type="checkbox" class="conditional-check" name="attr_tech_can_dig_deep">
                         <div class="conditional-block">
@@ -3249,8 +3280,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="tech-core">
+                <div>
                     <span class="label">Core:</span>
+                </div>
+                <div class="tech-core">
                     <select class="tech-field" name="attr_tech_core">
                         <option value="barrier">Barrier Core</option>
                         <option value="boost">Boost Core</option>
@@ -3270,10 +3303,17 @@
                 </div>
                 <div class="tech-core-level">
                     <span class="label">Core Power:</span>
-                    <input class="tech-field" type="number" name="attr_tech_core_level" value="1" />
+                    <input class="tech-field tech-small-input" type="number" name="attr_tech_core_level" value="1" />
+                </div>
+                <div class="tech-summary">
+                    <div><span name="attr_tech_description"></span></div>
+                    <div><span name="attr_tech_summary"></span></div>
+                    <div><span name="attr_tech_warnings"></span></div>
+                </div>
+                <div>
+                    <span class="label">Attribute:</span>
                 </div>
                 <div class="tech-attribute">
-                    <span class="label">Attribute:</span>
                     <select class="tech-field" name="attr_tech_stat">
                         <option value="none" selected="selected">None</option>
                         <option value="str">Strength</option>
@@ -3287,27 +3327,24 @@
                     <input type="checkbox" class="conditional-check" name="attr_tech_can_edit_cost">
                     <div class="conditional-block">
                         <span class="label">ST Cost:</span>
-                        <input class="tech-field" type="number" name="attr_tech_custom_cost" value="0" />
+                        <input class="tech-field tech-small-input" type="number" name="attr_tech_custom_cost" value="0" />
                     </div>
                     <div class="conditional-block-inverse">
                         <span class="label">ST Cost</span>
-                        <span class="derived-value" name="attr_tech_cost">
+                        <span class="derived-value" name="attr_tech_cost"></span>
                     </div>
-                </div>
-                <div class="tech-summary">
-                    <div><span name="attr_tech_description"></span></div>
-                    <div><span name="attr_tech_summary"></span></div>
-                    <div><span name="attr_tech_warnings"></span></div>
                 </div>
                 <div class="tech-description">
                     <div class="label">Description</div>
                     <div>
                         <textarea class="smallertext tech-field" name="attr_tech_description"></textarea>
                     </div>
+                </div>
+                <div class="tech-optional-fields">
                     <div class="tech-conditional-field">
                         <input type="checkbox" class="conditional-check" name="attr_tech_has_skills">
                         <div class="tech-block conditional-block">
-                            <span class="label">Granted Skills</span>
+                            <span class="label">Skills:</span>
                             <input type="text" class="tech-field" name="attr_tech_granted_skills" />
                             (<span class="sp_label" name="attr_tech_skill_sp"></span>/<span class="sp_label" name="attr_tech_skill_sp_max"></span>)
                         </div>
@@ -3315,7 +3352,7 @@
                     <div class="tech-conditional-field">
                         <input type="checkbox" class="conditional-check" name="attr_tech_has_flaws">
                         <div class="tech-block conditional-block">
-                            <span class="label">Inflicted Flaws</span>
+                            <span class="label">Flaws:</span>
                             <input type="text" class="tech-field" name="attr_tech_inflicted_flaws" />
                             (<span class="sp_label" name="attr_tech_flaw_sp"></span>/<span class="sp_label" name="attr_tech_flaw_sp_max"></span>)
                         </div>
@@ -3323,7 +3360,7 @@
                     <div class="tech-conditional-field">
                         <input type="checkbox" class="conditional-check" name="attr_tech_is_mimic">
                         <div class="tech-block conditional-block">
-                            <span class="label">Mimicked Tech</span>
+                            <span class="label">Mimicked Tech:</span>
                             <input class="tech-field" type="text" name="attr_tech_mimic_target" />
                         </div>
                     </div>

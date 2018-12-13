@@ -1,0 +1,130 @@
+v1.2.2 (9/6/18):
+
+v1.2.3 (10/16/2018):
+
+v1.2.4 (10/26/18):
+
+v1.2.5 (11/12/18):
+
+v1.3.0 (12/10/18):
+
+====
+
+v1.0.0 (12/14/17):
+- Massive visual update.
+- Updated tech usage display.
+- Ultimate Techniques can now be re-used when overriding limits.
+- Fixed some cases where Valor would update when it shouldn't.
+
+v1.0.1 (12/16/17):
+- Fixed bug that prevented deletion of techs.
+- Fixed issue with skill level warnings not being displayed.
+- Fixed a bug where Granted Skills weren't working.
+
+v1.0.2 (12/26/17):
+- Fixed a bunch of bugs with the Inflicted Flaws field.
+- Granted flaws/skills from mods/limits now appear in the tech description.
+
+v1.0.3 (12/27/17): 
+- Fixed a bunch of display issues with Domain Core.
+- Debilitating attacks now show their inflicted flaws in the tech description.
+
+v1.0.4 (1/6/18):
+- Slightly less masssive visual update.
+- Fixed a couple typos.
+- Domain Core should be treating mod levels correctly now.
+- Tech descriptions update when Attack values change.
+
+v1.0.5 (1/25/18):
+- Added support for Continuous Recovery.
+- Crisis and Berserker now only appear when using damage techs.
+- Added support for Continuous Recovery mod.
+
+v1.0.6 (2/21/18):
+- Fixed display of Healing Core heal amount.
+- New command !sizeup displays information for when a player uses the Size Up skill.
+- Unerring ults no longer display as already used on !status command.
+- !t-undo now displays a message indicating that it was used.
+- Vitality Limit now blocks at 40% Health, not 60%.
+- Fixed a few bugs.
+
+v1.0.7 (2/26/18):
+- Speed is finally correctly displayed as Move.
+- Bugfix: Healing techs without mods were broken by the new regen logic
+- Bugfix: Transformations weren't counted as ultimates in a lot of ways.
+- Bugfix: Transformations restore HP again.
+
+v1.0.8 (3/19/18):
+- Healing values displayed correctly on mnd/guts healing techniques.
+- Bonuses are once again added to technique attack rolls.
+
+v1.0.9 (5/21/18):
+- Bugfixes.
+- Fixed price on Unyielding Determination.
+- Skill/Flaw/Core libraries are no longer storied within the character sheet.
+- Can manually select a sheet to finalize to if Finalize Level-up doesn't work.
+- Finalize Level-up runs much faster.
+- Custom core no longer shows a +1 when a Master is using it and there's no roll being made.
+- Using a Transformation automatically raises the All Rolls bonus by one.
+- !status shows the right amount of ammo for ammo limits (was off by one).
+- Fixed rare issue where !crit would think a tech had the wrong core.
+- Reposition techs now factor in Unmovable for each target.
+
+v1.1.0 (9/4/2018):
+- Big code refactor.
+- Logic for reading limits is slightly more forgiving.
+- Sheet warns you about taking Health Limit over level 5.
+- Healer was incorrectly listed as Fixed progression.
+- Core Power was incorrectly called Core Level.
+- Errata: Intimidating Transformation cost and description text both fixed.
+- Errata: Attack Node progression is Fast.
+- Errata: Swift Step cost is now 4/1 and progression is Fast.
+- Errata: Increased Size cost is now 2/1.
+- Errata: Unmovable cost is now 4/2.
+- Errata: Underhanded is now a Season 1 Skill.
+- Bugfix: Berserk and Crisis sometimes displayed as if they were applied, even when the character wasn't at critical HP.
+- Bugfix: Displayed healing values didn't factor in the Healer skill.
+- Bugfix: Using a healing tech with no associated stat caused a crash.
+- Bugfix: Repositions were all displaying 0.
+- Bugfix: Boosts and Heals with stats associated with them no longer show a die roll.
+- Bugfix: I hecked up critical health warnings REAL bad.
+- New: Finalizing a level up sheet now indicates how many levels you gained.
+- New: Commands !addhp, !addst, !subhp, and !subst to grant or take away an increment of HP or ST for all selected tokens.
+
+v1.1.1 (10/16/2018):
+- Added checkboxes for Overdrive Skills.
+- Fixed a few mistakes in the skill library.
+- Automatically move characters forward and backwards as their initiative changes.
+- Bugfix: Various minor crash states
+
+v1.1.2 (10/26/2018):
+- Added a roll20 roll template for techniques.
+- Bugfix: Crash when using techniques without a character token.
+- Bugfix: Crash when using !crit if the original user's token was deleted.
+
+v1.2.5 (11/12/2018):
+- Unified version numbering for scripts and sheet.
+- Flunkies, Soldiers, and Swarms now get half power from Attack skills.
+- Flunkies, Soldiers, and Swarms now get reduced TP from Versatile Fighter.
+- Flunkies and Soldiers now get half power on healing techniques.
+- Bugfix: Crash when using a technique with Ultimate Health Limit.
+- Bugfix: Overload Limits button not unchecking itself after use.
+
+v1.3.0 (12/10/2018):
+- Massive CSS cleanup.
+- No longer using !important or <table> anywhere.
+- Made things look nicer.
+- Added field for ST cost of custom core techniques.
+- Bugfixes.
+- Added support for custom ST cost on custom core techniques.
+
+v1.4.0 (12/11/2018):
+- Added SP tracking for boosts, weakens, et cetera.
+- Techs now display warnings again.
+- Small adjustments to tech layout.
+
+v1.4.1 (12/13/2018):
+- Made a couple input fields wider so that negative values don't get cut off.
+- Skills, Flaws and Techs got a visual overhaul.
+- Added warnings for Skills and Flaws granted by techs if the flaw/tech is too high level.
+- SP caps now actually display for Transformations.
