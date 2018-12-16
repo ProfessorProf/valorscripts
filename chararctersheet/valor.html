@@ -2432,23 +2432,38 @@
                 switch(techCore) {
                     case 'weaken':
                     case 'domain':
+                    case 'damage':
                         flawSpMax = techCoreLevel;
                         break;
                 }
                 const techFlawList = techInflictedFlaws.toLowerCase()
                     .split(',')
-                    .map(s => s.trim())
-                    .filter(s => s && s.length > 0);
-                for(const flawName of techFlawList) {
-                    const flawData = flawLibrary.find(f => flawName.match(f.namePattern));
-                    if(flawData) {
-                        // Try to get the flaw level
-                        let split = flawName.split(' ');
-                        let flawLevel = parseInt(split[split.length - 1]);
-                        if(flawLevel != flawLevel) {
-                            // NaN, so there's no level listed - assume 1
-                            flawLevel = 1;
+                    .map(s => {
+                        if(s && s.length > 0) {
+                            // Try to split out the flaw level
+                            let split = s.split(' ');
+                            let flawLevel = parseInt(split[split.length - 1]);
+                            if(flawLevel != flawLevel) {
+                                // NaN, so there's no level listed
+                                return {
+                                    name: s.trim(),
+                                    level: 1
+                                };
+                            } else {
+                                return {
+                                    name: split.slice(0, split.length - 1).join(' ').trim(),
+                                    level: flawLevel
+                                };
+                            }
+                        } else {
+                            return null;
                         }
+                    })
+                    .filter(s => s);
+                
+                for(const flaw of techFlawList) {
+                    const flawData = flawLibrary.find(f => flaw.name.match(f.namePattern));
+                    if(flawData) {
                         // Max flaw level
                         var flawMaxLevel = 1;
                         switch(flawData.speed) {
@@ -2461,13 +2476,13 @@
                             case 3:
                                 flawMaxLevel = 100; // Custom Flaw
                         }
-                        if(flawLevel > flawMaxLevel) {
-                            warnings.push(`Max level for Flaw '${flawName}' is ${flawMaxLevel}.`);
+                        if(flaw.level > flawMaxLevel) {
+                            warnings.push(`Max level for Flaw '${flaw.name}' is ${flawMaxLevel}.`);
                         }
                         
-                        flawSp += flawData.cost + flawData.levelUp * (flawLevel - 1);
+                        flawSp += flawData.cost + flawData.levelUp * (flaw.level - 1);
                     } else {
-                        warnings.push(`Unrecognized Flaw '${flawName}'.`);
+                        warnings.push(`Unrecognized Flaw '${flaw.name}'.`);
                     }
                 }
                 if(flawSp > flawSpMax && flawSpMax > 0) {
@@ -2488,19 +2503,32 @@
                 }
                 const techSkillList = techGrantedSkills.toLowerCase()
                     .split(',')
-                    .map(s => s.trim())
-                    .filter(s => s && s.length > 0);
-                for(const skillName of techSkillList) {
-                    const skillData = skillLibrary.find(s => skillName.match(s.namePattern));
-                    if(skillData) {
-                        // Try to get the flaw level
-                        let split = skillName.split(' ');
-                        let skillLevel = parseInt(split[split.length - 1]);
-                        if(skillLevel != skillLevel) {
-                            // NaN, so there's no level listed - assume 1
-                            skillLevel = 1;
+                    .map(s => {
+                        if(s && s.length > 0) {
+                            // Try to split out the flaw level
+                            let split = s.split(' ');
+                            let skillLevel = parseInt(split[split.length - 1]);
+                            if(skillLevel != skillLevel) {
+                                // NaN, so there's no level listed
+                                return {
+                                    name: s.trim(),
+                                    level: 1
+                                };
+                            } else {
+                                return {
+                                    name: split.slice(0, split.length - 1).join(' ').trim(),
+                                    level: skillLevel
+                                };
+                            }
+                        } else {
+                            return null;
                         }
-                        
+                    })
+                    .filter(s => s);
+                
+                for(const skill of techSkillList) {
+                    const skillData = skillLibrary.find(s => skill.name.match(s.namePattern));
+                    if(skillData) {
                         // Max skill level
                         var skillMaxLevel = 1;
                         switch(skillData.speed) {
@@ -2513,13 +2541,13 @@
                             case 3:
                                 skillMaxLevel = 100; // Custom Flaw
                         }
-                        if(skillLevel > skillMaxLevel) {
-                            warnings.push(`Max level for Skill '${skillName}' is ${skillMaxLevel}.`);
+                        if(skill.level > skillMaxLevel) {
+                            warnings.push(`Max level for Skill '${skill.name}' is ${skillMaxLevel}.`);
                         }
                         
-                        skillSp += skillData.cost + skillData.levelUp * (skillLevel - 1);
+                        skillSp += skillData.cost + skillData.levelUp * (skill.level - 1);
                     } else {
-                        warnings.push(`Unrecognized Skill '${skillName}''.`);
+                        warnings.push(`Unrecognized Skill '${skill.name}''.`);
                     }
                 }
                 if(skillSp > skillSpMax && skillSpMax > 0) {
