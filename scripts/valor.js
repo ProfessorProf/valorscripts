@@ -2213,7 +2213,7 @@ on('chat:message', function(msg) {
                 log('Consumed ' + stCost + ' ST');
             }
             
-            if(tech.limits) {
+            if(tech.limits && !tech.overloadLimits) {
                 let healthLimit = tech.limits.find(function(l) {
                     return l.toLowerCase().indexOf('health') == 0;
                 });
@@ -3581,8 +3581,8 @@ on('chat:message', function(msg) {
         let newLevel = attributes.find(function(obj) {
             return obj.get('name') == 'level';
         });
-        let oldLevelValue = parseInt(oldLevel.get('current'));
-        let newLevelValue = parseInt(newLevel.get('current'));
+        let oldLevelValue = oldLevel ? parseInt(oldLevel.get('current')) : 1;
+        let newLevelValue = newLevel ? parseInt(newLevel.get('current')) : 1;
         
         // Get list of skills/flaws/techs from old sheet
         let oldFlaws = [];

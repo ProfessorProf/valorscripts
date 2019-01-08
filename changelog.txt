@@ -120,3 +120,8 @@ v1.4.1 (12/13/2018):
 v1.4.2 (12/16/2018):
 - Bugfix: Some skills/flaws didn't parse right when they had a level listed.
 - Bugfix: Debilitating attacks now list max flaw SP.
+
+v1.4.3 (1/8/2019):
+- Bugfix: Override Limits wasn't working right for health/init/valor costs.
+- Bugfix: Crash when creating a character sheet on a character who has no level specified.
+- Various minor sheet layout adjustments.

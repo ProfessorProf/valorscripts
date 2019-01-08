@@ -370,6 +370,10 @@ select.sheet-number-select {
 
 .sheet-tech-name {
     grid-column: span 2;
+    color: black;
+    position: absolute;
+    margin-top: -5px;
+    margin-left: -5px;
 }
 
 .sheet-tech-summary {
@@ -390,16 +394,17 @@ select.sheet-number-select {
     grid-column: span 3;
 }
 
+.sheet-spacer {
+  grid-column: span 2;
+}
+
 .sheet-tech-name input {
     border: 3px solid #F2AC63;
     border-radius: 0;
-    position: relative;
     width: 230px;
     font-weight: bold;
     line-height: 20px;
     font-size: 15px;
-    top: -12px;
-    left: -12px;
 }
 
 .sheet-tech-field {
