@@ -125,3 +125,7 @@ v1.4.3 (1/8/2019):
 - Bugfix: Override Limits wasn't working right for health/init/valor costs.
 - Bugfix: Crash when creating a character sheet on a character who has no level specified.
 - Various minor sheet layout adjustments.
+
+v1.4.4 (1/10/2019):
+- Bugfix: Techs now render properly in Firefox.
+- Small tech layout adjustments.
