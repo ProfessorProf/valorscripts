@@ -1,6 +1,5 @@
 /**
  * VALOR API SCRIPTS
- * v1.3.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -2427,7 +2426,7 @@ on('chat:message', function(msg) {
             techQualifiers.push('Empowered');
         }
         
-        if(hp.val / hp.max <= 0.4 && tech.core == 'damage' || tech.core == 'ultDamage') {
+        if(hp.val / hp.max <= 0.4 && (tech.core == 'damage' || tech.core == 'ultDamage')) {
             let crisis = getSkill(actor.get('_id'), 'crisis');
             if(crisis && crisis.level) {
                 techQualifiers.push('Crisis');

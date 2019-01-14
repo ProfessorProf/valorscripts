@@ -12,6 +12,7 @@ input[type=number].sheet-number-input-green {
     padding-bottom: 0;
     text-align: right;
     font-weight: bold;
+    white-space: nowrap;
 }
 
 input[type=number].sheet-number-input-orange {
@@ -24,6 +25,7 @@ input[type=number].sheet-number-input-orange {
     padding-bottom: 0;
     text-align: right;
     font-weight: bold;
+    white-space: nowrap;
 }
 
 .sheet-container {
@@ -372,6 +374,7 @@ select.sheet-number-select {
   position: relative;
   z-index: 10;
   top: 13px;
+  color: black;
 }
 
 .sheet-tech-summary {
