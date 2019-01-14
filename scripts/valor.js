@@ -1,6 +1,5 @@
 /**
  * VALOR API SCRIPTS
- * v1.3.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -2213,7 +2212,7 @@ on('chat:message', function(msg) {
                 log('Consumed ' + stCost + ' ST');
             }
             
-            if(tech.limits) {
+            if(tech.limits && !tech.overloadLimits) {
                 let healthLimit = tech.limits.find(function(l) {
                     return l.toLowerCase().indexOf('health') == 0;
                 });
@@ -2427,7 +2426,7 @@ on('chat:message', function(msg) {
             techQualifiers.push('Empowered');
         }
         
-        if(hp.val / hp.max <= 0.4 && tech.core == 'damage' || tech.core == 'ultDamage') {
+        if(hp.val / hp.max <= 0.4 && (tech.core == 'damage' || tech.core == 'ultDamage')) {
             let crisis = getSkill(actor.get('_id'), 'crisis');
             if(crisis && crisis.level) {
                 techQualifiers.push('Crisis');
@@ -3581,8 +3580,8 @@ on('chat:message', function(msg) {
         let newLevel = attributes.find(function(obj) {
             return obj.get('name') == 'level';
         });
-        let oldLevelValue = parseInt(oldLevel.get('current'));
-        let newLevelValue = parseInt(newLevel.get('current'));
+        let oldLevelValue = oldLevel ? parseInt(oldLevel.get('current')) : 1;
+        let newLevelValue = newLevel ? parseInt(newLevel.get('current')) : 1;
         
         // Get list of skills/flaws/techs from old sheet
         let oldFlaws = [];
