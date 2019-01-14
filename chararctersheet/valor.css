@@ -12,7 +12,6 @@ input[type=number].sheet-number-input-green {
     padding-bottom: 0;
     text-align: right;
     font-weight: bold;
-    white-space: nowrap;
 }
 
 input[type=number].sheet-number-input-orange {
@@ -25,7 +24,6 @@ input[type=number].sheet-number-input-orange {
     padding-bottom: 0;
     text-align: right;
     font-weight: bold;
-    white-space: nowrap;
 }
 
 .sheet-container {
@@ -121,6 +119,7 @@ input[type=number].sheet-number-input-orange {
 .sheet-derived-value {
     font-weight: bold;
     width: 3em;
+    white-space: nowrap;
 }
 
 .sheet-smalltext {
