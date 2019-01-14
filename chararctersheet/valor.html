@@ -3,16 +3,7 @@
     /**
      * VALOR CHARACTER SHEET
      *
-     * Installation Instructions:
-     * - Be a Roll20 Pro user.
-     * - From your game's main screen, go to Game Settings.
-     * - Under Character Sheet Template, select Custom.
-     * - Copy the contents of valor.html into the HTML Layout tab.
-     * - Copy the contents of valor.css into the CSS Styling tab.
-     *
      * Usage:
-     * - For Boosts, Weakens, or other techniques that grant skills or flaws, list
-     * them in the Description field.
      * - If you want to use unlisted mods or limits, enter "Custom #", where # is
      * the number of tech levels to add or how much to reduce ST by.
      * - If you want to use unlisted skills or flaws, choose 'Custom Skill' or
@@ -46,15 +37,6 @@
         { cost: 2, levelUp: 1, speed: 1, id: 'elementalVulnerability', namePattern: '^elemental vuln' },
         { cost: 2, levelUp: 1, speed: 1, id: 'armorReliant', namePattern: '^armor reliant' },
         { cost: 2, levelUp: 1, speed: 1, id: 'wardReliant', namePattern: '^ward reliant' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'broadForm', namePattern: '^broad form' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'fearTheDarkness', namePattern: '^fear the dark' },
-        { cost: 7, levelUp: 0, speed: 0, id: 'immobile', namePattern: '^immobile' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'insubstantial', namePattern: '^insubstantial' },
-        { cost: 2, levelUp: 0, speed: 0, id: 'situationalCompulsion', namePattern: '^situational compulsion' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'sunlightWeakness', namePattern: '^sunlight' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'thresheld', namePattern: '^thresheld' },
-        { cost: 2, levelUp: 0, speed: 0, id: 'weakGuard', namePattern: '^weak guard' },
-        { cost: 10, levelUp: 0, speed: 0, id: 'malevolentPossession', namePattern: '^malevolent possess' },
         { cost: 3, levelUp: 2, speed: 0, id: 'weakPhysicalAttacker', namePattern: '^weak phys(ical)? attack' },
         { cost: 3, levelUp: 2, speed: 0, id: 'weakEnergyAttacker', namePattern: '^weak en(ergy)? attack' },
         { cost: 4, levelUp: 0, speed: 0, id: 'impairedAccuracy', namePattern: '^impaired acc' },
@@ -220,42 +202,6 @@
         { cost: 4, levelUp: 0, speed: 0, id: 'pierceIllusion', namePattern: '^pierce illusion' },
         { cost: 4, levelUp: 2, speed: 1, id: 'elementalResistance', namePattern: '^elemental resist' },
         { cost: 3, levelUp: 0, speed: 0, id: 'elementalAttunement', namePattern: '^elemental attune' },
-        { cost: 5, levelUp: 0, speed: 0, id: 'polearmWielder', namePattern: '^polearm wield' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'rangedWeaponWielder', namePattern: '^ranged weapon wield' },
-        { cost: 4, levelUp: 2, speed: 0, id: 'aquatic', namePattern: '^aquatic$' },
-        { cost: 4, levelUp: 2, speed: 0, id: 'construct', namePattern: '^construct$' },
-        { cost: 4, levelUp: 2, speed: 0, id: 'elemental', namePattern: '^elemental$' },
-        { cost: 4, levelUp: 2, speed: 0, id: 'undead', namePattern: '^undead$' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'diminuitive', namePattern: '^diminuitive' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'healer', namePattern: '^healer' },
-        { cost: 1, levelUp: 1, speed: 0, id: 'increasedLength', namePattern: '^increased length' },
-        { cost: 1, levelUp: 0, speed: 0, id: 'largeHead', namePattern: '^large head' },
-        { cost: 4, levelUp: 3, speed: 0, id: 'limitedRegeneration', namePattern: '^limited regen' },
-        { cost: 1, levelUp: 0, speed: 0, id: 'longTail', namePattern: '^long tail' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'morale', namePattern: '^morale' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'hardenedResolve', namePattern: '^hardened resolve' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'standTall', namePattern: '^stand tall' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'terrainAdaptation', namePattern: '^terrain adapt' },
-        { cost: 12, levelUp: 0, speed: 0, id: 'ultimateAttack', namePattern: '^ultimate attack' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'unscrupulous', namePattern: '^unscrupulous' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'alteredDurability', namePattern: '^altered durability' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'amphibious', namePattern: '^amphibious' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'destructiveBurrow', namePattern: '^destructive burrow' },
-        { cost: 6, levelUp: 3, speed: 1, id: 'durableFlunky', namePattern: '^durable flunky' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'freeBurrow', namePattern: '^free burrow' },
-        { cost: 4, levelUp: 0, speed: 0, id: 'landAdaptation', namePattern: '^land adapt' },
-        { cost: 8, levelUp: 0, speed: 0, id: 'resurrectingFlunky', namePattern: '^resurrecting flunky' },
-        { cost: 8, levelUp: 0, speed: 0, id: 'trample', namePattern: '^trample' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'toweringPresence', namePattern: '^towering presence' },
-        { cost: 2, levelUp: 2, speed: 0, id: 'burrow', namePattern: '^burrow' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'humanshape', namePattern: '^human( )?shape' },
-        { cost: 4, levelUp: 2, speed: 0, id: 'limitedFlight', namePattern: '^limited flight' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'pressingSwarm', namePattern: '^pressing swarm' },
-        { cost: 12, levelUp: 0, speed: 0, id: 'shapeshifter', namePattern: '^shapeshifter' },
-        { cost: 1, levelUp: 1, speed: 0, id: 'skillCopy', namePattern: '^skill copy' },
-        { cost: 3, levelUp: 1, speed: 0, id: 'swiftStance', namePattern: '^swift stance' },
-        { cost: 8, levelUp: 0, speed: 0, id: 'victorAtAnyCost', namePattern: '^victor(y)? at any cost' },
-        { cost: 1, levelUp: 1, speed: 0, id: 'increasedCompanionSize', namePattern: '^increased companion size' },
         { cost: 2, levelUp: 0, speed: 0, id: 'changeAttributes', namePattern: '^change attr' },
         { cost: 2, levelUp: 2, speed: 0, id: 'enhancedRange', namePattern: '^enhanced range' },
         { cost: 8, levelUp: 0, speed: 0, id: 'greatAccuracy', namePattern: '^great acc' },
@@ -272,247 +218,177 @@
         { cost: 1, levelUp: 1, id: 'weaken' },
         { cost: 4, levelUp: 2, id: 'ultDamage' },
         { cost: 0, levelUp: 3, id: 'ultTransform' },
-        { cost: 0, levelUp: 3, id: 'ultMimic' },
-        { cost: 3, levelUp: 3, id: 'domain' }
+        { cost: 0, levelUp: 3, id: 'ultMimic' }
     ];
 
     function calculateBaseAttributes() {
         log('VALOR - Recalculating Base Attributes');
-        getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut'], function(values) {
+        getAttrs(['level', 'strength', 'agility', 'spirit', 'mind', 'guts'], function(values) {
             let level = parseInt(values.level);
-            let str = parseInt(values.str);
-            let agi = parseInt(values.agi);
-            let spr = parseInt(values.spr);
-            let mnd = parseInt(values.mnd);
-            let gut = parseInt(values.gut);
+            let strength = parseInt(values.strength);
+            let agility = parseInt(values.agility);
+            let spirit = parseInt(values.spirit);
+            let mind = parseInt(values.mind);
+            let guts = parseInt(values.guts);
 
-            if(str > level + 7) {
-                str = level + 7;
+            if(strength > level + 7) {
+                strength = level + 7;
             }
-            if(agi > level + 7) {
-                agi = level + 7;
+            if(agility > level + 7) {
+                agility = level + 7;
             }
-            if(spr > level + 7) {
-                spr = level + 7;
+            if(spirit > level + 7) {
+                spirit = level + 7;
             }
-            if(mnd > level + 7) {
-                mnd = level + 7;
+            if(mind > level + 7) {
+                mind = level + 7;
             }
-            if(gut > level + 7) {
-                gut = level + 7;
-            }
-
-            if(str < 1) {
-                str = 1
-            }
-            if(agi < 1) {
-                agi = 1
-            }
-            if(spr < 1) {
-                spr = 1
-            }
-            if(mnd < 1) {
-                mnd = 1
-            }
-            if(gut < 1) {
-                gut = 1
+            if(guts > level + 7) {
+                guts = level + 7;
             }
 
-            let unspentAP = 22 + 3 * level - str - agi - spr - mnd - gut;
+            if(strength < 1) {
+                strength = 1
+            }
+            if(agility < 1) {
+                agility = 1
+            }
+            if(spirit < 1) {
+                spirit = 1
+            }
+            if(mind < 1) {
+                mind = 1
+            }
+            if(guts < 1) {
+                guts = 1
+            }
+
+            let unspentAttributePoints = 22 + 3 * level - strength - agility - spirit - mind - guts;
 
             // Set values
             setAttrs({
-                str: str,
-                agi: agi,
-                spr: spr,
-                mnd: mnd,
-                gut: gut,
-                unspentAP: unspentAP
+                strength: strength,
+                agility: agility,
+                spirit: spirit,
+                mind: mind,
+                guts: guts,
+                unspentAttributePoints: unspentAttributePoints
             });
         });
     }
 
     function calculateActiveAttributes() {
         log('VALOR - Recalculating Active Attributes');
-        getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type',
-            'boostmus', 'boostdex', 'boostaur', 'boostint', 'boostres'], function(values) {
+        getAttrs(['level', 'strength', 'agility', 'spirit', 'mind', 'guts', 'type'], function(values) {
             const level = parseInt(values.level);
-            const str = parseInt(values.str);
-            const agi = parseInt(values.agi);
-            const spr = parseInt(values.spr);
-            const mnd = parseInt(values.mnd);
-            const gut = parseInt(values.gut);
+            const strength = parseInt(values.strength);
+            const agility = parseInt(values.agility);
+            const spirit = parseInt(values.spirit);
+            const mind = parseInt(values.mind);
+            const guts = parseInt(values.guts);
 
-            let mus = Math.ceil((level + str) / 2);
-            let dex = Math.ceil((level + agi) / 2);
-            let aur = Math.ceil((level + spr) / 2);
-            let int = Math.ceil((level + mnd) / 2);
-            let res = Math.ceil((level + gut) / 2);
-
-            const boostmus = values.boostmus == 'on';
-            const boostdex = values.boostdex == 'on';
-            const boostaur = values.boostaur == 'on';
-            const boostint = values.boostint == 'on';
-            const boostres = values.boostres == 'on';
+            let muscle = Math.ceil((level + strength) / 2);
+            let dexterity = Math.ceil((level + agility) / 2);
+            let aura = Math.ceil((level + spirit) / 2);
+            let intuition = Math.ceil((level + mind) / 2);
+            let resolve = Math.ceil((level + guts) / 2);
 
             switch(values.type) {
                 case 'flunky':
                 case 'soldier':
-                    mus--;
-                    dex--;
-                    aur--;
-                    int--;
-                    res--;
+                    muscle--;
+                    dexterity--;
+                    aura--;
+                    intuition--;
+                    resolve--;
                     break;
             }
-
-            if(boostmus) mus++;
-            if(boostdex) dex++;
-            if(boostaur) aur++;
-            if(boostint) int++;
-            if(boostres) res++;
 
             // Apply Skills
             let skillFieldNames = [];
             getSectionIDs('repeating_skills', function(sidarray) {
                 for(let i = 0; i < sidarray.length; i++) {
-                    skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
-                    skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
+                    skillFieldNames.push(`repeating_skills_${sidarray[i]}_skillname`);
+                    skillFieldNames.push(`repeating_skills_${sidarray[i]}_skilllevel`);
                 }
                 getAttrs(skillFieldNames, function(skillValues) {
                     for(let i = 0; i < sidarray.length; i++) {
-                        let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
-                        if(!skillName) {
-                            skillName = 'customSkill';
-                        }
-
-                        switch(skillName) {
-                            case 'balancedFighter':
-                                let stats = [mus, dex, aur, int, res];
-                                let highestStat = Math.max(...stats);
-                                if(mus < highestStat) {
-                                    mus++;
-                                }
-                                if(dex < highestStat) {
-                                    dex++;
-                                }
-                                if(aur < highestStat) {
-                                    aur++;
-                                }
-                                if(int < highestStat) {
-                                    int++;
-                                }
-                                if(res < highestStat) {
-                                    res++;
-                                }
-                                break;
+                        const skillName = skillValues[`repeating_skills_${sidarray[i]}_skillname`];
+                        if(skillName && skillName == 'balancedFighter') {
+                            let stats = [muscle, dexterity, aura, intuition, resolve];
+                            const highestStat = Math.max(...stats);
+                            if(muscle < highestStat) {
+                                muscle++;
+                            }
+                            if(dexterity < highestStat) {
+                                dexterity++;
+                            }
+                            if(aura < highestStat) {
+                                aura++;
+                            }
+                            if(intuition < highestStat) {
+                                intuition++;
+                            }
+                            if(resolve < highestStat) {
+                                resolve++;
+                            }
                         }
                     }
 
                     // Set values
                     setAttrs({
-                        mus: mus,
-                        dex: dex,
-                        aur: aur,
-                        int: int,
-                        res: res
+                        muscle: muscle,
+                        dexterity: dexterity,
+                        aura: aura,
+                        intuition: intuition,
+                        resolve: resolve
                     });
                 });
             });
         });
     }
 
-    function calculateBoostVisibility() {
-        log('VALOR - Recalculating Boost Visibility');
-
-        let canBoostMus = false;
-        let canBoostDex = false;
-        let canBoostAur = false;
-        let canBoostInt = false;
-        let canBoostRes = false;
-
-        getSectionIDs('repeating_skills', function(sidarray) {
-            let skillFieldNames = [];
-            for(let i = 0; i < sidarray.length; i++) {
-                skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
-            }
-            getAttrs(skillFieldNames, function(skillValues) {
-                for(let i = 0; i < sidarray.length; i++) {
-                    let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
-
-                    switch(skillName) {
-                        case 'acceleration':
-                            canBoostDex = true;
-                            break;
-                        case 'analysis':
-                            canBoostInt = true;
-                            break;
-                        case 'burningPassion':
-                            canBoostres = true;
-                            break;
-                        case 'resoluteAura':
-                            canBoostaur = true;
-                            break;
-                        case 'strengthOfWill':
-                            canBoostMus = true;
-                            break;
-                    }
-                }
-
-                let attrs = {};
-                attrs['can_boost_mus'] = canBoostMus ? 'on' : 0;;
-                attrs['can_boost_dex'] = canBoostDex ? 'on' : 0;;
-                attrs['can_boost_aur'] = canBoostAur ? 'on' : 0;;
-                attrs['can_boost_int'] = canBoostInt ? 'on' : 0;;
-                attrs['can_boost_res'] = canBoostRes ? 'on' : 0;;
-
-                // Set values
-                setAttrs(attrs);
-            });
-        });
-    }
-
     function calculateAttack() {
         log('VALOR - Recalculating Attack');
-        getAttrs(['level', 'str', 'agi', 'spr', 'mnd', 'gut', 'type'], function(values) {
+        getAttrs(['level', 'strength', 'agility', 'spirit', 'mind', 'guts', 'type'], function(values) {
             let level = parseInt(values.level);
-            let str = parseInt(values.str);
-            let agi = parseInt(values.agi);
-            let spr = parseInt(values.spr);
-            let mnd = parseInt(values.mnd);
-            let gut = parseInt(values.gut);
+            let strength = parseInt(values.strength);
+            let agility = parseInt(values.agility);
+            let spirit = parseInt(values.spirit);
+            let mind = parseInt(values.mind);
+            let guts = parseInt(values.guts);
 
-            let strAtk = (level + str) * 2;
-            let agiAtk = (level + agi) * 2;
-            let sprAtk = (level + spr) * 2;
-            let mndAtk = (level + mnd) * 2;
+            let strengthAttack = (level + strength) * 2;
+            let agilityAttack = (level + agility) * 2;
+            let spiritAttack = (level + spirit) * 2;
+            let mindAttack = (level + mind) * 2;
 
             // Apply Skills
             let skillFieldNames = [];
             getSectionIDs('repeating_skills', function(sidarray) {
                 for(let i = 0; i < sidarray.length; i++) {
-                    skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
-                    skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
+                    skillFieldNames.push(`repeating_skills_${sidarray[i]}_skillname`);
+                    skillFieldNames.push(`repeating_skills_${sidarray[i]}_skilllevel`);
                 }
                 getAttrs(skillFieldNames, function(skillValues) {
                     for(let i = 0; i < sidarray.length; i++) {
-                        let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                        let skillName = skillValues[`repeating_skills_${sidarray[i]}_skillname`];
                         if(!skillName) {
                             skillName = 'customSkill';
                         }
                         let skillLevel = 1;
-                        if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
-                            skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
+                        if(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]) {
+                            skillLevel = parseInt(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]);
                         }
 
                         switch(skillName) {
                             case 'energyAttacker':
-                                sprAtk += 3 + 3 * skillLevel;
-                                mndAtk += 3 + 3 * skillLevel;
+                                spiritAttack += 3 + 3 * skillLevel;
+                                mindAttack += 3 + 3 * skillLevel;
                                 break;
                             case 'physicalAttacker':
-                                strAtk += 3 + 3 * skillLevel;
-                                agiAtk += 3 + 3 * skillLevel;
+                                strengthAttack += 3 + 3 * skillLevel;
+                                agilityAttack += 3 + 3 * skillLevel;
                                 break;
                         }
                     }
@@ -521,25 +397,25 @@
                         case 'flunky':
                         case 'soldier':
                         case 'swarm':
-                            strAtk = Math.ceil(strAtk / 2);
-                            agiAtk = Math.ceil(agiAtk / 2);
-                            sprAtk = Math.ceil(sprAtk / 2);
-                            mndAtk = Math.ceil(mndAtk / 2);
+                            strengthAttack = Math.ceil(strengthAttack / 2);
+                            agilityAttack = Math.ceil(agilityAttack / 2);
+                            spiritAttack = Math.ceil(spiritAttack / 2);
+                            mindAttack = Math.ceil(mindAttack / 2);
                             break;
                         case 'master':
-                            strAtk += str;
-                            agiAtk += agi;
-                            sprAtk += spr;
-                            mndAtk += mnd;
+                            strengthAttack += strength;
+                            agilityAttack += agility;
+                            spiritAttack += spirit;
+                            mindAttack += mind;
                             break;
                     }
 
                     // Set values
                     setAttrs({
-                        strAtk: strAtk,
-                        agiAtk: agiAtk,
-                        sprAtk: sprAtk,
-                        mndAtk: mndAtk
+                        strengthAttack: strengthAttack,
+                        agilityAttack: agilityAttack,
+                        spiritAttack: spiritAttack,
+                        mindAttack: mindAttack
                     });
                 });
             });
@@ -548,35 +424,35 @@
 
     function calculateHealth() {
         log('VALOR - Recalculating Max Health');
-        getAttrs(['level', 'str', 'gut', 'type'], function(values) {
+        getAttrs(['level', 'strength', 'guts', 'type'], function(values) {
             let level = parseInt(values.level);
-            let str = parseInt(values.str);
-            let gut = parseInt(values.gut);
+            let strength = parseInt(values.strength);
+            let guts = parseInt(values.guts);
 
-            let hp = 50 + 10 * level + 10 * gut + 5 * str;
+            let health = 50 + 10 * level + 10 * guts + 5 * strength;
 
             // Apply Flaws
             let flawFieldNames = [];
             getSectionIDs('repeating_flaws', function(idarray) {
                 for(let i = 0; i < idarray.length; i++) {
-                    flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawname');
-                    flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawlevel');
+                    flawFieldNames.push(`repeating_flaws_${idarray[i]}_flawname`);
+                    flawFieldNames.push(`repeating_flaws_${idarray[i]}_flawlevel`);
                 }
                 getAttrs(flawFieldNames, function(flawValues) {
                     for(let i = 0; i < idarray.length; i++) {
-                        let flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
+                        let flawName = flawValues[`repeating_flaws_${idarray[i]}_flawname`];
                         if(!flawName) {
                             flawName = 'customFlaw';
                         }
                         let flawLevel = 1;
-                        if(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']) {
-                            flawLevel = parseInt(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']);
+                        if(flawValues[`repeating_flaws_${idarray[i]}_flawlevel`]) {
+                            flawLevel = parseInt(flawValues[`repeating_flaws_${idarray[i]}_flawlevel`]);
                         }
 
                         // Apply effects
                         switch(flawName) {
                             case 'fragile':
-                                hp -= 15 + 15 * flawLevel;
+                                health -= 15 + 15 * flawLevel;
                                 break;
                         }
                     }
@@ -585,47 +461,44 @@
                     let skillFieldNames = [];
                     getSectionIDs('repeating_skills', function(sidarray) {
                         for(let i = 0; i < sidarray.length; i++) {
-                            skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
-                            skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
+                            skillFieldNames.push(`repeating_skills_${sidarray[i]}_skillname`);
+                            skillFieldNames.push(`repeating_skills_${sidarray[i]}_skilllevel`);
                         }
                         getAttrs(skillFieldNames, function(skillValues) {
                             for(let i = 0; i < sidarray.length; i++) {
-                                let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                                let skillName = skillValues[`repeating_skills_${sidarray[i]}_skillname`];
                                 if(!skillName) {
                                     skillName = 'customSkill';
                                 }
                                 let skillLevel = 1;
-                                if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
-                                    skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
+                                if(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]) {
+                                    skillLevel = parseInt(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]);
                                 }
 
                                 switch(skillName) {
                                     case 'tough':
-                                        hp += 15 + 15 * skillLevel;
-                                        break;
-                                    case 'construct':
-                                        hp += 2 * str;
+                                        health += 15 + 15 * skillLevel;
                                         break;
                                 }
                             }
 
                             switch(values.type) {
                                 case 'flunky':
-                                    hp = 1;
+                                    health = 1;
                                     break;
                                 case 'soldier':
-                                    hp = Math.ceil(hp / 2);
+                                    health = Math.ceil(health / 2);
                                     break;
                                 case 'master':
-                                    hp *= 2;
+                                    health *= 2;
                                     break;
                             }
 
                             // Set values
                             setAttrs({
-                                hp_max: hp,
-                                hpInc: Math.ceil(hp / 5),
-                                hpCrit: Math.ceil(hp / 5) * 2
+                                health_max: health,
+                                healthIncrement: Math.ceil(health / 5),
+                                criticalHealth: Math.ceil(health / 5) * 2
                             });
                         });
                     });
@@ -636,35 +509,35 @@
 
     function calculateStamina() {
         log('VALOR - Recalculating Max Stamina');
-        getAttrs(['level', 'mnd', 'spr', 'type'], function(values) {
+        getAttrs(['level', 'mind', 'spirit', 'type'], function(values) {
             let level = parseInt(values.level);
-            let mnd = parseInt(values.mnd);
-            let spr = parseInt(values.spr);
+            let mind = parseInt(values.mind);
+            let spirit = parseInt(values.spirit);
 
-            let st = 8 + 4 * level + 2 * spr + 2 * mnd;
+            let stamina = 8 + 4 * level + 2 * spirit + 2 * mind;
 
             // Apply Flaws
             let flawFieldNames = [];
             getSectionIDs('repeating_flaws', function(idarray) {
                 for(let i = 0; i < idarray.length; i++) {
-                    flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawname');
-                    flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawlevel');
+                    flawFieldNames.push(`repeating_flaws_${idarray[i]}_flawname`);
+                    flawFieldNames.push(`repeating_flaws_${idarray[i]}_flawlevel`);
                 }
                 getAttrs(flawFieldNames, function(flawValues) {
                     for(let i = 0; i < idarray.length; i++) {
-                        let flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
+                        let flawName = flawValues[`repeating_flaws_${idarray[i]}_flawname`];
                         if(!flawName) {
                             flawName = 'customFlaw';
                         }
                         let flawLevel = 1;
-                        if(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']) {
-                            flawLevel = parseInt(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']);
+                        if(flawValues[`repeating_flaws_${idarray[i]}_flawlevel`]) {
+                            flawLevel = parseInt(flawValues[`repeating_flaws_${idarray[i]}_flawlevel`]);
                         }
 
                         // Apply effects
                         switch(flawName) {
                             case 'lackOfControl':
-                                st -= 2 + 6 * flawLevel;
+                                stamina -= 2 + 6 * flawLevel;
                                 break;
                         }
                     }
@@ -673,37 +546,37 @@
                     let skillFieldNames = [];
                     getSectionIDs('repeating_skills', function(sidarray) {
                         for(let i = 0; i < sidarray.length; i++) {
-                            skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
-                            skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
+                            skillFieldNames.push(`repeating_skills_${sidarray[i]}_skillname`);
+                            skillFieldNames.push(`repeating_skills_${sidarray[i]}_skilllevel`);
                         }
                         getAttrs(skillFieldNames, function(skillValues) {
                             for(let i = 0; i < sidarray.length; i++) {
-                                let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                                let skillName = skillValues[`repeating_skills_${sidarray[i]}_skillname`];
                                 if(!skillName) {
                                     skillName = 'customSkill';
                                 }
                                 let skillLevel = 1;
-                                if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
-                                    skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
+                                if(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]) {
+                                    skillLevel = parseInt(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]);
                                 }
 
                                 switch(skillName) {
                                     case 'tireless':
-                                        st += 2 + 6 * skillLevel;
+                                        stamina += 2 + 6 * skillLevel;
                                         break;
                                 }
                             }
 
                             switch(values.type) {
                                 case 'master':
-                                    st *= 2;
+                                    stamina *= 2;
                                     break;
                             }
 
                             // Set values
                             setAttrs({
-                                st_max: st,
-                                stInc: Math.ceil(st / 5)
+                                stamina_max: stamina,
+                                staminaIncrement: Math.ceil(stamina / 5)
                             });
                         });
                     });
@@ -714,29 +587,29 @@
 
     function calculateDefense() {
         log('VALOR - Recalculating Defense');
-        getAttrs(['level', 'str', 'gut', 'type'], function(values) {
+        getAttrs(['level', 'strength', 'guts', 'type'], function(values) {
             let level = parseInt(values.level);
-            let str = parseInt(values.str);
-            let gut = parseInt(values.gut);
+            let strength = parseInt(values.strength);
+            let guts = parseInt(values.guts);
 
-            let defense = 2 * level + str + gut;
+            let defense = 2 * level + strength + guts;
 
             // Apply Flaws
             let flawFieldNames = [];
             getSectionIDs('repeating_flaws', function(idarray) {
                 for(let i = 0; i < idarray.length; i++) {
-                    flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawname');
-                    flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawlevel');
+                    flawFieldNames.push(`repeating_flaws_${idarray[i]}_flawname`);
+                    flawFieldNames.push(`repeating_flaws_${idarray[i]}_flawlevel`);
                 }
                 getAttrs(flawFieldNames, function(flawValues) {
                     for(let i = 0; i < idarray.length; i++) {
-                        let flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
+                        let flawName = flawValues[`repeating_flaws_${idarray[i]}_flawname`];
                         if(!flawName) {
                             flawName = 'customFlaw';
                         }
                         let flawLevel = 1;
-                        if(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']) {
-                            flawLevel = parseInt(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']);
+                        if(flawValues[`repeating_flaws_${idarray[i]}_flawlevel`]) {
+                            flawLevel = parseInt(flawValues[`repeating_flaws_${idarray[i]}_flawlevel`]);
                         }
 
                         // Apply effects
@@ -751,26 +624,23 @@
                     let skillFieldNames = [];
                     getSectionIDs('repeating_skills', function(sidarray) {
                         for(let i = 0; i < sidarray.length; i++) {
-                            skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
-                            skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
+                            skillFieldNames.push(`repeating_skills_${sidarray[i]}_skillname`);
+                            skillFieldNames.push(`repeating_skills_${sidarray[i]}_skilllevel`);
                         }
                         getAttrs(skillFieldNames, function(skillValues) {
                             for(let i = 0; i < sidarray.length; i++) {
-                                let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                                let skillName = skillValues[`repeating_skills_${sidarray[i]}_skillname`];
                                 if(!skillName) {
                                     skillName = 'customSkill';
                                 }
                                 let skillLevel = 1;
-                                if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
-                                    skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
+                                if(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]) {
+                                    skillLevel = parseInt(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]);
                                 }
 
                                 switch(skillName) {
                                     case 'ironDefense':
                                         defense += 2 + 2 * skillLevel;
-                                        break;
-                                    case 'construct':
-                                        defense += Math.ceil(level / 5) * 2;
                                         break;
                                 }
                             }
@@ -788,29 +658,29 @@
 
     function calculateResistance() {
         log('VALOR - Recalculating Resistance');
-        getAttrs(['level', 'spr', 'mnd', 'type'], function(values) {
+        getAttrs(['level', 'spirit', 'mind', 'type'], function(values) {
             let level = parseInt(values.level);
-            let spr = parseInt(values.spr);
-            let mnd = parseInt(values.mnd);
+            let spirit = parseInt(values.spirit);
+            let mind = parseInt(values.mind);
 
-            let resistance = 2 * level + spr + mnd;
+            let resistance = 2 * level + spirit + mind;
 
             // Apply Flaws
             let flawFieldNames = [];
             getSectionIDs('repeating_flaws', function(idarray) {
                 for(let i = 0; i < idarray.length; i++) {
-                    flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawname');
-                    flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawlevel');
+                    flawFieldNames.push(`repeating_flaws_${idarray[i]}_flawname`);
+                    flawFieldNames.push(`repeating_flaws_${idarray[i]}_flawlevel`);
                 }
                 getAttrs(flawFieldNames, function(flawValues) {
                     for(let i = 0; i < idarray.length; i++) {
-                        let flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
+                        let flawName = flawValues[`repeating_flaws_${idarray[i]}_flawname`];
                         if(!flawName) {
                             flawName = 'customFlaw';
                         }
                         let flawLevel = 1;
-                        if(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']) {
-                            flawLevel = parseInt(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']);
+                        if(flawValues[`repeating_flaws_${idarray[i]}_flawlevel`]) {
+                            flawLevel = parseInt(flawValues[`repeating_flaws_${idarray[i]}_flawlevel`]);
                         }
 
                         // Apply effects
@@ -825,26 +695,23 @@
                     let skillFieldNames = [];
                     getSectionIDs('repeating_skills', function(sidarray) {
                         for(let i = 0; i < sidarray.length; i++) {
-                            skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
-                            skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
+                            skillFieldNames.push(`repeating_skills_${sidarray[i]}_skillname`);
+                            skillFieldNames.push(`repeating_skills_${sidarray[i]}_skilllevel`);
                         }
                         getAttrs(skillFieldNames, function(skillValues) {
                             for(let i = 0; i < sidarray.length; i++) {
-                                let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                                let skillName = skillValues[`repeating_skills_${sidarray[i]}_skillname`];
                                 if(!skillName) {
                                     skillName = 'customSkill';
                                 }
                                 let skillLevel = 1;
-                                if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
-                                    skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
+                                if(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]) {
+                                    skillLevel = parseInt(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]);
                                 }
 
                                 switch(skillName) {
                                     case 'resistant':
                                         resistance += 2 + 2 * skillLevel;
-                                        break;
-                                    case 'construct':
-                                        resistance -= Math.ceil(level / 5) * 2;
                                         break;
                                 }
                             }
@@ -860,38 +727,35 @@
         });
     }
 
-    function calculateSpeed() {
+    function calculateMove() {
         log('VALOR - Recalculating Move');
-        getAttrs(['agi'], function(values) {
-            let agi = parseInt(values.agi);
+        getAttrs(['agility'], function(values) {
+            let agility = parseInt(values.agility);
 
-            let speed = Math.ceil(agi / 4) + 2;
+            let move = Math.ceil(agility / 4) + 2;
 
             // Apply Flaws
             let flawFieldNames = [];
             getSectionIDs('repeating_flaws', function(idarray) {
                 for(let i = 0; i < idarray.length; i++) {
-                    flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawname');
-                    flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawlevel');
+                    flawFieldNames.push(`repeating_flaws_${idarray[i]}_flawname`);
+                    flawFieldNames.push(`repeating_flaws_${idarray[i]}_flawlevel`);
                 }
                 getAttrs(flawFieldNames, function(flawValues) {
                     for(let i = 0; i < idarray.length; i++) {
-                        let flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
+                        let flawName = flawValues[`repeating_flaws_${idarray[i]}_flawname`];
                         if(!flawName) {
                             flawName = 'customFlaw';
                         }
                         let flawLevel = 1;
-                        if(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']) {
-                            flawLevel = parseInt(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']);
+                        if(flawValues[`repeating_flaws_${idarray[i]}_flawlevel`]) {
+                            flawLevel = parseInt(flawValues[`repeating_flaws_${idarray[i]}_flawlevel`]);
                         }
 
                         // Apply effects
                         switch(flawName) {
                             case 'slow':
-                                speed -= flawLevel;
-                                break;
-                            case 'immobile':
-                                speed = 0;
+                                move -= flawLevel;
                                 break;
                         }
                     }
@@ -900,30 +764,30 @@
                     let skillFieldNames = [];
                     getSectionIDs('repeating_skills', function(sidarray) {
                         for(let i = 0; i < sidarray.length; i++) {
-                            skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
-                            skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
+                            skillFieldNames.push(`repeating_skills_${sidarray[i]}_skillname`);
+                            skillFieldNames.push(`repeating_skills_${sidarray[i]}_skilllevel`);
                         }
                         getAttrs(skillFieldNames, function(skillValues) {
                             for(let i = 0; i < sidarray.length; i++) {
-                                let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                                let skillName = skillValues[`repeating_skills_${sidarray[i]}_skillname`];
                                 if(!skillName) {
                                     skillName = 'customSkill';
                                 }
                                 let skillLevel = 1;
-                                if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
-                                    skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
+                                if(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]) {
+                                    skillLevel = parseInt(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]);
                                 }
 
                                 switch(skillName) {
                                     case 'sprinter':
-                                        speed += skillLevel;
+                                        move += skillLevel;
                                         break;
                                 }
                             }
 
                             // Set values
                             setAttrs({
-                                speed: speed
+                                move: move
                             });
                         });
                     });
@@ -937,29 +801,29 @@
         getAttrs(['level', 'type'], function(values) {
             let level = parseInt(values.level);
 
-            let di = level + 5;
+            let damageIncrement = level + 5;
 
             // Apply Skills
             let skillFieldNames = [];
             getSectionIDs('repeating_skills', function(sidarray) {
                 for(let i = 0; i < sidarray.length; i++) {
-                    skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
-                    skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
+                    skillFieldNames.push(`repeating_skills_${sidarray[i]}_skillname`);
+                    skillFieldNames.push(`repeating_skills_${sidarray[i]}_skilllevel`);
                 }
                 getAttrs(skillFieldNames, function(skillValues) {
                     for(let i = 0; i < sidarray.length; i++) {
-                        let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                        let skillName = skillValues[`repeating_skills_${sidarray[i]}_skillname`];
                         if(!skillName) {
                             skillName = 'customSkill';
                         }
                         let skillLevel = 1;
-                        if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
-                            skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
+                        if(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]) {
+                            skillLevel = parseInt(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]);
                         }
 
                         switch(skillName) {
                             case 'improvedDamageIncrement':
-                                di += 2 + 2 * skillLevel; // ERRATA: More powerful IDI
+                                damageIncrement += 2 + 2 * skillLevel; // ERRATA: More powerful IDI
                                 break;
                         }
                     }
@@ -967,13 +831,13 @@
                     switch(values.type) {
                         case 'flunky':
                         case 'soldier':
-                            di = Math.ceil(di / 2);
+                            damageIncrement = Math.ceil(damageIncrement / 2);
                             break;
                     }
 
                     // Set values
                     setAttrs({
-                        di: di
+                        damageIncrement: damageIncrement
                     });
                 });
             });
@@ -982,19 +846,19 @@
 
     function calculateInitiative() {
         log('VALOR - Recalculating Initiative');
-        getAttrs(['dex'], function(values) {
-            let init = parseInt(values.dex);
+        getAttrs(['dexterity'], function(values) {
+            let initiative = parseInt(values.dexterity);
 
             // Apply Flaws
             let flawFieldNames = [];
             getSectionIDs('repeating_flaws', function(idarray) {
                 for(let i = 0; i < idarray.length; i++) {
-                    flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawname');
-                    flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawlevel');
+                    flawFieldNames.push(`repeating_flaws_${idarray[i]}_flawname`);
+                    flawFieldNames.push(`repeating_flaws_${idarray[i]}_flawlevel`);
                 }
                 getAttrs(flawFieldNames, function(flawValues) {
                     for(let i = 0; i < idarray.length; i++) {
-                        let flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
+                        let flawName = flawValues[`repeating_flaws_${idarray[i]}_flawname`];
                         if(!flawName) {
                             flawName = 'customFlaw';
                         }
@@ -1002,7 +866,7 @@
                         // Apply effects
                         switch(flawName) {
                             case 'slowToAct':
-                                init -= 2;
+                                initiative -= 2;
                                 break;
                         }
                     }
@@ -1011,26 +875,26 @@
                     let skillFieldNames = [];
                     getSectionIDs('repeating_skills', function(sidarray) {
                         for(let i = 0; i < sidarray.length; i++) {
-                            skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
-                            skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
+                            skillFieldNames.push(`repeating_skills_${sidarray[i]}_skillname`);
+                            skillFieldNames.push(`repeating_skills_${sidarray[i]}_skilllevel`);
                         }
                         getAttrs(skillFieldNames, function(skillValues) {
                             for(let i = 0; i < sidarray.length; i++) {
-                                let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                                let skillName = skillValues[`repeating_skills_${sidarray[i]}_skillname`];
                                 if(!skillName) {
                                     skillName = 'customSkill';
                                 }
 
                                 switch(skillName) {
                                     case 'quickToAct':
-                                        init += 2;
+                                        initiative += 2;
                                         break;
                                 }
                             }
 
                             // Set values
                             setAttrs({
-                                init: init
+                                initiative: initiative
                             });
                         });
                     });
@@ -1054,18 +918,18 @@
             let skillFieldNames = [];
             getSectionIDs('repeating_skills', function(sidarray) {
                 for(let i = 0; i < sidarray.length; i++) {
-                    skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
-                    skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
+                    skillFieldNames.push(`repeating_skills_${sidarray[i]}_skillname`);
+                    skillFieldNames.push(`repeating_skills_${sidarray[i]}_skilllevel`);
                 }
                 getAttrs(skillFieldNames, function(skillValues) {
                     for(let i = 0; i < sidarray.length; i++) {
-                        let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                        let skillName = skillValues[`repeating_skills_${sidarray[i]}_skillname`];
                         if(!skillName) {
                             skillName = 'customSkill';
                         }
                         let skillLevel = 1;
-                        if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
-                            skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
+                        if(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]) {
+                            skillLevel = parseInt(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]);
                         }
 
                         switch(skillName) {
@@ -1081,10 +945,10 @@
                     }
 
                     let atkBonusDisp = ' ';
-                    if(atkBonus > 0) atkBonusDisp = '+' + atkBonus;
+                    if(atkBonus > 0) atkBonusDisp = `+${atkBonus}`;
                     if(atkBonus < 0) atkBonusDisp = atkBonus;
                     let defBonusDisp = ' ';
-                    if(defBonus > 0) defBonusDisp = '+' + defBonus;
+                    if(defBonus > 0) defBonusDisp = `+${defBonus}`;
                     if(defBonus < 0) defBonusDisp = defBonus;
 
                     // Set values
@@ -1110,24 +974,19 @@
         log('VALOR - Recalculating Flaws & Skills');
         getAttrs(['level', 'type'], function(values) {
             var level = parseInt(values.level);
-            var unspentSP = 14 + 6 * level;
+            var unspentSkillPoints = 14 + 6 * level;
 
             // Various values determined solely by skill list
             var valor = 10;
-            var hasDigDeep = false;
-            var hasOverloadLimits = false;
-            var hasEmpowerAttack = false;
-            var hasResoluteStrike = false;
             var hasUlt = false;
-            var healerLevel = 0;
 
             switch(values.type) {
                 case 'flunky':
                 case 'soldier':
-                    unspentSP = Math.ceil(unspentSP / 2);
+                    unspentSkillPoints = Math.ceil(unspentSkillPoints / 2);
                     break;
                 case 'master':
-                    unspentSP += 4 + level;
+                    unspentSkillPoints += 4 + level;
                     break;
             }
 
@@ -1135,20 +994,20 @@
             var flawFieldNames = [];
             getSectionIDs('repeating_flaws', function(idarray) {
                 for(var i = 0; i < idarray.length; i++) {
-                    flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawname');
-                    flawFieldNames.push('repeating_flaws_' + idarray[i] + '_flawlevel');
+                    flawFieldNames.push(`repeating_flaws_${idarray[i]}_flawname`);
+                    flawFieldNames.push(`repeating_flaws_${idarray[i]}_flawlevel`);
                 }
                 getAttrs(flawFieldNames, function(flawValues) {
                     var flawSP = 0;
                     for(var i = 0; i < idarray.length; i++) {
                         var warning = ' ';
-                        var flawName = flawValues['repeating_flaws_' + idarray[i] + '_flawname'];
+                        var flawName = flawValues[`repeating_flaws_${idarray[i]}_flawname`];
                         if(!flawName) {
                             flawName = 'customFlaw';
                         }
                         var flawLevel = 1;
-                        if(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']) {
-                            flawLevel = parseInt(flawValues['repeating_flaws_' + idarray[i] + '_flawlevel']);
+                        if(flawValues[`repeating_flaws_${idarray[i]}_flawlevel`]) {
+                            flawLevel = parseInt(flawValues[`repeating_flaws_${idarray[i]}_flawlevel`]);
                         }
 
                         var flaw = flawLibrary.find(function(f) {
@@ -1168,11 +1027,11 @@
                                     flawMaxLevel = 100; // Custom Flaw
                             }
                             if(flawLevel > flawMaxLevel && flaw.speed != 3) {
-                                warning = 'Warning: Level cap for this Flaw is ' + flawMaxLevel + '.';
+                                warning = `Warning: Level cap for this Flaw is ${flawMaxLevel}.`;
                             }
 
                             var flawAttrs = {};
-                            flawAttrs['repeating_flaws_' + idarray[i] + '_warning'] = warning;
+                            flawAttrs[`repeating_flaws_${idarray[i]}_warning`] = warning;
                             setAttrs(flawAttrs, { silent: true });
 
                             flawSP += flaw.cost + (flawLevel - 1) * flaw.levelUp;
@@ -1183,45 +1042,30 @@
                     if(flawSP > level + 7) {
                         flawSP = level + 7;
                     }
-                    unspentSP += flawSP;
+                    unspentSkillPoints += flawSP;
 
                     // Apply Skills
                     var skillFieldNames = [];
                     getSectionIDs('repeating_skills', function(sidarray) {
                         for(var i = 0; i < sidarray.length; i++) {
-                            skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
-                            skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
+                            skillFieldNames.push(`repeating_skills_${sidarray[i]}_skillname`);
+                            skillFieldNames.push(`repeating_skills_${sidarray[i]}_skilllevel`);
                         }
                         getAttrs(skillFieldNames, function(skillValues) {
                             for(var i = 0; i < sidarray.length; i++) {
                                 var warning = ' ';
-                                var skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                                var skillName = skillValues[`repeating_skills_${sidarray[i]}_skillname`];
                                 if(!skillName) {
                                     skillName = 'customSkill';
                                 }
                                 var skillLevel = 1;
-                                if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
-                                    skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
+                                if(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]) {
+                                    skillLevel = parseInt(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]);
                                 }
 
                                 switch(skillName) {
                                     case 'breakValorLimit':
                                         valor += 10;
-                                        break;
-                                    case 'digDeep':
-                                        hasDigDeep = true;
-                                        break;
-                                    case 'empowerAttack':
-                                        hasEmpowerAttack = true;
-                                        break;
-                                    case 'resoluteStrike':
-                                        hasResoluteStrike = true;
-                                        break;
-                                    case 'overloadLimits':
-                                        hasOverloadLimits = true;
-                                        break;
-                                    case 'healer':
-                                        healerLevel = skillLevel;
                                         break;
                                 }
 
@@ -1243,26 +1087,21 @@
                                     }
 
                                     if(skillLevel > skillMaxLevel && skill.level != 3) {
-                                        warning = 'Warning: Level cap for this Skill is ' + skillMaxLevel + '.';
+                                        warning = `Warning: Level cap for this Skill is ${skillMaxLevel}.`;
                                     }
 
                                     var skillAttrs = {};
-                                    skillAttrs['repeating_skills_' + sidarray[i] + '_warning'] = warning;
+                                    skillAttrs[`repeating_skills_${sidarray[i]}_warning`] = warning;
                                     setAttrs(skillAttrs, { silent: true });
 
-                                    unspentSP -= skill.cost + (skillLevel - 1) * skill.levelUp;
+                                    unspentSkillPoints -= skill.cost + (skillLevel - 1) * skill.levelUp;
                                 }
                             }
 
                             // Set values
                             setAttrs({
-                                unspentSP: unspentSP,
-                                valor_max: valor,
-                                hasDigDeep: hasDigDeep,
-                                hasOverloadLimits: hasOverloadLimits,
-                                hasEmpowerAttack: hasEmpowerAttack,
-                                hasResoluteStrike: hasResoluteStrike,
-                                healerLevel: healerLevel,
+                                unspentSkillPoints: unspentSkillPoints,
+                                valor_max: valor
                             });
                         });
                     });
@@ -1276,19 +1115,19 @@
         getAttrs(['level', 'type'], function(values) {
             let level = parseInt(values.level);
 
-            let unspentTP = 8 + 4 * level;
+            let unspentTechPoints = 8 + 4 * level;
             let flunkyTP = 2 + level;
             let soldierTP = 4 + 2 * level;
             if(level > 5) {
-                unspentTP += level - 5;
+                unspentTechPoints += level - 5;
                 flunkyTP += level - 5;
                 soldierTP += level - 5;
             }
             if(level > 10) {
-                unspentTP += level - 10;
+                unspentTechPoints += level - 10;
             }
             if(level > 15) {
-                unspentTP += level - 15;
+                unspentTechPoints += level - 15;
                 soldierTP += level - 15;
             }
 
@@ -1296,14 +1135,14 @@
 
             switch(values.type) {
                 case 'flunky':
-                    unspentTP = flunkyTP;
+                    unspentTechPoints = flunkyTP;
                     break;
                 case 'soldier':
                 case 'swarm':
-                    unspentTP = soldierTP;
+                    unspentTechPoints = soldierTP;
                     break;
                 case 'master':
-                    unspentTP += 1 + level;
+                    unspentTechPoints += 1 + level;
                     break;
 
             }
@@ -1312,32 +1151,32 @@
             let skillFieldNames = [];
             getSectionIDs('repeating_skills', function(sidarray) {
                 for(let i = 0; i < sidarray.length; i++) {
-                    skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skillname');
-                    skillFieldNames.push('repeating_skills_' + sidarray[i] + '_skilllevel');
+                    skillFieldNames.push(`repeating_skills_${sidarray[i]}_skillname`);
+                    skillFieldNames.push(`repeating_skills_${sidarray[i]}_skilllevel`);
                 }
                 getAttrs(skillFieldNames, function(skillValues) {
                     for(let i = 0; i < sidarray.length; i++) {
-                        let skillName = skillValues['repeating_skills_' + sidarray[i] + '_skillname'];
+                        let skillName = skillValues[`repeating_skills_${sidarray[i]}_skillname`];
                         if(!skillName) {
                             skillName = 'customSkill';
                         }
                         let skillLevel = 1;
-                        if(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']) {
-                            skillLevel = parseInt(skillValues['repeating_skills_' + sidarray[i] + '_skilllevel']);
+                        if(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]) {
+                            skillLevel = parseInt(skillValues[`repeating_skills_${sidarray[i]}_skilllevel`]);
                         }
 
                         switch(skillName) {
                             case 'versatileFighter':
                                 switch(values.type) {
                                     case 'flunky':
-                                        unspentTP += skillLevel;
+                                        unspentTechPoints += skillLevel;
                                         break;
                                     case 'soldier':
                                     case 'swarm':
-                                        unspentTP += 2 + skillLevel;
+                                        unspentTechPoints += 2 + skillLevel;
                                         break;
                                     default:
-                                        unspentTP += 2 + 2 * skillLevel;
+                                        unspentTechPoints += 2 + 2 * skillLevel;
                                         break;
                                 }
                                 break;
@@ -1351,9 +1190,9 @@
                     let techFieldNames = [];
                     getSectionIDs('repeating_techs', function(tidarray) {
                         for(let i = 0; i < tidarray.length; i++) {
-                            techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_core_level');
-                            techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_mod_level');
-                            techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_core');
+                            techFieldNames.push(`repeating_techs_${tidarray[i]}_tech_core_level`);
+                            techFieldNames.push(`repeating_techs_${tidarray[i]}_tech_mod_level`);
+                            techFieldNames.push(`repeating_techs_${tidarray[i]}_tech_core`);
                         }
 
                         getAttrs(techFieldNames, function(techValues) {
@@ -1376,21 +1215,21 @@
                             }
 
                             for(let i = 0; i < tidarray.length; i++) {
-                                techCore = techValues['repeating_techs_' + tidarray[i] + '_tech_core'];
+                                techCore = techValues[`repeating_techs_${tidarray[i]}_tech_core`];
                                 let techCoreLevel = 1;
-                                if(techValues['repeating_techs_' + tidarray[i] + '_tech_core_level']) {
-                                    techCoreLevel = parseInt(techValues['repeating_techs_' + tidarray[i] + '_tech_core_level']);
+                                if(techValues[`repeating_techs_${tidarray[i]}_tech_core_level`]) {
+                                    techCoreLevel = parseInt(techValues[`repeating_techs_${tidarray[i]}_tech_core_level`]);
                                 }
                                 let techModsLevel = 0;
-                                if(techValues['repeating_techs_' + tidarray[i] + '_tech_mod_level']) {
-                                    techModsLevel = parseInt(techValues['repeating_techs_' + tidarray[i] + '_tech_mod_level']);
+                                if(techValues[`repeating_techs_${tidarray[i]}_tech_mod_level`]) {
+                                    techModsLevel = parseInt(techValues[`repeating_techs_${tidarray[i]}_tech_mod_level`]);
                                 }
 
                                 let spentTP = techModsLevel + techCoreLevel;
 
                                 // Set the tech's total level
                                 let techAttrs = {};
-                                techAttrs['repeating_techs_' + tidarray[i] + '_tech_level'] = spentTP;
+                                techAttrs[`repeating_techs_${tidarray[i]}_tech_level`] = spentTP;
                                 setAttrs(techAttrs);
 
                                 if((techCore == 'ultDamage' || techCore == 'ultTransform' || techCore == 'ultMimic' || techCore == 'domain')
@@ -1401,13 +1240,13 @@
                                 }
 
                                 if(spentTP > 0) {
-                                    unspentTP -= spentTP;
+                                    unspentTechPoints -= spentTP;
                                 }
                             }
 
                             // Set values
                             setAttrs({
-                                unspentTP: unspentTP
+                                unspentTechPoints: unspentTechPoints
                             });
                         });
                     });
@@ -1416,140 +1255,76 @@
         });
     }
 
-    function calculateTechCommand(techId) {
-        log('VALOR - Recalculating Technique Command ID ' + techId);
-
-        let techFieldNames = [];
-
-        techFieldNames.push('repeating_techs_' + techId + '_tech_name');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_core');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_mods');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_limits');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_targets');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_bonus');
-
-        getAttrs(techFieldNames, function(techValues) {
-            let techName = techValues['repeating_techs_' + techId + '_tech_name'];
-            let techCore = 'damage';
-            if(techValues['repeating_techs_' + techId + '_tech_core']) {
-                techCore = techValues['repeating_techs_' + techId + '_tech_core'];
-            }
-            let techMods = '';
-            if(techValues['repeating_techs_' + techId + '_tech_mods']) {
-                techMods = techValues['repeating_techs_' + techId + '_tech_mods'].toLowerCase();
-            }
-            let techLimits = '';
-            if(techValues['repeating_techs_' + techId + '_tech_limits']) {
-                techLimits = techValues['repeating_techs_' + techId + '_tech_limits'].toLowerCase();
-            }
-            let techTargets = 1;
-            if(techValues['repeating_techs_' + techId + '_tech_targets']) {
-                techTargets = parseInt(techValues['repeating_techs_' + techId + '_tech_targets']);
-            }
-            if(techTargets > 20) {
-                techTargets = 20;
-            }
-            let techBonus = 0;
-            if(techValues['repeating_techs_' + techId + '_tech_bonus']) {
-                techBonus = parseInt(techValues['repeating_techs_' + techId + '_tech_bonus']);
-            }
-
-            let hasTargets = true;
-
-            if(techCore == 'barrier' || techCore == 'summoning' ||
-               techCore == 'ultTransform' || techCore == 'domain') {
-                hasTargets = false;
-            }
-
-            if(techMods.indexOf('custom') == -1 && techMods.indexOf('transform ally') > -1) {
-                hasTargets = true;
-            }
-
-            if(techLimits.indexOf('custom') == -1 && techLimits.indexOf('self') > -1) {
-                hasTargets = false;
-            }
-
-            let techCommand = '!t --as "@{character_id}" "@{tech_name}"';
-            if(techBonus) {
-                 techCommand += ' +@{tech_bonus}';
-            }
-            if(techTargets > 0 && hasTargets) {
-                techCommand += ' --targets'
-                for(let j = 0; j < techTargets; j++) {
-                    let targetId = 'Target #' + (j + 1);
-                    techCommand += ' @{target|' + targetId + '|token_id}'
-                }
-            }
-
-            let attrs = {};
-            attrs['repeating_techs_' + techId + '_tech_command'] = techCommand;
-            setAttrs(attrs, { silent: true });
-        });
-    }
-
     function calculateTech(techId) {
-        log('VALOR - Recalculating Technique ID ' + techId);
+        log(`VALOR - Recalculating Technique ID ${techId}`);
 
-        let techFieldNames = ['str', 'agi', 'spr', 'mnd', 'gut',
-                              'mus', 'dex', 'aur', 'int', 'res',
-                              'strAtk', 'agiAtk', 'sprAtk', 'mndAtk',
-                              'level', 'hp_max', 'di', 'type',
+        let techFieldNames = ['strength', 'agility', 'spirit', 'mind', 'guts',
+                              'muscle', 'dexterity', 'aura', 'intuition', 'resolve',
+                              'strengthAttack', 'agilityAttack', 'spiritAttack', 'mindAttack',
+                              'level', 'hp_max', 'damageIncrement', 'type',
+                              'rollbonus', 'atkrollbonus', 'iatkrollbonus', 'eatkbonus', 'patkbonus',
                               'hasDigDeep', 'hasOverloadLimits', 'hasEmpowerAttack', 'hasResoluteStrike', 'healerLevel'];
 
-        techFieldNames.push('repeating_techs_' + techId + '_tech_name');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_core_level');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_core');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_stat');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_mods');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_limits');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_description');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_granted_skills');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_inflicted_flaws');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_targets');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_custom_cost');
+        techFieldNames.push(`repeating_techs_${techId}_tech_name`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_core_level`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_core`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_stat`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_mods`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_limits`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_description`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_granted_skills`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_inflicted_flaws`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_targets`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_custom_cost`);
 
         getAttrs(techFieldNames, function(techValues) {
-            let level = parseInt(techValues.level);
-            let hp = parseInt(techValues.hp_max);
-            let di = parseInt(techValues.di);
-            let str = parseInt(techValues.str);
-            let agi = parseInt(techValues.agi);
-            let spr = parseInt(techValues.spr);
-            let mnd = parseInt(techValues.mnd);
-            let gut = parseInt(techValues.gut);
+            const level = parseInt(techValues.level);
+            const health = parseInt(techValues.hp_max);
+            const damageIncrement = parseInt(techValues.damageIncrement);
+            const strength = parseInt(techValues.strength);
+            const agility = parseInt(techValues.agility);
+            const spirit = parseInt(techValues.spirit);
+            const mind = parseInt(techValues.mind);
+            const guts = parseInt(techValues.guts);
+            const rollBonus = parseInt(techValues.rollbonus);
+            const attackRollBonus = parseInt(techValues.atkrollbonus);
+            const inherentAttackRollBonus = parseInt(techValues.iatkrollbonus);
+            const energyAttackBonus = parseInt(techValues.eatkbonus);
+            const physicalAttackBonus = parseInt(techValues.patkbonus);
 
-            let techName = techValues['repeating_techs_' + techId + '_tech_name'];
-            let techStat = techValues['repeating_techs_' + techId + '_tech_stat'];
-            let techGrantedSkills = techValues['repeating_techs_' + techId + '_tech_granted_skills'];
-            let techInflictedFlaws = techValues['repeating_techs_' + techId + '_tech_inflicted_flaws'];
-            let techDescription = techValues['repeating_techs_' + techId + '_tech_description'];
+            let techName = techValues[`repeating_techs_${techId}_tech_name`];
+            let techStat = techValues[`repeating_techs_${techId}_tech_stat`];
+            let techGrantedSkills = techValues[`repeating_techs_${techId}_tech_granted_skills`];
+            let techInflictedFlaws = techValues[`repeating_techs_${techId}_tech_inflicted_flaws`];
+            let techDescription = techValues[`repeating_techs_${techId}_tech_description`];
             let techCore = 'damage';
-            if(techValues['repeating_techs_' + techId + '_tech_core']) {
-                techCore = techValues['repeating_techs_' + techId + '_tech_core'];
+            if(techValues[`repeating_techs_${techId}_tech_core`]) {
+                techCore = techValues[`repeating_techs_${techId}_tech_core`];
             }
             let techMods = '';
-            if(techValues['repeating_techs_' + techId + '_tech_mods']) {
-                techMods = techValues['repeating_techs_' + techId + '_tech_mods'].toLowerCase();
+            if(techValues[`repeating_techs_${techId}_tech_mods`]) {
+                techMods = techValues[`repeating_techs_${techId}_tech_mods`].toLowerCase();
             }
             let techLimits = '';
-            if(techValues['repeating_techs_' + techId + '_tech_limits']) {
-                techLimits = techValues['repeating_techs_' + techId + '_tech_limits'].toLowerCase();
+            if(techValues[`repeating_techs_${techId}_tech_limits`]) {
+                techLimits = techValues[`repeating_techs_${techId}_tech_limits`].toLowerCase();
             }
             let techCoreLevel = 1;
-            if(techValues['repeating_techs_' + techId + '_tech_core_level']) {
-                techCoreLevel = parseInt(techValues['repeating_techs_' + techId + '_tech_core_level']);
+            if(techValues[`repeating_techs_${techId}_tech_core_level`]) {
+                techCoreLevel = parseInt(techValues[`repeating_techs_${techId}_tech_core_level`]);
             }
             let techTargets = 1;
-            if(techValues['repeating_techs_' + techId + '_tech_targets']) {
-                techTargets = parseInt(techValues['repeating_techs_' + techId + '_tech_targets']);
+            if(techValues[`repeating_techs_${techId}_tech_targets`]) {
+                techTargets = parseInt(techValues[`repeating_techs_${techId}_tech_targets`]);
             }
             if(techTargets > 20) {
                 techTargets = 20;
             }
             let techCustomCost = 0;
-            if(techValues['repeating_techs_' + techId + '_tech_custom_cost']) {
-                techCustomCost = parseInt(techValues['repeating_techs_' + techId + '_tech_custom_cost']);
+            if(techValues[`repeating_techs_${techId}_tech_custom_cost`]) {
+                techCustomCost = parseInt(techValues[`repeating_techs_${techId}_tech_custom_cost`]);
             }
+
 
             // Build tech summary
             let summary = '';
@@ -1584,24 +1359,30 @@
                 action = 'Slow';
             }
             if(techCore != 'custom') {
-                summary += action + ' Action. ';
+                summary += `${action} Action. `;
             }
 
             // Display core functionality
             let rollStat = techStat;
             if(techMods.indexOf('muscular') > -1) {
-                rollStat = 'str';
+                rollStat = 'strength';
             }
             if(techMods.indexOf('dexterous') > -1 ||
                techMods.indexOf('dextrous') > -1) {
-                rollStat = 'agi';
+                rollStat = 'agility';
             }
             if(techMods.indexOf('aura') > -1) {
-                rollStat = 'spr';
+                rollStat = 'spirit';
             }
             if(techMods.indexOf('intuitive') > -1) {
-                rollStat = 'mnd';
+                rollStat = 'mind';
             }
+            
+            let techRoll = '';
+            let amount = 0;
+            let defRes = 'def';
+            let microSummary = '';
+
             if(techCore == 'damage' ||
                techCore == 'ultDamage' ||
                techCore == 'weaken' ||
@@ -1615,28 +1396,41 @@
                 }
                 let toHit = 0;
                 switch(rollStat) {
-                    case 'str':
-                        toHit = techValues.mus + hitBonus;
-                        summary += 'Roll Muscle (1d10+' + toHit + ') to hit. '
+                    case 'strength':
+                        toHit = techValues.muscle + hitBonus;
+                        summary += `Roll Muscle (1d10+${toHit}) to hit. `;
                         break;
-                    case 'agi':
-                        toHit = techValues.dex + hitBonus;
-                        summary += 'Roll Dexterity (1d10+' + toHit + ') to hit. '
+                    case 'agility':
+                        toHit = techValues.dexterity + hitBonus;
+                        summary += `Roll Dexterity (1d10+${toHit}) to hit. `;
                         break;
-                    case 'spr':
-                        toHit = techValues.aur + hitBonus;
-                        summary += 'Roll Aura (1d10+' + toHit + ') to hit. '
+                    case 'spirit':
+                        toHit = techValues.aura + hitBonus;
+                        summary += `Roll Aura (1d10+${toHit}) to hit. `;
                         break;
-                    case 'mnd':
-                        toHit = techValues.int + hitBonus;
-                        summary += 'Roll Intuition (1d10+' + toHit + ') to hit. '
+                    case 'mind':
+                        toHit = techValues.intuition + hitBonus;
+                        summary += `Roll Intuition (1d10+${toHit}) to hit. `;
                         break;
-                    case 'gut':
-                        toHit = techValues.res + hitBonus;
-                        summary += 'Roll Resolve (1d10+' + toHit + ') to hit. '
+                    case 'guts':
+                        toHit = techValues.resolve + hitBonus;
+                        summary += `Roll Resolve (1d10+${toHit}) to hit. `;
                         break;
                 }
+                
+                if(techCore == 'damage' || techCore == 'ultDamage') {
+                    toHit += attackRollBonus + inherentAttackRollBonus;
+                }
+                toHit += rollBonus;
+                
+                techRoll += `[[1d10+${toHit}]] `;
+                if(techStat == 'strength') techRoll += 'Muscle';
+                if(techStat == 'agility') techRoll += 'Dexterity';
+                if(techStat == 'mind') techRoll += 'Intuition';
+                if(techStat == 'spirit') techRoll += 'Aura';
+                if(techStat == 'guts') techRoll += 'Resolve';
             }
+            
             switch(techCore) {
                 case 'damage':
                 case 'ultDamage':
@@ -1649,97 +1443,101 @@
                         techMods.indexOf('persistent') > -1 ||
                         techMods.indexOf('debilitating') > -1 ||
                         techMods.indexOf('boosting') > -1;
-                    let damage = 0;
                     switch(techStat) {
-                        case 'str':
+                        case 'strength':
                             if(specialAttack && techCore == 'damage') {
-                                damage = 12 + 4 * techCoreLevel + Math.ceil(techValues.strAtk / 2);
+                                amount = 12 + 4 * techCoreLevel + Math.ceil(techValues.strengthAttack / 2);
                             } else if((!specialAttack && techCore == 'damage') || (specialAttack && techCore == 'ultDamage')) {
-                                damage = 15 + 5 * techCoreLevel + techValues.strAtk;
+                                amount = 15 + 5 * techCoreLevel + techValues.strengthAttack;
                             } else {
-                                damage = 24 + 8 * techCoreLevel + techValues.strAtk;
+                                amount = 24 + 8 * techCoreLevel + techValues.strengthAttack;
                             }
-                            summary += 'On a hit, deal ' + damage + ' physical damage to the target. '
+                            amount += physicalAttackBonus;
+                            summary += `On a hit, deal ${amount} physical damage to the target. `;
                             break;
-                        case 'agi':
+                        case 'agility':
                             if(specialAttack && techCore == 'damage') {
-                                damage = 12 + 4 * techCoreLevel + Math.ceil(techValues.agiAtk / 2);
+                                amount = 12 + 4 * techCoreLevel + Math.ceil(techValues.agilityAttack / 2);
                             } else if((!specialAttack && techCore == 'damage') || (specialAttack && techCore == 'ultDamage')) {
-                                damage = 15 + 5 * techCoreLevel + techValues.agiAtk;
+                                amount = 15 + 5 * techCoreLevel + techValues.agilityAttack;
                             } else {
-                                damage = 24 + 8 * techCoreLevel + techValues.agiAtk;
+                                amount = 24 + 8 * techCoreLevel + techValues.agilityAttack;
                             }
-                            summary += 'On a hit, deal ' + damage + ' physical damage to the target. '
+                            amount += physicalAttackBonus;
+                            summary += `On a hit, deal ${amount} physical damage to the target. `;
                             break;
-                        case 'spr':
+                        case 'spirit':
                             if(specialAttack && techCore == 'damage') {
-                                damage = 12 + 4 * techCoreLevel + Math.ceil(techValues.sprAtk / 2);
+                                amount = 12 + 4 * techCoreLevel + Math.ceil(techValues.spiritAttack / 2);
                             } else if((!specialAttack && techCore == 'damage') || (specialAttack && techCore == 'ultDamage')) {
-                                damage = 15 + 5 * techCoreLevel + techValues.sprAtk;
+                                amount = 15 + 5 * techCoreLevel + techValues.spiritAttack;
                             } else {
-                                damage = 24 + 8 * techCoreLevel + techValues.sprAtk;
+                                amount = 24 + 8 * techCoreLevel + techValues.spiritAttack;
                             }
-                            summary += 'On a hit, deal ' + damage + ' energy damage to the target. '
+                            amount += energyAttackBonus;
+                            summary += `On a hit, deal ${amount} energy damage to the target. `;
+                            defRes = 'res';
                             break;
-                        case 'mnd':
+                        case 'mind':
                             if(specialAttack && techCore == 'damage') {
-                                damage = 12 + 4 * techCoreLevel + Math.ceil(techValues.mndAtk / 2);
+                                amount = 12 + 4 * techCoreLevel + Math.ceil(techValues.mindAttack / 2);
                             } else if((!specialAttack && techCore == 'damage') || (specialAttack && techCore == 'ultDamage')) {
-                                damage = 15 + 5 * techCoreLevel + techValues.mndAtk;
+                                amount = 15 + 5 * techCoreLevel + techValues.mindAttack;
                             } else {
-                                damage = 24 + 8 * techCoreLevel + techValues.mndAtk;
+                                amount = 24 + 8 * techCoreLevel + techValues.mindAttack;
                             }
-                            summary += 'On a hit, deal ' + damage + ' energy damage to the target. '
+                            amount += energyAttackBonus;
+                            summary += `On a hit, deal ${amount} energy damage to the target. `;
+                            defRes = 'res';
                             break;
                     }
                     break;
                 case 'healing':
-                    let healing = 0;
                     switch(techStat) {
-                        case 'spr':
-                            healing = Math.ceil(spr / 2); // ERRATA - Reduced Healing power
+                        case 'spirit':
+                            amount = Math.ceil(spirit / 2); // ERRATA - Reduced Healing power
                             break;
-                        case 'mnd':
-                            healing = Math.ceil(mnd / 2);
+                        case 'mind':
+                            amount = Math.ceil(mind / 2);
                             break;
-                        case 'gut':
-                            healing = Math.ceil(gut / 2);
+                        case 'guts':
+                            amount = Math.ceil(guts / 2);
                             break;
                     }
                     if(techValues.healerLevel > 0) {
-                        healing += 2 + 2 * techValues.healerLevel;
+                        amount += 2 + 2 * techValues.healerLevel;
                     }
                     if(techMods.indexOf('continuous r') > -1) {
-                        healing += 6 + 2 * techCoreLevel;
-                        if(techValues.type == 'flunky' || techValues.type == 'soldier') healing = Math.ceil(healing / 2);
-                        summary += 'Makes the target recover ' + healing + ' Health per turn for 3 turns. '
+                        amount += 6 + 2 * techCoreLevel;
+                        if(techValues.type == 'flunky' || techValues.type == 'soldier') amount = Math.ceil(amount / 2);
+                        summary += `Makes the target recover ${amount} Health per turn for 3 turns. `;
                     } else {
-                        healing += 9 + 3 * techCoreLevel;
-                        if(techValues.type == 'flunky' || techValues.type == 'soldier') healing = Math.ceil(healing / 2);
-                        summary += 'Restore ' + healing + ' Health to the target. '
+                        amount += 9 + 3 * techCoreLevel;
+                        if(techValues.type == 'flunky' || techValues.type == 'soldier') amount = Math.ceil(amount / 2);
+                        summary += `Restore ${amount} Health to the target. `;
                     }
                     break;
                 case 'barrier':
-                    summary += 'Create a Barrier of power ' + techCoreLevel + '. ';
+                    summary += `Create a Barrier of power ${techCoreLevel}. `;
                     barrierFreebie = true;
                     break;
                 case 'mimic':
-                    summary += 'Mimics a witnessed enemy Technique at Tech Level ' + techCoreLevel + '. ';
+                    summary += `Mimics a witnessed enemy Technique at Tech Level ${techCoreLevel}. `;
                     break;
                 case 'ultMimic':
-                    summary += 'Mimics a witnessed enemy Ultimate Technique at Tech Level ' + techCoreLevel + '. ';
+                    summary += `Mimics a witnessed enemy Ultimate Technique at Tech Level ${techCoreLevel}. `;
                     break;
                 case 'summoning':
-                    summary += 'Summons a Level ' + techCoreLevel + ' ally. Command it with a Support Action. ';
+                    summary += `Summons a Level ${techCoreLevel} ally. Command it with a Support Action. `;
                     break;
                 case 'ultTransform':
-                    let bonusHp = level * 10;
+                    amount = level * 10;
                     if(techValues.type == 'master') {
-                        bonusHp *= 2;
+                        amount *= 2;
                     }
-                    summary += 'Transform, gaining ' + bonusHp + ' HP and +1 to all Active Attributes. ';
+                    summary += `Transform, gaining ${amount} HP and +1 to all Active Attributes. `;
                     if(techGrantedSkills) {
-                        summary += 'Grants Skills: ' + techGrantedSkills;
+                        summary += `Grants Skills: ${techGrantedSkills}`;
                         if(!summary.endsWith('.')) {
                             summary += '.';
                         }
@@ -1749,7 +1547,7 @@
                     break;
                 case 'boost':
                     if(techGrantedSkills) {
-                        summary += 'Grants Skills: ' + techGrantedSkills;
+                        summary += `Grants Skills: ${techGrantedSkills}`;
                         if(!summary.endsWith('.')) {
                             summary += '.';
                         }
@@ -1759,7 +1557,7 @@
                     break;
                 case 'weaken':
                     if(techInflictedFlaws) {
-                        summary += 'Inflicts Flaws: ' + techInflictedFlaws;
+                        summary += `Inflicts Flaws: ${techInflictedFlaws};`
                         if(!summary.endsWith('.')) {
                             summary += '.';
                         }
@@ -1769,14 +1567,14 @@
                     break;
                 case 'domain':
                     if(techGrantedSkills) {
-                        summary += 'Grants Skills within domain: ' + techGrantedSkills;
+                        summary += `Grants Skills within domain: ${techGrantedSkills}`;
                         if(!summary.endsWith('.')) {
                             summary += '.';
                         }
                         summary += ' ';
                     }
                     if(techInflictedFlaws) {
-                        summary += ' Inflicts Flaws within domain: ' + techInflictedFlaws;
+                        summary += ` Inflicts Flaws within domain: ${techInflictedFlaws}`;
                         if(!summary.endsWith('.')) {
                             summary += '.';
                         }
@@ -1793,7 +1591,6 @@
                     warnings.push(`Unknown Core '${techCore}'.`);
                     break;
             }
-
             summary += '\n';
 
             // Display mods
@@ -1811,18 +1608,20 @@
                 if(mod.indexOf('custom') == 0) {
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('range') == 0) {
+                    log(mod);
                     let range = 3 * modLevel;
                     switch(techStat) {
-                        case 'str':
+                        case 'strength':
                             range = 2 * modLevel;
                             break;
-                        case 'agi':
-                        case 'spr':
+                        case 'agility':
+                        case 'spirit':
                             range = 4 * modLevel;
                             break;
                     }
-                    summary += 'Range ' + range + '. ';
+                    summary += `Range ${range}. `;
                     totalModLevel += modLevel;
+                    log(summary);
                 } else if(mod.indexOf('blast') == 0) {
                     let rushMod = mods.find(function(m) {
                       return m.indexOf('line') > -1;
@@ -1830,10 +1629,10 @@
                     if(rushMod) {
                         // Say nothing - this'll get incorporated into the line attack mod
                     } else {
-                        summary += 'Blast Radius ' + modLevel + '. ';
+                        summary += `Blast Radius ${modLevel}. `;
                     }
                     let blastCost = 0;
-                    if(techStat == 'spr') {
+                    if(techStat == 'spirit') {
                         blastCost = 2 * modLevel - 1;
                     } else {
                         blastCost = 2 * modLevel;
@@ -1852,17 +1651,17 @@
                     } else if(modLevel == 2) {
                         summary += 'Chains twice. ';
                     } else {
-                        summary += 'Chains ' + modLevel + ' times. ';
+                        summary += `Chains ${modLevel} times. `;
                     }
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('line') == 0 && mod.indexOf('line var') != 0) {
                     let line = 3 * modLevel;
                     switch(techStat) {
-                        case 'str':
-                        case 'agi':
+                        case 'strength':
+                        case 'agility':
                             line = 2 * modLevel;
                             break;
-                        case 'spr':
+                        case 'spirit':
                             line++;
                             break;
                     }
@@ -1878,9 +1677,9 @@
                             // NaN, so there's no level listed - assume 1
                             blastRadius = 1;
                         }
-                        summary += 'Targets everything within radius ' + blastRadius + ' around a line of length ' + line + '. ';
+                        summary += `Targets everything within radius ${blastRadius} around a line of length ${line}. `;
                     } else {
-                        summary += 'Targets in a line of length ' + line + '. ';
+                        summary += `Targets in a line of length ${line}. `;
                     }
                     totalModLevel += modLevel;
                     if(barrierFreebie) {
@@ -1889,21 +1688,21 @@
                     }
                 } else if(mod.indexOf('line var') == 0) {
                     let variations = modLevel;
-                    if(techStat == 'mnd') {
+                    if(techStat == 'mind') {
                         variations++;
                     }
                     if(variations == 1) {
                         summary += 'Line can change direction once. ';
                     } else {
-                        summary += 'Line can change direction ' + variations + ' times. ';
+                        summary += `Line can change direction ${variations} times. `;
                     }
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('multiple') == 0) {
                     let targets = 1 + modLevel;
-                    if(techStat == 'agi') {
+                    if(techStat == 'agility') {
                         targets++;
                     }
-                    summary += 'Choose up to ' + targets + ' targets. ';
+                    summary += `Choose up to ${targets} targets. `;
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('indirect') == 0) {
                     summary += 'Can target anywhere on the battlefield. ';
@@ -1921,37 +1720,37 @@
                           // NaN, so there's no level listed - assume 1
                           bonusMove = 1;
                       }
-                      if(techStat == 'agi') {
+                      if(techStat == 'agility') {
                           bonusMove++;
                       }
                       if(bonusMove == 1) {
                           summary += 'You can move an additional space on this Move Action. ';
                       } else {
-                          summary += 'You can move an additional ' + bonusMove + ' spaces on this Move Action. ';
+                          summary += `You can move an additional ${bonusMove} spaces on this Move Action. `;
                       }
                     }
-                    if(techStat == 'agi' || techStat == 'str') {
+                    if(techStat == 'agility' || techStat == 'strength') {
                         totalModLevel += 2;
                     } else {
                         totalModLevel += 3;
                     }
                 } else if(mod.indexOf('smart area') == 0) {
                     summary += 'You can choose to omit any number of spaces from the target area. ';
-                    if(techStat == 'mnd') {
+                    if(techStat == 'mind') {
                         totalModLevel++;
                     } else {
                         totalModLevel += 2;
                     }
                 } else if(mod.indexOf('whirlwind') == 0) {
                     summary += 'Targets all enemies in your Zone of Control. ';
-                    if(techStat == 'str' || techStat == 'agi') {
+                    if(techStat == 'strength' || techStat == 'agility') {
                         totalModLevel++;
                     } else {
                         totalModLevel += 2;
                     }
                 } else if(mod.indexOf('debilitating') == 0) {
                     if(techInflictedFlaws) {
-                        summary += 'Inflicts Flaws on a hit: ' + techInflictedFlaws + '. ';
+                        summary += `Inflicts Flaws on a hit: ${techInflictedFlaws}. `;
                     }
                     hasFlaws = true;
                 } else if(mod.indexOf('boosting') == 0) {
@@ -1962,11 +1761,12 @@
                     summary += 'Attacks again in the same area at the start of your next 2 turns. ';
                     isPersistent = true;
                 } else if(mod.indexOf('piercing') == 0) {
-                    if(techStat == 'str' || techStat == 'agi') {
+                    if(techStat == 'strength' || techStat == 'agility') {
                         summary += 'Ignores Defense. ';
                     } else {
                         summary += 'Ignores Resistance. ';
                     }
+                    defRes = null;
                 } else if(mod.indexOf('sapping') == 0) {
                     summary += 'On a hit, the target takes ongoing damage equal to a third of initial damage for 3 turns. ';
                 } else if(mod.indexOf('transform ally') == 0) {
@@ -1979,11 +1779,11 @@
                     summary += 'Can stack with another Transformation. ';
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('intimidating transform') == 0) {
-                    summary += `When transforming and at the start of each turn, roll Resolve (1d10+${techValues.res}) or Aura (1d10+${techValues.aur})` +
+                    summary += `When transforming and at the start of each turn, roll Resolve (1d10+${techValues.resolve}) or Aura (1d10+${techValues.aura})` +
                     ` to intimidate everyone within ${modLevel} spaces.`;
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('accurate') == 0) {
-                    if(techStat == 'agi') {
+                    if(techStat == 'agility') {
                         totalModLevel += 3;
                     } else {
                         totalModLevel += 4;
@@ -1991,10 +1791,12 @@
                 } else if(mod.indexOf('aura') == 0) {
                     totalModLevel++;
                 } else if(mod.indexOf('damage shift') == 0) {
-                    if(techStat == 'str' || techStat == 'agi') {
+                    if(techStat == 'strength' || techStat == 'agility') {
                         summary += 'Is affected by Resistance instead of Defense. ';
+                        defRes = 'res';
                     } else {
                         summary += 'Is affected by Defense instead of Resistance. ';
+                        defRes = 'def';
                     }
                     totalModLevel++;
                 } else if(mod.indexOf('darkness zone') == 0) {
@@ -2008,37 +1810,37 @@
                         // Say nothing - this'll get incorporated into the rush mod
                     } else {
                         let distance = modLevel;
-                        if(techStat == 'agi') {
+                        if(techStat == 'agility') {
                             distance++;
                         }
                         if(distance == 1) {
                             summary += 'Move 1 space before or after attacking. ';
                         } else {
-                            summary += 'Move ' + distance + ' spaces before or after attacking. ';
+                            summary += `Move ${distance} spaces before or after attacking. `;
                         }
                     }
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('destruction') == 0) {
                     let destroy = 2 * modLevel;
-                    summary += '+' + destroy + ' Durability damage to objects. ';
+                    summary += `+${destroy} Durability damage to objects. `;
                     totalModLevel++;
                 } else if(mod.indexOf('dexterous') == 0 ||
                           mod.indexOf('dextrous') == 0) {
                     totalModLevel++;
                 } else if(mod.indexOf('drop') == 0) {
-                    summary += 'If target is flying, they fall and take ' + di + ' damage. ';
+                    summary += `If target is flying, they fall and take ${damageIncrement} damage. `;
                     totalModLevel++;
                 } else if(mod.indexOf('grant flaw') == 0 ||
                           mod.indexOf('grants flaw') == 0) {
                     if(techInflictedFlaws) {
-                        summary += 'Inflicts Flaws: ' + techInflictedFlaws + '. ';
+                        summary += `Inflicts Flaws: ${techInflictedFlaws}. `;
                     }
                     totalModLevel += modLevel;
                     hasFlaws = true;
                 } else if(mod.indexOf('grant skill') == 0 ||
                           mod.indexOf('grants skill') == 0) {
                     if(techGrantedSkills) {
-                        summary += 'Grants Skills: ' + techGrantedSkills + '. ';
+                        summary += `Grants Skills: ${techGrantedSkills}. `;
                     }
                     totalModLevel += modLevel;
                     hasSkills = true;
@@ -2060,27 +1862,27 @@
                     totalModLevel++;
                 } else if(mod.indexOf('ram') == 0) {
                     summary += 'On a hit, move and drag the target to a space adjacent to you. ';
-                    if(techStat == 'str') {
+                    if(techStat == 'strength') {
                         totalModLevel++;
                     } else {
                         totalModLevel += 2;
                     }
                 } else if(mod.indexOf('repo') == 0) {
                     let distance = 1 + modLevel;
-                    if(techStat == 'str') {
+                    if(techStat == 'strength') {
                         distance++;
                     }
-                    summary += 'On a hit, move the target up to ' + distance + ' spaces. ';
+                    summary += `On a hit, move the target up to ${distance} spaces. `;
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('throw') == 0) {
                     summary += 'If you move the target into someone else, attack them as well to deal full damage. ';
-                    if(techStat == 'str') {
+                    if(techStat == 'strength') {
                         totalModLevel++;
                     } else {
                         totalModLevel += 2;
                     }
                 } else if(mod.indexOf('violent') == 0) {
-                    summary += 'If someone tries to move through the barrier, they take ' + di + ' damage. ';
+                    summary += `If someone tries to move through the barrier, they take ${damageIncrement} damage. `;
                     totalModLevel++;
                 } else if(mod.indexOf('launching') == 0) {
                     summary += 'On a hit, the target is Launched. ';
@@ -2101,7 +1903,7 @@
                     totalModLevel++;
                 } else if(mod.indexOf('element') == 0) {
                     summary += 'Deals elemental damage. ';
-                    if(techStat == 'str' || techStat == 'agi') {
+                    if(techStat == 'strength' || techStat == 'agility') {
                         totalModLevel++;
                     }
                 } else if(mod.indexOf('defeat lock') == 0) {
@@ -2141,7 +1943,7 @@
                     if(limitLevel == 1) {
                         summary += "Your zone of control is expanded by 1 space within your domain. ";
                     } else {
-                        summary += "Your zone of control is expanded by " + limitLevel + " spaces within your domain. ";
+                        summary += `Your zone of control is expanded by ${limitLevel} spaces within your domain. `;
                     }
                     totalModLevel += 6 * limitLevel;
                 } else if(mod.indexOf('locked zone') == 0) {
@@ -2195,7 +1997,7 @@
                     limitSt += limitLevel;
                 } else if(limit.indexOf('health') == 0) {
                     let healthLost = 5 * limitLevel;
-                    limitSummary += 'Costs ' + healthLost + ' Health. ';
+                    limitSummary += `Costs ${healthLost} Health. `;
                     limitSt += 2 * limitLevel;
                     if(limitLevel > 5) {
                         warnings.push("Health Limit can't be taken above level 5.");
@@ -2209,7 +2011,7 @@
                     if(ammo == 1) {
                         limitSummary += 'Can only be used once per scene. ';
                     } else {
-                        limitSummary += 'Can only be used ' + ammo + ' times per scene. ';
+                        limitSummary += `Can only be used ${ammo} times per scene. `;
                     }
                     limitSt += 3 * limitLevel;
                 } else if(limit.indexOf('companion') == 0) {
@@ -2219,7 +2021,7 @@
                     if(limitLevel == 1) {
                         limitSummary += 'Must wait for 1 turn before using again. ';
                     } else {
-                        limitSummary += 'Must wait for ' + limitLevel + ' turns before using again. ';
+                        limitSummary += `Must wait for ${limitLevel} turns before using again. `;
                     }
                     limitSt += 2 * limitLevel;
                 } else if(limit.indexOf('dark power') == 0) {
@@ -2233,25 +2035,25 @@
                     limitSt += 4;
                 } else if(limit.indexOf('grant flaw') == 0) {
                     if(techInflictedFlaws) {
-                        summary += 'Inflicts Flaws on user: ' + techInflictedFlaws + '. ';
+                        summary += `Inflicts Flaws on user: ${techInflictedFlaws}. `;
                     }
                     limitSt += limitLevel;
                     hasFlaws = true;
                 } else if(limit.indexOf('grant skill') == 0) {
                     if(techGrantedSkills) {
-                        summary += 'Grants Skills for target: ' + techGrantedSkills + '. ';
+                        summary += `Grants Skills for target: ${techGrantedSkills}. `;
                     }
                     limitSt += limitLevel;
                     hasSkills = true;
                 } else if(limit.indexOf('initiative') == 0) {
-                    limitSummary += 'Initiative reduced by ' + limitLevel + ' after using this Technique. ';
+                    limitSummary += `Initiative reduced by ${limitLevel} after using this Technique. `;
                     limitSt += 3 * limitLevel;
                 } else if(limit.indexOf('immobile') == 0) {
                     limitSummary += "Can't be used if you've already moved this turn. ";
                     limitSt += 3;
                 } else if(limit.indexOf('injury') == 0) {
-                    let threshold = hp - Math.ceil(hp / 5) * limitLevel;
-                    limitSummary += 'Your Health must be ' + threshold + ' or lower to use this Technique. ';
+                    let threshold = health - Math.ceil(health / 5) * limitLevel;
+                    limitSummary += `Your Health must be ${threshold} or lower to use this Technique. `;
                     limitSt += 2 * limitLevel;
                 } else if(limit.indexOf('landbound') == 0) {
                     limitSummary += 'Cannot target flying characters. ';
@@ -2260,13 +2062,13 @@
                     limitSummary += 'Cannot reduce a target below 1 HP. ';
                     limitSt += 3;
                 } else if(limit.indexOf('minimum range') == 0) {
-                    limitSummary += 'Cannot target characters who are ' + limitLevel + ' or fewer spaces away from you. ';
+                    limitSummary += `Cannot target characters who are ${limitLevel} or fewer spaces away from you. `;
                     limitSt += limitLevel;
                 } else if(limit.indexOf('movement') == 0) {
                     if(limitLevel == 1) {
                         limitSummary += "Can't be used unless you're at least 1 space away from where you started your turn. ";
                     } else {
-                        limitSummary += "Can't be used unless you're at least " + limitLevel + ' spaces away from where you started your turn. ';
+                        limitSummary += `Can't be used unless you're at least ${limitLevel} spaces away from where you started your turn. `;
                     }
                     limitSt += limitLevel;
                 } else if(limit.indexOf('push') == 0) {
@@ -2291,7 +2093,7 @@
                           limit.indexOf('set-up') == 0 ||
                           limit.indexOf('set up') == 0) {
                     let turn = 1 + limitLevel;
-                    limitSummary += "Can't be used until turn " + turn + ' or later. ';
+                    limitSummary += `Can't be used until turn ${turn} or later. `;
                     limitSt += limitLevel;
                 } else if(limit.indexOf('single companion') == 0) {
                     limitSummary += 'Only a specific Companion can use this Technique. ';
@@ -2302,21 +2104,21 @@
                     limitSummary += 'Only lasts for 2 turns. ';
                     limitSt += 6;
                 } else if(limit.indexOf('unstable summon') == 0) {
-                    limitSummary += 'Summon has a ' + limitLevel + ' in 10 chance to ignore orders. ';
+                    limitSummary += `Summon has a ${limitLevel} in 10 chance to ignore orders. `;
                     limitSt += 4 * limitLevel;
                 } else if(limit.indexOf('upkeep') == 0) {
-                    limitSummary += 'Must spent ' + limitLevel + ' Stamina at the start of each turn to keep active. ';
+                    limitSummary += `Must spent ${limitLevel} Stamina at the start of each turn to keep active. `;
                     limitSt += 4 * limitLevel;
                 } else if(limit.indexOf('vitality') == 0) {
-                    let threshold = Math.ceil(hp * 0.4);
-                    limitSummary += "Can't be used if you are at or below " + threshold + ' Health. ';
+                    let threshold = Math.ceil(health * 0.4);
+                    limitSummary += `Can't be used if you are at or below ${threshold} Health. `;
                     limitSt += 3 * limitLevel;
                 } else if(limit.indexOf('valor') == 0) {
                     if(limit.indexOf('valor consumption') > -1) {
-                        limitSummary += 'Valor is reduced by ' + limitLevel + ' after using (can go below 0). ';
+                        limitSummary += `Valor is reduced by ${limitLevel} after using (can go below 0). `;
                         limitSt += 5 * limitLevel;
                     } else {
-                        limitSummary += "Can't be used unless you have at least " + limitLevel + ' Valor. ';
+                        limitSummary += `Can't be used unless you have at least ${limitLevel} Valor. `;
                         limitSt += 2 * limitLevel;
                     }
                 } else if(limit.indexOf('clone') == 0) {
@@ -2330,7 +2132,7 @@
                     limitSt += 2;
                 } else if(limit.indexOf('time') == 0) {
                     let time = 5 - limitLevel;
-                    limitSummary += 'Transformation ends after ' + time + ' turns. ';
+                    limitSummary += `Transformation ends after ${time} ${time == 1 ? 'turn' : 'turns'}. `;
                     limitSt += 5 * limitLevel;
                 } else if(limit.indexOf('airborne') == 0) {
                     limitSummary += 'You must be Flying to use this Technique. ';
@@ -2345,15 +2147,15 @@
                     if(limitLevel == 1) {
                         limitSummary += "After using this Technique, you can't use it during the next scene. ";
                     } else {
-                        limitSummary += "After using this Technique, you can't use it during the next " + limitLevel + ' scenes. ';
+                        limitSummary += `After using this Technique, you can't use it during the next ${limitLevel} scenes. `;
                     }
                     limitSt += 10 * limitLevel;
                 } else if(limit.indexOf('ultimate health') == 0) {
-                    damage = Math.ceil(hp / 5);
-                    limitSummary += 'Costs ' + damage + ' Health. ';
+                    damage = Math.ceil(health / 5);
+                    limitSummary += `Costs ${damage} Health. `;
                     limitSt += 20;
                 } else if(limit.indexOf('ultimate valor') == 0) {
-                    limitSummary += 'Costs ' + limitLevel + ' Valor. ';
+                    limitSummary += `Costs ${limitLevel} Valor. `;
                     limitSt += 10 * limitLevel;
                 } else if(limit.indexOf('dark surrender') == 0) {
                     limitSummary += 'After using this Technique, you automatically surrender to your Malevolent Entity. ';
@@ -2362,7 +2164,7 @@
                     limitSummary += 'After using this Technique, your Health and Valor are both reduced to 0. ';
                     limitSt = 9999;
                 } else if(limit.indexOf('sacrifice') == 0) {
-                    limitSummary += "Costs " + 10 * limitLevel + " of an ally's Health. ";
+                    limitSummary += `Costs ${10 * limitLevel} of an ally's Health. `;
                     limitSt += 2 * limitLevel;
                 } else if(limit.indexOf('fatigue') == 0) {
                     limitSummary += 'You become Fatigued after using this Technique. ';
@@ -2377,7 +2179,7 @@
                     limitSummary += 'Consumes ammunition that must be purchased or found. ';
                     limitSt += limitLevel;
                 } else if(limit.indexOf('sync') == 0) {
-                    limitSummary += 'You must have at least ' + limitLevel + 'Synchronization with your Ego Weapon to use this Technique. ';
+                    limitSummary += `You must have at least ${limitLevel} Synchronization with your Ego Weapon to use this Technique. `;
                     limitSt += 2 * limitLevel;
                 } else if(limit.indexOf('bloodseeker') == 0) {
                     limitSummary += 'Can only affect targets that are at Critical Health. ';
@@ -2421,7 +2223,7 @@
                     cost = 0;
                 }
 
-                summary += 'Costs ' + cost + ' Stamina. '
+                summary += `Costs ${cost} Stamina. `
             }
             summary += limitSummary;
 
@@ -2553,53 +2355,64 @@
                     warnings.push('Skills exceed SP limit.');
                 }
             }
-
+            
+            // Write the small summary
+            switch(techCore) {
+                case 'damage':
+                case 'ultDamage':
+                    microSummary = `Damage: **${amount}**`;
+                    if(defRes) microSummary += ` - ${defRes == 'def' ? 'Defense' : 'Resistance'}`;
+                    break;
+                case 'healing':
+                    microSummary = `Restores **${amount}** HP`;
+                    break;
+                case 'ultTransform':
+                    microSummary = `HP +**${amount}**`;
+                    break;
+            }
+            
             let attrs = {};
-            attrs['repeating_techs_' + techId + '_tech_summary'] = summary;
-            attrs['repeating_techs_' + techId + '_tech_warnings'] = warnings.length > 0 ? `WARNING: ${warnings.join(' ')}` : ' ';
-            attrs['repeating_techs_' + techId + '_tech_mod_level'] = totalModLevel;
-            attrs['repeating_techs_' + techId + '_tech_level'] = techLevel;
-            attrs['repeating_techs_' + techId + '_tech_limit_st'] = limitSt;
-            attrs['repeating_techs_' + techId + '_tech_cost'] = cost;
-            attrs['repeating_techs_' + techId + '_tech_flaw_sp'] = flawSp;
-            attrs['repeating_techs_' + techId + '_tech_flaw_sp_max'] = flawSpMax;
-            attrs['repeating_techs_' + techId + '_tech_skill_sp'] = skillSp;
-            attrs['repeating_techs_' + techId + '_tech_skill_sp_max'] = skillSpMax;
-            attrs['repeating_techs_' + techId + '_tech_is_mimic'] = techCore == 'mimic' || techCore == 'ultMimic'
+            attrs[`repeating_techs_${techId}_tech_summary`] = summary;
+            attrs[`repeating_techs_${techId}_tech_warnings`] = warnings.length > 0 ? `WARNING: ${warnings.join(' ')}` : ' ';
+            attrs[`repeating_techs_${techId}_tech_mod_level`] = totalModLevel;
+            attrs[`repeating_techs_${techId}_tech_level`] = techLevel;
+            attrs[`repeating_techs_${techId}_tech_limit_st`] = limitSt;
+            attrs[`repeating_techs_${techId}_tech_cost`] = cost;
+            attrs[`repeating_techs_${techId}_tech_flaw_sp`] = flawSp;
+            attrs[`repeating_techs_${techId}_tech_flaw_sp_max`] = flawSpMax;
+            attrs[`repeating_techs_${techId}_tech_skill_sp`] = skillSp;
+            attrs[`repeating_techs_${techId}_tech_skill_sp_max`] = skillSpMax;
+            attrs[`repeating_techs_${techId}_tech_is_mimic`] = techCore == 'mimic' || techCore == 'ultMimic'
                 ? 'on' : 'off';
-            attrs['repeating_techs_' + techId + '_tech_has_flaws'] = hasFlaws
+            attrs[`repeating_techs_${techId}_tech_has_flaws`] = hasFlaws
                 ? 'on' : 'off';
-            attrs['repeating_techs_' + techId + '_tech_has_skills'] = hasSkills
+            attrs[`repeating_techs_${techId}_tech_has_skills`] = hasSkills
                 ? 'on' : 'off';
-            attrs['repeating_techs_' + techId + '_tech_can_dig_deep'] = (techValues.hasDigDeep && cost > 0)
-                ? 'on' : 'off';
-            attrs['repeating_techs_' + techId + '_tech_can_overload_limits'] = techValues.hasOverloadLimits
-                ? 'on' : 'off';
-            attrs['repeating_techs_' + techId + '_tech_can_empower'] = (techValues.hasEmpowerAttack &&
-                (techCore == 'damage' || techCore == 'ultDamage' || techCore == 'mimic' || techCore == 'ultMimic'))
-                ? 'on' : 'off';
-            attrs['repeating_techs_' + techId + '_tech_can_resolute_strike'] = (techValues.hasResoluteStrike &&
-                (techCore == 'damage' || techCore == 'ultDamage' || techCore == 'mimic' ||
-                techCore == 'ultMimic' || techCore == 'weaken'))
-                ? 'on' : 'off';
-            attrs['repeating_techs_' + techId + '_tech_can_persist'] = isPersistent ? 'on' : 'off';
-            attrs['repeating_techs_' + techId + '_tech_can_edit_cost'] = techCore == 'custom' ? 'on' : 'off';
+            attrs[`repeating_techs_${techId}_tech_inflicted_flaws`] = hasFlaws ? techInflictedFlaws : '';
+            attrs[`repeating_techs_${techId}_tech_granted_skills`] = hasSkills ? techGrantedSkills : '';
+            if(techCore != 'mimic') {
+                attrs[`repeating_techs_${techId}_tech_mimic_target`] = '';
+            }
+            attrs[`repeating_techs_${techId}_tech_can_edit_cost`] = techCore == 'custom' ? 'on' : 'off';
+            attrs[`repeating_techs_${techId}_tech_stat_roll`] = techRoll;
+            attrs[`repeating_techs_${techId}_tech_micro_summary`] = microSummary;
             setAttrs(attrs, { silent: true });
         });
     }
 
-    on('change:level change:str change:agi change:spr change:mnd change:gut', function() {
+    on('change:level change:strength change:agility change:spirit change:mind change:guts', function() {
         calculateBaseAttributes();
     });
 
-    on('change:level change:str change:agi change:spr change:mnd change:gut ' +
+    on('change:level change:strength change:agility change:spirit change:mind change:guts ' +
         'change:type change:repeating_skills remove:repeating_skills', function() {
         calculateAttack();
         calculateActiveAttributes();
 
     });
 
-    on('change:stratk change:agiatk change:mndatk change:spratk', function() {
+    on('change:strengthattack change:agilityattack change:mindattack change:spiritattack ' +
+        'change:patkbonus change:eatkbonus change:atkrollbonus change:iatkrollbonus change:rollbonus', function() {
         getSectionIDs('repeating_techs', function(tidarray) {
             tidarray.forEach(function(techId) {
                 calculateTech(techId);
@@ -2607,27 +2420,27 @@
         });
     });
 
-    on('change:level change:str change:gut change:type ' +
+    on('change:level change:strength change:guts change:type ' +
         'change:repeating_skills remove:repeating_skills change:repeating_flaws remove:repeating_flaws', function() {
         calculateHealth();
         calculateDefense();
     });
 
-    on('change:level change:mnd change:spr change:type ' +
+    on('change:level change:mind change:spirit change:type ' +
         'change:repeating_skills remove:repeating_skills change:repeating_flaws remove:repeating_flaws', function() {
         calculateStamina();
         calculateResistance();
     });
 
-    on('change:agi change:repeating_skills remove:repeating_skills change:repeating_flaws remove:repeating_flaws', function() {
-        calculateSpeed();
+    on('change:agility change:repeating_skills remove:repeating_skills change:repeating_flaws remove:repeating_flaws', function() {
+        calculateMove();
     });
 
     on('change:level change:type change:repeating_skills remove:repeating_skills', function() {
         calculateDamageIncrement();
     });
 
-    on('change:dex change:repeating_skills remove:repeating_skills change:repeating_flaws remove:repeating_flaws', function() {
+    on('change:dexterity change:repeating_skills remove:repeating_skills change:repeating_flaws remove:repeating_flaws', function() {
         calculateInitiative();
     });
 
@@ -2655,16 +2468,6 @@
         calculateTech(techId);
     });
 
-    on('change:repeating_techs:tech_mods change:repeating_techs:tech_targets change:repeating_techs:tech_bonus '+
-       'change:repeating_techs:tech_core change:repeating_techs:tech_limits change:repeating_techs:tech_name', function(eventInfo) {
-        var techId = eventInfo.sourceAttribute.substring(16, 36);
-        calculateTechCommand(techId);
-    });
-
-    on('change:repeating_skills remove:repeating_skills', function(eventInfo) {
-        calculateBoostVisibility();
-    });
-
     on('sheet:opened', function() {
         // Update attributes
         calculateBaseAttributes();
@@ -2674,7 +2477,7 @@
         calculateDefense();
         calculateStamina();
         calculateResistance();
-        calculateSpeed();
+        calculateMove();
         calculateDamageIncrement();
         calculateInitiative();
         calculateFlawsAndSkills();
@@ -2710,7 +2513,7 @@
                 <span class="label">Experience:</span>
             </div>
             <div>
-                <input type="number" class="longer-number attributes-header-input" name="attr_exp" value="0">
+                <input type="number" class="longer-number attributes-header-input" name="attr_experience" value="0">
             </div>
             <div class="attributes-header-label">
                 <span class="label">Type:</span>
@@ -2734,95 +2537,70 @@
                     <div class="label stats-column-header">BASE</div>
                     <div>Strength:</div>
                     <div>
-                        <input type="number" class="number-input-orange" name="attr_str" value="5">
+                        <input type="number" class="number-input-orange" name="attr_strength" value="5">
                     </div>
                     <div>Agility:</div>
                     <div>
-                        <input type="number" class="number-input-orange" name="attr_agi" value="5">
+                        <input type="number" class="number-input-orange" name="attr_agility" value="5">
                     </div>
                     <div>Spirit:</div>
                     <div>
-                        <input type="number" class="number-input-orange" name="attr_spr" value="5">
+                        <input type="number" class="number-input-orange" name="attr_spirit" value="5">
                     </div>
                     <div>Mind:</div>
                     <div>
-                        <input type="number" class="number-input-orange" name="attr_mnd" value="5">
+                        <input type="number" class="number-input-orange" name="attr_mind" value="5">
                     </div>
                     <div>Guts:</div>
                     <div>
-                        <input type="number" class="number-input-orange" name="attr_gut" value="5">
+                        <input type="number" class="number-input-orange" name="attr_guts" value="5">
                     </div>
                 </div>
                 <div class="stats-column stats-green">
                     <div class="label stats-column-header">ACTIVE</div>
                     <div>Muscle:</div>
                     <div>
-                        <span class="derived-value" name="attr_mus"></span>
-                        <button type="roll" value='!roll-as @{character_id} "1d10+@{mus}+@{rollbonus}" "Muscle"' name="roll_mus"></button>
-                        <input type="checkbox" class="conditional-check" name="attr_can_boost_mus">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_boostmus">
-                            <span class="arrow">↑</span>
-                        </div>
+                        <span class="derived-value" name="attr_muscle"></span>
+                        <button type="roll" value='[[1d10+@{muscle}+@{rollbonus}]] Muscle' name="roll_muscle"></button>
                     </div>
                     <div>Dexterity:</div>
                     <div>
-                        <span class="derived-value" name="attr_dex"></span>
-                        <button type="roll" value='!roll-as @{character_id} "1d10+@{dex}+@{rollbonus}" "Dexterity"' name="roll_dex"></button>
-                        <input type="checkbox" class="conditional-check" name="attr_can_boost_dex">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_boostdex">
-                            <span class="arrow">↑</span>
-                        </div>
+                        <span class="derived-value" name="attr_dexterity"></span>
+                        <button type="roll" value='[[1d10+@{dexterity}+@{rollbonus}]] Dexterity' name="roll_dexterity"></button>
                     </div>
                     <div>Aura:</div>
                     <div>
-                        <span class="derived-value" name="attr_aur"></span>
-                        <button type="roll" value='!roll-as @{character_id} "1d10+@{aur}+@{rollbonus}" "Aura"' name="roll_aur"></button>
-                        <input type="checkbox" class="conditional-check" name="attr_can_boost_aur">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_boostaur">
-                            <span class="arrow">↑</span>
-                        </div>
+                        <span class="derived-value" name="attr_aura"></span>
+                        <button type="roll" value='[[1d10+@{aura}+@{rollbonus}]] Aura' name="roll_aura"></button>
                     </div>
                     <div>Intuition:</div>
                     <div>
-                        <span class="derived-value" name="attr_int"></span>
-                        <button type="roll" value='!roll-as @{character_id} "1d10+@{int}+@{rollbonus}" "Intuition"' name="roll_int"></button>
-                        <input type="checkbox" class="conditional-check" name="attr_can_boost_int">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_boostint">
-                            <span class="arrow">↑</span>
-                        </div>
+                        <span class="derived-value" name="attr_intuition"></span>
+                        <button type="roll" value='[[1d10+@{intuition}+@{rollbonus}]] Intuition' name="roll_intuition"></button>
                     </div>
                     <div>Resolve:</div>
                     <div>
-                        <span class="derived-value" name="attr_res"></span>
-                        <button type="roll" value='!roll-as @{character_id} "1d10+@{res}+@{rollbonus}" "Resolve"' name="roll_res"></button>
-                        <input type="checkbox" class="conditional-check" name="attr_can_boost_res">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_boostres">
-                            <span class="arrow">↑</span>
-                        </div>
+                        <span class="derived-value" name="attr_resolve"></span>
+                        <button type="roll" value='[[1d10+@{resolve}+@{rollbonus}]] Resolve' name="roll_resolve"></button>
                     </div>
                 </div>
                 <div class="stats-column stats-orange">
                     <div class="label stats-column-header">ATTACK</div>
                     <div>Strength:</div>
                     <div class="derived-value">
-                        <span name="attr_strAtk" />
+                        <span name="attr_strengthAttack" />
                     </div>
                     <div>Agility:</div>
                     <div class="derived-value">
-                        <span name="attr_agiAtk" />
+                        <span name="attr_agilityAttack" />
                     </div>
                     <div>Spirit:</div>
                     <div class="derived-value">
-                        <span name="attr_sprAtk" />
+                        <span name="attr_spiritAttack" />
                     </div>
                     <div>Mind:</div>
                     <div class="derived-value">
-                        <span name="attr_mndAtk" />
+                        <span name="attr_mindAttack" />
                     </div>
                     <div>
                         <!-- No guts attack -->
@@ -2832,11 +2610,11 @@
                     <div class="label stats-column-header">STATISTICS</div>
                     <div>Health:</div>
                     <div class="derived-value">
-                        <span name="attr_hp_max" />
+                        <span name="attr_health_max" />
                     </div>
                     <div>Stamina:</div>
                     <div class="derived-value">
-                        <span name="attr_st_max" />
+                        <span name="attr_stamina_max" />
                     </div>
                     <div>Defense:</div>
                     <div class="derived-value">
@@ -2848,36 +2626,36 @@
                     </div>
                     <div>Move:</div>
                     <div class="derived-value">
-                        <span name="attr_speed" />
+                        <span name="attr_move" />
                     </div>
                 </div>
                 <div class="stats-column stats-orange">
                     <div class="label stats-column-header">INCREMENTS</div>
                     <div>HP Increment:</div>
                     <div class="derived-value">
-                        <span name="attr_hpInc" />
+                        <span name="attr_healthIncrement" />
                     </div>
                     <div>ST Increment:</div>
                     <div class="derived-value">
-                        <span name="attr_stInc" />
+                        <span name="attr_staminaIncrement" />
                     </div>
                     <div>Critical HP:</div>
                     <div class="derived-value">
-                        <span name="attr_hpCrit" />
+                        <span name="attr_criticalHealth" />
                     </div>
                     <div>Dmg Increment:</div>
                     <div class="derived-value">
-                        <span name="attr_di" />
+                        <span name="attr_damageIncrement" />
                     </div>
                     <div>Initiative:</div>
                     <div class="derived-value">
-                        <span name="attr_init" ></span>
-                        <button type="roll" value="[[1d10+@{init}+@{rollbonus} &{tracker} &{noerror}]] Initiative" name="roll_init"></button>
+                        <span name="attr_initiative" ></span>
+                        <button type="roll" value="[[1d10+@{initiative}+@{rollbonus} &{tracker} &{noerror}]] Initiative" name="roll_init"></button>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="unspent-ap"><span name="attr_unspentAP"></span> AP UNSPENT</div>
+        <div class="unspent-ap"><span name="attr_unspentAttributePoints"></span> AP UNSPENT</div>
         <div class="section-header">BONUSES</div>
         <div class="stats-container">
             <div class="stats">
@@ -2912,25 +2690,15 @@
                         <input type="number" class="number-input-orange long-number" name="attr_eatkbonus" value="0">
                     </div>
                 </div>
-                <div class="stats-column stats-green stats-short">
-                    <div>Defense:</div>
-                    <div>
-                        <input type="number" class="number-input-green long-number" name="attr_defensebonus" value="0">
-                    </div>
-                    <div>Resistance:</div>
-                    <div>
-                        <input type="number" class="number-input-green long-number" name="attr_resistancebonus" value="0">
-                    </div>
-                </div>
             </div>
         </div>
         <div class="section-header roll-defense">ROLL DEFENSE</div>
         <div class="defense-buttons">
-            <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{mus}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Muscle Defense"' name="roll_mus_def">Muscle</button>
-            <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{dex}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Dexterity Defense"' name="roll_dex_def">Dexterity</button>
-            <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{aur}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Aura Defense"' name="roll_aur_def">Aura</button>
-            <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{int}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Intuition Defense"' name="roll_int_def">Intuition</button>
-            <button class="valor-button" type="roll" value='!roll-as @{character_id} "1d10+@{res}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}" "Resolve Defense"' name="roll_res_def">Resolve</button>
+            <button class="valor-button" type="roll" value='[[1d10+@{muscle}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Muscle Defense' name="roll_mus_def">Muscle</button>
+            <button class="valor-button" type="roll" value='[[1d10+@{dexterity}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Dexterity Defense' name="roll_dex_def">Dexterity</button>
+            <button class="valor-button" type="roll" value='[[1d10+@{aura}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Aura Defense' name="roll_aur_def">Aura</button>
+            <button class="valor-button" type="roll" value='[[1d10+@{intuition}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Intuition Defense' name="roll_int_def">Intuition</button>
+            <button class="valor-button" type="roll" value='[[1d10+@{resolve}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Resolve Defense' name="roll_res_def">Resolve</button>
         </div>
     </div>
 
@@ -3228,7 +2996,7 @@
             </div>
         </fieldset>
 
-        <div class="unspent-sp"><span name="attr_unspentSP"></span> SP UNSPENT</div>
+        <div class="unspent-sp"><span name="attr_unspentSkillPoints"></span> SP UNSPENT</div>
     </div>
 
     <div class="sheet-tab-content sheet-tab3">
@@ -3236,7 +3004,7 @@
 
         <fieldset class="repeating_techs">
             <div class="tech-name">
-                <input type="text" class = "tech-name" name="attr_tech_name" value="New Technique" />
+                <input type="text" class="tech-name" name="attr_tech_name" value="New Technique" />
             </div>
             <div class="tech">
                 <div class="spacer"></div>
@@ -3247,66 +3015,10 @@
                     </div>
                 </div>
                 <div class="tech-button">
-                    <button class="valor-button" type='roll' name='attr_tech_command'> Use Technique</button>
-                    <span class="label">Targets</span>
-                    <select name="attr_tech_targets" class="number-select tech-field tech-small-input">
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                        <option value="8">8</option>
-                        <option value="9">9</option>
-                        <option value="10">10</option>
-                        <option value="11">11</option>
-                        <option value="12">12</option>
-                        <option value="13">13</option>
-                        <option value="14">14</option>
-                        <option value="15">15</option>
-                        <option value="16">16</option>
-                        <option value="17">17</option>
-                        <option value="18">18</option>
-                        <option value="19">19</option>
-                        <option value="20">20</option>
-                    </select>
-                    <span class="label">Bonus</span> <input class="tech-field tech-small-input" type='number' value='0' name='attr_tech_bonus'>
-                    <div>
-                        <input type="checkbox" class="conditional-check" name="attr_tech_can_dig_deep">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_tech_digDeep">
-                            <span class="label">Use Dig Deep</span>
-                        </div>
-                    </div>
-                    <div>
-                        <input type="checkbox" class="conditional-check" name="attr_tech_can_overload_limits">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_tech_overloadLimits">
-                            <span class="label">Use Overload Limits</span>
-                        </div>
-                    </div>
-                    <div>
-                        <input type="checkbox" class="conditional-check" name="attr_tech_can_empower">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_tech_empowerAttack">
-                            <span class="label">Use Empower Attack</span>
-                        </div>
-                    </div>
-                    <div>
-                        <input type="checkbox" class="conditional-check" name="attr_tech_can_resolute_strike">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_tech_resoluteStrike">
-                            <span class="label">Use Resolute Strike</span>
-                        </div>
-                    </div>
-                    <div>
-                        <input type="checkbox" class="conditional-check" name="attr_tech_can_persist">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_tech_persist">
-                            <span class="label">Persistent Reroll</span>
-                        </div>
-                    </div>
+                    <input type="hidden" class="tech-name" name="attr_tech_stat_roll" value="[[1d10+0]] Muscle" />
+                    <input type="hidden" class="tech-name" name="attr_tech_micro_summary" value="" />
+                    <button class="valor-button" type='roll' 
+                        value='&{template:valor} {{name=@{tech_name}}} {{roll=@{tech_stat_roll}}} {{summary=@{tech_micro_summary}}} {{skills=@{tech_granted_skills}}} {{flaws=@{tech_inflicted_flaws}}} {{mimic=@{tech_mimic_target}}}'> Use Technique</button>
                 </div>
                 <div>
                     <span class="label">Core:</span>
@@ -3344,11 +3056,11 @@
                 <div class="tech-attribute">
                     <select class="tech-field" name="attr_tech_stat">
                         <option value="none" selected="selected">None</option>
-                        <option value="str">Strength</option>
-                        <option value="agi">Agility</option>
-                        <option value="spr">Spirit</option>
-                        <option value="mnd">Mind</option>
-                        <option value="gut">Guts</option>
+                        <option value="strength">Strength</option>
+                        <option value="agility">Agility</option>
+                        <option value="spirit">Spirit</option>
+                        <option value="mind">Mind</option>
+                        <option value="guts">Guts</option>
                     </select>
                 </div>
                 <div class="tech-cost">
@@ -3413,38 +3125,31 @@
                 </div>
             </div>
         </fieldset>
-        <div class="unspent-tp"><span name="attr_unspentTP"></span> TP UNSPENT</div>
+        <div class="unspent-tp"><span name="attr_unspentTechPoints"></span> TP UNSPENT</div>
     </div>
 
-</div>
-
-<br />
-
-<div>
-    <input type="checkbox" class="conditional-check" name="attr_is_duplicate">
-    <div class="tech-block conditional-block">
-        <button type='roll' value='!d-finalize @{character_id}' name='roll_resolve'>Finalize Level-up</button>
-    </div>
-    <div class="tech-block conditional-block-inverse">
-        <button type='roll' value='!duplicate @{character_id}' name='roll_duplicate'>Create Level-up Sheet</button>
-    </div>
 </div>
 
 <rolltemplate class="sheet-rolltemplate-valor">
     <div class="outer">
         <div class="header">
-            {{name}}
+            {{name}} {{#mimic}}[{{mimic}}]{{/mimic}}
         </div>
-        {{#roll}}
-        <br />
-        <div class="roll">
+        <div>
             {{roll}}
         </div>
-        {{/roll}}
-        {{#summary}}
         <div>
             {{summary}}
         </div>
-        {{/summary}}
+        {{#skills}}
+        <div>
+            Skills: {{skills}}
+        </div>
+        {{/skills}}
+        {{#flaws}}
+        <div>
+            Flaws: {{flaws}}
+        </div>
+        {{/flaws}}
     </div>
 </rolltemplate>

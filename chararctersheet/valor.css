@@ -12,7 +12,6 @@ input[type=number].sheet-number-input-green {
     padding-bottom: 0;
     text-align: right;
     font-weight: bold;
-    white-space: nowrap;
 }
 
 input[type=number].sheet-number-input-orange {
@@ -25,7 +24,6 @@ input[type=number].sheet-number-input-orange {
     padding-bottom: 0;
     text-align: right;
     font-weight: bold;
-    white-space: nowrap;
 }
 
 .sheet-container {
@@ -34,11 +32,6 @@ input[type=number].sheet-number-input-orange {
 
 .sheet-header {
     margin: 3px;
-}
-
-.sheet-arrow {
-    margin-right: 5px;
-    font-weight: bold;
 }
 
 .sheet-label {
@@ -121,6 +114,7 @@ input[type=number].sheet-number-input-orange {
 .sheet-derived-value {
     font-weight: bold;
     width: 3em;
+    white-space: nowrap;
 }
 
 .sheet-smalltext {
@@ -396,7 +390,7 @@ select.sheet-number-select {
 }
 
 .sheet-spacer {
-  grid-column: span 2;
+    grid-column: span 2;
 }
 
 .sheet-tech-name input {
@@ -466,6 +460,7 @@ select.sheet-number-select {
     color: #730A18;
     background-color: #FCECD8;
     margin-left: 8px;
+    margin-top: 6px;
     padding-left: 5px;
     padding-bottom: 3px;
 }
@@ -475,6 +470,7 @@ select.sheet-number-select {
     border: 3px solid #F2AC63;
     color: black;
     left: -11px;
+    top: -5px;
     font-weight: bold;
     font-size: 11pt;
     background-color: white;
