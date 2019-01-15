@@ -1,4 +1,4 @@
-* {
+.sheet-container {
     font-family: Segoe UI,Frutiger,Frutiger Linotype,Dejavu Sans,Helvetica Neue,Arial,sans-serif;
 }
 
@@ -92,14 +92,14 @@ input[type=number].sheet-number-input-orange {
 }
 
 .sheet-stats-green {
-    padding: 3px;
+    padding: 3px 3px 5px 3px;
     background-color: #EBE9DA;
     border: 2px solid #AFAF6B;
     color: #66652E;
 }
 
 .sheet-stats-orange {
-    padding: 3px;
+    padding: 3px 3px 5px 3px;
     background-color: #FDF1E4;
     border: 2px solid #F5C691;
     color: #730A18;
@@ -225,7 +225,7 @@ hr {
     background-color: #e5d4cf;
     padding-bottom: 10px;
     margin-bottom: 15px;
-    margin-left: 8px;
+    margin-left: 24px;
     padding-left: 4px;
     width: 95%;
 }
@@ -278,7 +278,7 @@ hr {
     background-color: #D4D1C1;
     padding-bottom: 10px;
     margin-bottom: 15px;
-    margin-left: 8px;
+    margin-left: 24px;
     padding-left: 4px;
     width: 95%;
 }
@@ -481,6 +481,20 @@ select.sheet-number-select {
 
 .sheet-rolltemplate-valor .sheet-roll {
     line-height: 170%
+}
+
+.sheet-rolltemplate-valor .sheet-healing-number {
+    font-weight: bold;
+    color: darkgreen;
+}
+
+.sheet-rolltemplate-valor .sheet-damage-number {
+    font-weight: bold;
+    color: darkred;
+}
+
+.sheet-rolltemplate-valor .sheet-mods-list {
+    font-style: italic;
 }
 
 div.sheet-tab-content { display: none; }

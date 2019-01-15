@@ -5,7 +5,8 @@
      *
      * Usage:
      * - If you want to use unlisted mods or limits, enter "Custom #", where # is
-     * the number of tech levels to add or how much to reduce ST by.
+     * the number of tech levels to add or how much to reduce ST by. You can put
+     * extra text between Custom and the number, like "Custom (Mind reader) 6".
      * - If you want to use unlisted skills or flaws, choose 'Custom Skill' or
      * 'Custom Flaw' and set the level to the amount of SP.
      *
@@ -217,8 +218,7 @@
         { cost: 3, levelUp: 2, id: 'summoning' },
         { cost: 1, levelUp: 1, id: 'weaken' },
         { cost: 4, levelUp: 2, id: 'ultDamage' },
-        { cost: 0, levelUp: 3, id: 'ultTransform' },
-        { cost: 0, levelUp: 3, id: 'ultMimic' }
+        { cost: 0, levelUp: 3, id: 'ultTransform' }
     ];
 
     function calculateBaseAttributes() {
@@ -1027,7 +1027,8 @@
                                     flawMaxLevel = 100; // Custom Flaw
                             }
                             if(flawLevel > flawMaxLevel && flaw.speed != 3) {
-                                warning = `Warning: Level cap for this Flaw is ${flawMaxLevel}.`;
+                                warning = getTranslationByKey('warning-flaw-level-cap').replace("{{0}}", flawMaxLevel);
+                                log(warning);
                             }
 
                             var flawAttrs = {};
@@ -1087,7 +1088,7 @@
                                     }
 
                                     if(skillLevel > skillMaxLevel && skill.level != 3) {
-                                        warning = `Warning: Level cap for this Skill is ${skillMaxLevel}.`;
+                                        warning = getTranslationByKey('warning-skill-level-cap').replace("{{0}}", skillMaxLevel);
                                     }
 
                                     var skillAttrs = {};
@@ -1232,7 +1233,7 @@
                                 techAttrs[`repeating_techs_${tidarray[i]}_tech_level`] = spentTP;
                                 setAttrs(techAttrs);
 
-                                if((techCore == 'ultDamage' || techCore == 'ultTransform' || techCore == 'ultMimic' || techCore == 'domain')
+                                if((techCore == 'ultDamage' || techCore == 'ultTransform')
                                     && ults.length > 0) {
                                     // Use the next Ult to offset the TP cost
                                     spentTP -= ults[0];
@@ -1262,8 +1263,7 @@
                               'muscle', 'dexterity', 'aura', 'intuition', 'resolve',
                               'strengthAttack', 'agilityAttack', 'spiritAttack', 'mindAttack',
                               'level', 'hp_max', 'damageIncrement', 'type',
-                              'rollbonus', 'atkrollbonus', 'iatkrollbonus', 'eatkbonus', 'patkbonus',
-                              'hasDigDeep', 'hasOverloadLimits', 'hasEmpowerAttack', 'hasResoluteStrike', 'healerLevel'];
+                              'rollbonus', 'atkrollbonus', 'iatkrollbonus', 'eatkbonus', 'patkbonus'];
 
         techFieldNames.push(`repeating_techs_${techId}_tech_name`);
         techFieldNames.push(`repeating_techs_${techId}_tech_core_level`);
@@ -1332,38 +1332,39 @@
 
             let hasSkills = false;
             let hasFlaws = false;
+            let skillSpMax
+            let flawSpMax = 0;
             let barrierFreebie = false;
-            let isPersistent = false;
 
             if(techCoreLevel < 1) {
-                warnings.push('Core Power cannot be less than 1.');
+                warnings.push(getTranslationByKey('warning-core-power-1'));
             }
 
             // Is this an ult?
-            if(techCore == 'ultDamage' || techCore == 'ultTransform' ||
-               techCore == 'ultMimic' || techCore == 'domain') {
-                summary += 'Ultimate Technique. ';
+            if(techCore == 'ultDamage' || techCore == 'ultTransform') {
+                summary += getTranslationByKey('desc-ultimate-technique');
             }
 
             // Display required action
-            let action = 'Attack';
+            let action = getTranslationByKey('attack');
             if(techCore == 'barrier' || techCore == 'boost' ||
                techCore == 'healing' || techCore == 'weaken' ||
                techCore == 'ultTransform') {
-                action  = 'Support';
+                action  = getTranslationByKey('support');
             }
-            if(techMods.indexOf('rush') > -1 || techMods.indexOf('ramming') > -1) {
-                action += '+Move';
+            if(techMods.indexOf('rush') > -1 || techMods.indexOf('ram') > -1) {
+                action = getTranslationByKey('attack-move');
             }
             if((techCore == 'summoning' && techMods.indexOf('quick summon') == -1) || techLimits.indexOf('slow') > -1) {
-                action = 'Slow';
+                action = getTranslationByKey('slow');
             }
             if(techCore != 'custom') {
-                summary += `${action} Action. `;
+                summary += getTranslationByKey('desc-action').replace("{{0}}", action);
             }
 
             // Display core functionality
             let rollStat = techStat;
+            let rollStatName = '';
             if(techMods.indexOf('muscular') > -1) {
                 rollStat = 'strength';
             }
@@ -1377,11 +1378,16 @@
             if(techMods.indexOf('intuitive') > -1) {
                 rollStat = 'mind';
             }
+            if(techMods.indexOf('intuitive') > -1) {
+                rollStat = 'mind';
+            }
             
             let techRoll = '';
-            let amount = 0;
+            let damageAmount = 0;
+            let healingAmount = 0;
+            let transformAmount = 0;
             let defRes = 'def';
-            let microSummary = '';
+            let displayMods = [];
 
             if(techCore == 'damage' ||
                techCore == 'ultDamage' ||
@@ -1398,37 +1404,35 @@
                 switch(rollStat) {
                     case 'strength':
                         toHit = techValues.muscle + hitBonus;
-                        summary += `Roll Muscle (1d10+${toHit}) to hit. `;
+                        rollStatName = getTranslationByKey('muscle');
                         break;
                     case 'agility':
                         toHit = techValues.dexterity + hitBonus;
-                        summary += `Roll Dexterity (1d10+${toHit}) to hit. `;
+                        rollStatName = getTranslationByKey('dexterity');
                         break;
                     case 'spirit':
                         toHit = techValues.aura + hitBonus;
-                        summary += `Roll Aura (1d10+${toHit}) to hit. `;
+                        rollStatName = getTranslationByKey('aura');
                         break;
                     case 'mind':
                         toHit = techValues.intuition + hitBonus;
-                        summary += `Roll Intuition (1d10+${toHit}) to hit. `;
+                        rollStatName = getTranslationByKey('intuition');
                         break;
                     case 'guts':
                         toHit = techValues.resolve + hitBonus;
-                        summary += `Roll Resolve (1d10+${toHit}) to hit. `;
+                        rollStatName = getTranslationByKey('resolve');
                         break;
                 }
+                summary += getTranslationByKey('desc-roll-to-hit')
+                    .replace("{{0}}", rollStatName)
+                    .replace("{{1}}", toHit);
                 
                 if(techCore == 'damage' || techCore == 'ultDamage') {
                     toHit += attackRollBonus + inherentAttackRollBonus;
                 }
                 toHit += rollBonus;
                 
-                techRoll += `[[1d10+${toHit}]] `;
-                if(techStat == 'strength') techRoll += 'Muscle';
-                if(techStat == 'agility') techRoll += 'Dexterity';
-                if(techStat == 'mind') techRoll += 'Intuition';
-                if(techStat == 'spirit') techRoll += 'Aura';
-                if(techStat == 'guts') techRoll += 'Resolve';
+                techRoll += `[[1d10+${toHit}]] ${rollStatName}`;
             }
             
             switch(techCore) {
@@ -1446,48 +1450,48 @@
                     switch(techStat) {
                         case 'strength':
                             if(specialAttack && techCore == 'damage') {
-                                amount = 12 + 4 * techCoreLevel + Math.ceil(techValues.strengthAttack / 2);
+                                damageAmount = 12 + 4 * techCoreLevel + Math.ceil(techValues.strengthAttack / 2);
                             } else if((!specialAttack && techCore == 'damage') || (specialAttack && techCore == 'ultDamage')) {
-                                amount = 15 + 5 * techCoreLevel + techValues.strengthAttack;
+                                damageAmount = 15 + 5 * techCoreLevel + techValues.strengthAttack;
                             } else {
-                                amount = 24 + 8 * techCoreLevel + techValues.strengthAttack;
+                                damageAmount = 24 + 8 * techCoreLevel + techValues.strengthAttack;
                             }
-                            amount += physicalAttackBonus;
-                            summary += `On a hit, deal ${amount} physical damage to the target. `;
+                            damageAmount += physicalAttackBonus;
+                            summary += getTranslationByKey('desc-physical-damage').replace("{{0}}", damageAmount);
                             break;
                         case 'agility':
                             if(specialAttack && techCore == 'damage') {
-                                amount = 12 + 4 * techCoreLevel + Math.ceil(techValues.agilityAttack / 2);
+                                damageAmount = 12 + 4 * techCoreLevel + Math.ceil(techValues.agilityAttack / 2);
                             } else if((!specialAttack && techCore == 'damage') || (specialAttack && techCore == 'ultDamage')) {
-                                amount = 15 + 5 * techCoreLevel + techValues.agilityAttack;
+                                damageAmount = 15 + 5 * techCoreLevel + techValues.agilityAttack;
                             } else {
-                                amount = 24 + 8 * techCoreLevel + techValues.agilityAttack;
+                                damageAmount = 24 + 8 * techCoreLevel + techValues.agilityAttack;
                             }
-                            amount += physicalAttackBonus;
-                            summary += `On a hit, deal ${amount} physical damage to the target. `;
+                            damageAmount += physicalAttackBonus;
+                            summary += getTranslationByKey('desc-physical-damage').replace("{{0}}", damageAmount);
                             break;
                         case 'spirit':
                             if(specialAttack && techCore == 'damage') {
-                                amount = 12 + 4 * techCoreLevel + Math.ceil(techValues.spiritAttack / 2);
+                                damageAmount = 12 + 4 * techCoreLevel + Math.ceil(techValues.spiritAttack / 2);
                             } else if((!specialAttack && techCore == 'damage') || (specialAttack && techCore == 'ultDamage')) {
-                                amount = 15 + 5 * techCoreLevel + techValues.spiritAttack;
+                                damageAmount = 15 + 5 * techCoreLevel + techValues.spiritAttack;
                             } else {
-                                amount = 24 + 8 * techCoreLevel + techValues.spiritAttack;
+                                damageAmount = 24 + 8 * techCoreLevel + techValues.spiritAttack;
                             }
-                            amount += energyAttackBonus;
-                            summary += `On a hit, deal ${amount} energy damage to the target. `;
+                            damageAmount += energyAttackBonus;
+                            summary += getTranslationByKey('desc-energy-damage').replace("{{0}}", damageAmount);
                             defRes = 'res';
                             break;
                         case 'mind':
                             if(specialAttack && techCore == 'damage') {
-                                amount = 12 + 4 * techCoreLevel + Math.ceil(techValues.mindAttack / 2);
+                                damageAmount = 12 + 4 * techCoreLevel + Math.ceil(techValues.mindAttack / 2);
                             } else if((!specialAttack && techCore == 'damage') || (specialAttack && techCore == 'ultDamage')) {
-                                amount = 15 + 5 * techCoreLevel + techValues.mindAttack;
+                                damageAmount = 15 + 5 * techCoreLevel + techValues.mindAttack;
                             } else {
-                                amount = 24 + 8 * techCoreLevel + techValues.mindAttack;
+                                damageAmount = 24 + 8 * techCoreLevel + techValues.mindAttack;
                             }
-                            amount += energyAttackBonus;
-                            summary += `On a hit, deal ${amount} energy damage to the target. `;
+                            damageAmount += energyAttackBonus;
+                            summary += getTranslationByKey('desc-energy-damage').replace("{{0}}", damageAmount);
                             defRes = 'res';
                             break;
                     }
@@ -1495,92 +1499,50 @@
                 case 'healing':
                     switch(techStat) {
                         case 'spirit':
-                            amount = Math.ceil(spirit / 2); // ERRATA - Reduced Healing power
+                            healingAmount = Math.ceil(spirit / 2); // ERRATA - Reduced Healing power
                             break;
                         case 'mind':
-                            amount = Math.ceil(mind / 2);
+                            healingAmount = Math.ceil(mind / 2);
                             break;
                         case 'guts':
-                            amount = Math.ceil(guts / 2);
+                            healingAmount = Math.ceil(guts / 2);
                             break;
                     }
-                    if(techValues.healerLevel > 0) {
-                        amount += 2 + 2 * techValues.healerLevel;
-                    }
-                    if(techMods.indexOf('continuous r') > -1) {
-                        amount += 6 + 2 * techCoreLevel;
-                        if(techValues.type == 'flunky' || techValues.type == 'soldier') amount = Math.ceil(amount / 2);
-                        summary += `Makes the target recover ${amount} Health per turn for 3 turns. `;
-                    } else {
-                        amount += 9 + 3 * techCoreLevel;
-                        if(techValues.type == 'flunky' || techValues.type == 'soldier') amount = Math.ceil(amount / 2);
-                        summary += `Restore ${amount} Health to the target. `;
-                    }
+                    healingAmount += 9 + 3 * techCoreLevel;
+                    if(techValues.type == 'flunky' || techValues.type == 'soldier') healingAmount = Math.ceil(healingAmount / 2);
+                    summary += getTranslationByKey('desc-healing-core').replace("{{0}}", healingAmount);
                     break;
                 case 'barrier':
-                    summary += `Create a Barrier of power ${techCoreLevel}. `;
+                    summary += getTranslationByKey('desc-barrier-core').replace("{{0}}", techCoreLevel);
                     barrierFreebie = true;
                     break;
                 case 'mimic':
-                    summary += `Mimics a witnessed enemy Technique at Tech Level ${techCoreLevel}. `;
-                    break;
-                case 'ultMimic':
-                    summary += `Mimics a witnessed enemy Ultimate Technique at Tech Level ${techCoreLevel}. `;
+                    summary += getTranslationByKey('desc-mimic-core').replace("{{0}}", techCoreLevel);
                     break;
                 case 'summoning':
-                    summary += `Summons a Level ${techCoreLevel} ally. Command it with a Support Action. `;
+                    summary += getTranslationByKey('desc-summoning-core').replace("{{0}}", techCoreLevel);
                     break;
                 case 'ultTransform':
-                    amount = level * 10;
+                    transformAmount = level * 10;
                     if(techValues.type == 'master') {
-                        amount *= 2;
+                        transformAmount *= 2;
                     }
-                    summary += `Transform, gaining ${amount} HP and +1 to all Active Attributes. `;
+                    summary += getTranslationByKey('desc-transformation-core').replace("{{0}}", techCoreLevel);
                     if(techGrantedSkills) {
-                        summary += `Grants Skills: ${techGrantedSkills}`;
-                        if(!summary.endsWith('.')) {
-                            summary += '.';
-                        }
-                        summary += ' ';
+                        summary += getTranslationByKey('desc-grants-skills').replace("{{0}}", techGrantedSkills);
                     }
                     hasSkills = true;
                     break;
                 case 'boost':
                     if(techGrantedSkills) {
-                        summary += `Grants Skills: ${techGrantedSkills}`;
-                        if(!summary.endsWith('.')) {
-                            summary += '.';
-                        }
-                        summary += ' ';
+                        summary += getTranslationByKey('desc-grants-skills').replace("{{0}}", techGrantedSkills);
                     }
                     hasSkills = true;
                     break;
                 case 'weaken':
                     if(techInflictedFlaws) {
-                        summary += `Inflicts Flaws: ${techInflictedFlaws};`
-                        if(!summary.endsWith('.')) {
-                            summary += '.';
-                        }
-                        summary += ' ';
+                        summary += getTranslationByKey('desc-inflicts-flaws').replace("{{0}}", techInflictedFlaws);
                     }
-                    hasFlaws = true;
-                    break;
-                case 'domain':
-                    if(techGrantedSkills) {
-                        summary += `Grants Skills within domain: ${techGrantedSkills}`;
-                        if(!summary.endsWith('.')) {
-                            summary += '.';
-                        }
-                        summary += ' ';
-                    }
-                    if(techInflictedFlaws) {
-                        summary += ` Inflicts Flaws within domain: ${techInflictedFlaws}`;
-                        if(!summary.endsWith('.')) {
-                            summary += '.';
-                        }
-                        summary += ' ';
-                    }
-                    hasSkills = true;
                     hasFlaws = true;
                     break;
                 case 'custom':
@@ -1588,7 +1550,7 @@
                     hasFlaws = true;
                     break;
                 default:
-                    warnings.push(`Unknown Core '${techCore}'.`);
+                    warnings.push(getTranslationByKey('warning-unknown-core').replace("{{0}}", techCoreLevel));
                     break;
             }
             summary += '\n';
@@ -1608,7 +1570,6 @@
                 if(mod.indexOf('custom') == 0) {
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('range') == 0) {
-                    log(mod);
                     let range = 3 * modLevel;
                     switch(techStat) {
                         case 'strength':
@@ -1619,17 +1580,16 @@
                             range = 4 * modLevel;
                             break;
                     }
-                    summary += `Range ${range}. `;
+                    summary += getTranslationByKey('desc-mods-ranged').replace("{{0}}", range);
                     totalModLevel += modLevel;
-                    log(summary);
                 } else if(mod.indexOf('blast') == 0) {
                     let rushMod = mods.find(function(m) {
                       return m.indexOf('line') > -1;
                     });
                     if(rushMod) {
-                        // Say nothing - this'll get incorporated into the line attack mod
+                        // Say nothing - this'll get incorporated into the rush mod
                     } else {
-                        summary += `Blast Radius ${modLevel}. `;
+                        summary += getTranslationByKey('desc-mods-blast-radius').replace("{{0}}", modLevel);
                     }
                     let blastCost = 0;
                     if(techStat == 'spirit') {
@@ -1647,11 +1607,11 @@
                     totalModLevel += blastCost;
                 } else if(mod.indexOf('chain') == 0) {
                     if(modLevel == 1) {
-                        summary += 'Chains once. ';
+                        summary += getTranslationByKey('desc-mods-chain-1');
                     } else if(modLevel == 2) {
-                        summary += 'Chains twice. ';
+                        summary += getTranslationByKey('desc-mods-chain-2');
                     } else {
-                        summary += `Chains ${modLevel} times. `;
+                        summary += getTranslationByKey('desc-mods-chain-x').replace("{{0}}", modLevel);
                     }
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('line') == 0 && mod.indexOf('line var') != 0) {
@@ -1677,9 +1637,11 @@
                             // NaN, so there's no level listed - assume 1
                             blastRadius = 1;
                         }
-                        summary += `Targets everything within radius ${blastRadius} around a line of length ${line}. `;
+                        summary += getTranslationByKey('desc-mods-line-blast')
+                            .replace("{{0}}", blastRadius)
+                            .replace("{{1}}", line);
                     } else {
-                        summary += `Targets in a line of length ${line}. `;
+                        summary += getTranslationByKey('desc-mods-line-attack').replace("{{0}}", line);
                     }
                     totalModLevel += modLevel;
                     if(barrierFreebie) {
@@ -1692,9 +1654,9 @@
                         variations++;
                     }
                     if(variations == 1) {
-                        summary += 'Line can change direction once. ';
+                        summary += getTranslationByKey('desc-mods-line-variation-1');
                     } else {
-                        summary += `Line can change direction ${variations} times. `;
+                        summary += getTranslationByKey('desc-mods-line-variation-x').replace("{{0}}", variations);
                     }
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('multiple') == 0) {
@@ -1702,32 +1664,32 @@
                     if(techStat == 'agility') {
                         targets++;
                     }
-                    summary += `Choose up to ${targets} targets. `;
+                    summary += getTranslationByKey('desc-mods-line-variation-x').replace("{{0}}", targets);
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('indirect') == 0) {
-                    summary += 'Can target anywhere on the battlefield. ';
+                        summary += getTranslationByKey('desc-mods-indirect-attack');
                     totalModLevel += 3;
                 } else if(mod.indexOf('rush') == 0) {
-                    summary += 'Take a Move Action, then target everyone you moved through. ';
+                    summary += getTranslationByKey('desc-mods-rush-attack');
                     let dashMod = mods.find(function(m) {
                       return m.indexOf('dash') > -1;
                     });
                     if(dashMod) {
-                      // Incorporate dash mod into rush attack
-                      let dashSplit = dashMod.split(' ');
-                      let bonusMove = parseInt(dashSplit[dashSplit.length - 1]);
-                      if(bonusMove != bonusMove) {
-                          // NaN, so there's no level listed - assume 1
-                          bonusMove = 1;
-                      }
-                      if(techStat == 'agility') {
-                          bonusMove++;
-                      }
-                      if(bonusMove == 1) {
-                          summary += 'You can move an additional space on this Move Action. ';
-                      } else {
-                          summary += `You can move an additional ${bonusMove} spaces on this Move Action. `;
-                      }
+                        // Incorporate dash mod into rush attack
+                        let dashSplit = dashMod.split(' ');
+                        let bonusMove = parseInt(dashSplit[dashSplit.length - 1]);
+                        if(bonusMove != bonusMove) {
+                            // NaN, so there's no level listed - assume 1
+                            bonusMove = 1;
+                        }
+                        if(techStat == 'agility') {
+                            bonusMove++;
+                        }
+                        if(bonusMove == 1) {
+                            summary += getTranslationByKey('desc-mods-rush-dash-1');
+                        } else {
+                            summary += getTranslationByKey('desc-mods-rush-dash-x').replace("{{0}}", bonusMove);
+                        }
                     }
                     if(techStat == 'agility' || techStat == 'strength') {
                         totalModLevel += 2;
@@ -1735,14 +1697,14 @@
                         totalModLevel += 3;
                     }
                 } else if(mod.indexOf('smart area') == 0) {
-                    summary += 'You can choose to omit any number of spaces from the target area. ';
+                    summary += getTranslationByKey('desc-mods-smart-area');
                     if(techStat == 'mind') {
                         totalModLevel++;
                     } else {
                         totalModLevel += 2;
                     }
                 } else if(mod.indexOf('whirlwind') == 0) {
-                    summary += 'Targets all enemies in your Zone of Control. ';
+                    summary += getTranslationByKey('desc-mods-whirlwind');
                     if(techStat == 'strength' || techStat == 'agility') {
                         totalModLevel++;
                     } else {
@@ -1750,37 +1712,41 @@
                     }
                 } else if(mod.indexOf('debilitating') == 0) {
                     if(techInflictedFlaws) {
-                        summary += `Inflicts Flaws on a hit: ${techInflictedFlaws}. `;
+                        summary += getTranslationByKey('desc-mods-debilitating').replace("{{0}}", techInflictedFlaws);
                     }
                     hasFlaws = true;
                 } else if(mod.indexOf('boosting') == 0) {
                     hasSkills = true;
                 } else if(mod.indexOf('drain') == 0) {
-                    summary += 'On a hit, recover Health equal to the largest amount of damage dealt to a single target. ';
+                    summary += getTranslationByKey('desc-mods-drain');
+                    displayMods.push('Drain');
                 } else if(mod.indexOf('persistent') == 0) {
-                    summary += 'Attacks again in the same area at the start of your next 2 turns. ';
-                    isPersistent = true;
+                    summary += getTranslationByKey('desc-mods-persistent');
+                    displayMods.push('Persistent');
                 } else if(mod.indexOf('piercing') == 0) {
                     if(techStat == 'strength' || techStat == 'agility') {
-                        summary += 'Ignores Defense. ';
+                        summary += getTranslationByKey('desc-mods-piercing-def');
                     } else {
-                        summary += 'Ignores Resistance. ';
+                        summary += getTranslationByKey('desc-mods-piercing-res');
                     }
                     defRes = null;
                 } else if(mod.indexOf('sapping') == 0) {
-                    summary += 'On a hit, the target takes ongoing damage equal to a third of initial damage for 3 turns. ';
+                    summary += getTranslationByKey('desc-mods-sapping');
+                    displayMods.push('Sapping');
                 } else if(mod.indexOf('transform ally') == 0) {
-                    summary += 'Can transform an ally within 5 spaces. ';
+                    summary += getTranslationByKey('desc-mods-transform-ally');
                     totalModLevel += 1;
                 } else if(mod.indexOf('unerring') == 0) {
-                    summary += 'Can be used again if you miss every target. ';
+                    summary += getTranslationByKey('desc-mods-unerring');
                     totalModLevel += 2;
                 } else if(mod.indexOf('consecutive transform') == 0) {
-                    summary += 'Can stack with another Transformation. ';
+                    summary += getTranslationByKey('desc-mods-consecutive-transformation');
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('intimidating transform') == 0) {
-                    summary += `When transforming and at the start of each turn, roll Resolve (1d10+${techValues.resolve}) or Aura (1d10+${techValues.aura})` +
-                    ` to intimidate everyone within ${modLevel} spaces.`;
+                    summary += getTranslationByKey('desc-mods-intimidating-transformation')
+                        .replace("{{0}}", techValues.resolve)
+                        .replace("{{1}}", techValues.aura)
+                        .replace("{{2}}", modLevel);
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('accurate') == 0) {
                     if(techStat == 'agility') {
@@ -1792,15 +1758,16 @@
                     totalModLevel++;
                 } else if(mod.indexOf('damage shift') == 0) {
                     if(techStat == 'strength' || techStat == 'agility') {
-                        summary += 'Is affected by Resistance instead of Defense. ';
+                        summary += getTranslationByKey('desc-mods-damage-shift-res');
                         defRes = 'res';
                     } else {
-                        summary += 'Is affected by Defense instead of Resistance. ';
+                        summary += getTranslationByKey('desc-mods-damage-shift-def');
                         defRes = 'def';
                     }
                     totalModLevel++;
                 } else if(mod.indexOf('darkness zone') == 0) {
-                    summary += 'Target area is filled with darkness. ';
+                    summary += getTranslationByKey('desc-mods-darkness-zone');
+                    displayMods.push('Darkness Zone');
                     totalModLevel += 2;
                 } else if(mod.indexOf('dash') == 0) {
                     let rushMod = mods.find(function(m) {
@@ -1814,54 +1781,62 @@
                             distance++;
                         }
                         if(distance == 1) {
-                            summary += 'Move 1 space before or after attacking. ';
+                            summary += getTranslationByKey('desc-mods-dash-1');
+                            
                         } else {
-                            summary += `Move ${distance} spaces before or after attacking. `;
+                            summary += getTranslationByKey('desc-mods-dash-x').replace("{{0}}", distance);
                         }
                     }
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('destruction') == 0) {
                     let destroy = 2 * modLevel;
-                    summary += `+${destroy} Durability damage to objects. `;
+                    summary += getTranslationByKey('desc-mods-destruction').replace("{{0}}", destroy);
                     totalModLevel++;
                 } else if(mod.indexOf('dexterous') == 0 ||
                           mod.indexOf('dextrous') == 0) {
                     totalModLevel++;
                 } else if(mod.indexOf('drop') == 0) {
-                    summary += `If target is flying, they fall and take ${damageIncrement} damage. `;
+                    summary += getTranslationByKey('desc-mods-drop-attack').replace("{{0}}", damageIncrement);
+                    displayMods.push('Drop Attack');
                     totalModLevel++;
                 } else if(mod.indexOf('grant flaw') == 0 ||
                           mod.indexOf('grants flaw') == 0) {
                     if(techInflictedFlaws) {
-                        summary += `Inflicts Flaws: ${techInflictedFlaws}. `;
+                        summary += getTranslationByKey('desc-inflicts-flaws').replace("{{0}}", techInflictedFlaws);
                     }
                     totalModLevel += modLevel;
+                    flawSpMax = modLevel;
                     hasFlaws = true;
                 } else if(mod.indexOf('grant skill') == 0 ||
                           mod.indexOf('grants skill') == 0) {
                     if(techGrantedSkills) {
-                        summary += `Grants Skills: ${techGrantedSkills}. `;
+                        summary += getTranslationByKey('desc-grants-skills').replace("{{0}}", techGrantedSkills);
                     }
                     totalModLevel += modLevel;
+                    skillSpMax = modLevel;
                     hasSkills = true;
                 } else if(mod.indexOf('high barrier') == 0) {
-                    summary += 'Flying targets cannot cross the barrier. ';
+                    summary += getTranslationByKey('desc-mods-high-barrier');
                     totalModLevel ++;
                 } else if(mod.indexOf('immobiliz') == 0) {
-                    summary += 'On a hit, the target is Immobilized. ';
+                    summary += getTranslationByKey('desc-mods-immobilize');
                     totalModLevel += 3;
+                    displayMods.push('Immobilize');
                 } else if(mod.indexOf('intuitive') == 0) {
                     totalModLevel++;
                 } else if(mod.indexOf('knock') == 0) {
-                    summary += 'On a hit, the target is knocked prone. ';
+                    summary += getTranslationByKey('desc-mods-knock-down');
                     totalModLevel += 3;
+                    displayMods.push('Knock Down');
                 } else if(mod.indexOf('light zone') == 0) {
-                    summary += 'Darkness in the target area is eliminated. ';
+                    summary += getTranslationByKey('desc-mods-light-zone');
+                    displayMods.push('Light Zone');
                     totalModLevel++;
                 } else if(mod.indexOf('muscular') == 0) {
                     totalModLevel++;
                 } else if(mod.indexOf('ram') == 0) {
-                    summary += 'On a hit, move and drag the target to a space adjacent to you. ';
+                    summary += getTranslationByKey('desc-mods-ramming');
+                    displayMods.push('Ramming');
                     if(techStat == 'strength') {
                         totalModLevel++;
                     } else {
@@ -1872,99 +1847,50 @@
                     if(techStat == 'strength') {
                         distance++;
                     }
-                    summary += `On a hit, move the target up to ${distance} spaces. `;
+                    summary += getTranslationByKey('desc-mods-reposition').replace("{{0}}", distance);
+                    displayMods.push(`Reposition ${distance}`);
                     totalModLevel += modLevel;
                 } else if(mod.indexOf('throw') == 0) {
-                    summary += 'If you move the target into someone else, attack them as well to deal full damage. ';
+                    summary += getTranslationByKey('desc-mods-throw');
+                    displayMods.push('Throw');
                     if(techStat == 'strength') {
                         totalModLevel++;
                     } else {
                         totalModLevel += 2;
                     }
                 } else if(mod.indexOf('violent') == 0) {
-                    summary += `If someone tries to move through the barrier, they take ${damageIncrement} damage. `;
+                    summary += getTranslationByKey('desc-mods-violent-barrier').replace("{{0}}", damageIncrement);
                     totalModLevel++;
                 } else if(mod.indexOf('launching') == 0) {
-                    summary += 'On a hit, the target is Launched. ';
+                    summary += getTranslationByKey('desc-mods-launch');
+                    displayMods.push('Launch');
                     totalModLevel += 3;
                 } else if(mod.indexOf('phasing') == 0) {
-                    summary += 'Ignores all obstacles. ';
+                    summary += getTranslationByKey('desc-mods-phasing');
                     totalModLevel++;
                 } else if(mod.indexOf('quick summon') == 0) {
                     totalModLevel += 3;
                 } else if(mod.indexOf('selective barrier') == 0) {
-                    summary += 'Allies can move through the barrier freely. ';
+                    summary += getTranslationByKey('desc-mods-selective-barrier');
                     totalModLevel++;
                 } else if(mod.indexOf('disrupt') >= 0) {
-                    summary += 'Target area becomes Difficult Terrain. ';
+                    summary += getTranslationByKey('desc-mods-terrain-disruption');
+                    displayMods.push('Terrain Disruption');
                     totalModLevel++;
                 } else if(mod.indexOf('repair') >= 0) {
-                    summary += 'Difficult Terrain in the target area is eliminated. ';
+                    summary += getTranslationByKey('desc-mods-repair');
+                    displayMods.push('Terrain Repair');
                     totalModLevel++;
                 } else if(mod.indexOf('element') == 0) {
-                    summary += 'Deals elemental damage. ';
+                    summary += getTranslationByKey('desc-mods-elemental');
                     if(techStat == 'strength' || techStat == 'agility') {
                         totalModLevel++;
                     }
-                } else if(mod.indexOf('defeat lock') == 0) {
-                    summary += "If target is incapacitated, they can't be revived for 24 hours unless this character is defeated. ";
-                    totalModLevel += 3;
-                } else if(mod.indexOf('draw out the dark') == 0) {
-                    summary += "On a hit, targets with Malevolent Entity must make a roll to maintain control. ";
-                    totalModLevel += 1;
-                } else if(mod.indexOf('effect lock') == 0) {
-                    summary += "If centered on a target, the area of effect follows them as they move. ";
-                    totalModLevel += 2;
-                } else if(mod.indexOf('encroaching mal') == 0) {
-                    summary += "On a hit, the target gains 1 Malevolence. ";
-                    totalModLevel += 1;
-                } else if(mod.indexOf('intimidat') == 0) {
-                    summary += "On a hit, the target is Shaken. ";
-                    totalModLevel += 3;
-                } else if(mod.indexOf('overwhelming mal') == 0) {
-                    summary += "On a hit, the target gains 1 Malevolence that lasts until the next rest scene. ";
-                    totalModLevel += 3;
-                } else if(mod.indexOf('pull under') == 0) {
-                    summary += "On a hit, the target is dragged underwater. ";
-                    totalModLevel += 2;
-                } else if(mod.indexOf('repair') == 0) {
-                    summary += "Can heal undead and constructs. ";
-                    totalModLevel += 2;
-                } else if(mod.indexOf('targeting mark') == 0) {
-                    summary += "On a hit, Mark the target, giving your allies +1 to hit that target for 3 turns. ";
-                    totalModLevel += 4;
-                } else if(mod.indexOf('astral form') == 0) {
-                    summary += "Project an astral body into the center of the domain; you can attack from it and it projects a Zone of Control. ";
-                    totalModLevel += 4;
-                } else if(mod.indexOf('astral mo') == 0) {
-                    summary += "Your astral body can move within your domain whenever you move. ";
-                    totalModLevel += 4;
-                } else if(mod.indexOf('influential control') == 0) {
-                    if(limitLevel == 1) {
-                        summary += "Your zone of control is expanded by 1 space within your domain. ";
-                    } else {
-                        summary += `Your zone of control is expanded by ${limitLevel} spaces within your domain. `;
-                    }
-                    totalModLevel += 6 * limitLevel;
-                } else if(mod.indexOf('locked zone') == 0) {
-                    summary += "Characters must succeed at an opposed roll against you to exit your domain. Attacks across the edge of the domain are made at a -2 penalty. ";
-                    totalModLevel += 4;
-                } else if(mod.indexOf('shifting tran') == 0) {
-                    summary += "Switch to another form and replace one of its Transformations with this one. ";
-                    totalModLevel += 4;
-                } else if(mod.indexOf('shifting dom') == 0) {
-                    summary += "Switch to another form and replace one of its Domains with this one. ";
-                    totalModLevel += 4;
-                } else if(mod.indexOf('touch of mal') == 0) {
-                    summary += "Whenever you hit a target with a Damage or Weaken tech in this form, they gain 1 Malevolence. ";
-                    totalModLevel += 6;
-                } else if(mod.indexOf('continuous r') == 0) {
-                    // Add nothing, already explained in core description
                 } else if(mod.length > 0) {
-                    warnings.push(`Unrecognized Modifier '${mod}'.`);
+                    warnings.push(getTranslationByKey('warning-unknown-mod').replace("{{0}}", mod));
                 }
             });
-            if(techCore == 'ultDamage' || techCore == 'domain') {
+            if(techCore == 'ultDamage') {
                 totalModLevel -= 2;
                 if(totalModLevel < 0) totalModLevel = 0;
                 totalModLevel = Math.ceil(totalModLevel / 2);
@@ -1972,7 +1898,7 @@
 
             let techLevel = techCoreLevel + totalModLevel;
             if(techLevel > level + 3 || (techCoreLevel > level && techCore == 'summoning')) {
-                warnings.push('Technique Level is too high for current Character Level.');
+                warnings.push(getTranslationByKey('warning-tech-level-cap'));
             }
 
             summary += '\n';
@@ -2038,12 +1964,14 @@
                         summary += `Inflicts Flaws on user: ${techInflictedFlaws}. `;
                     }
                     limitSt += limitLevel;
+                    flawSpMax = limitLevel;
                     hasFlaws = true;
                 } else if(limit.indexOf('grant skill') == 0) {
                     if(techGrantedSkills) {
                         summary += `Grants Skills for target: ${techGrantedSkills}. `;
                     }
                     limitSt += limitLevel;
+                    skillSpMax = limitLevel;
                     hasSkills = true;
                 } else if(limit.indexOf('initiative') == 0) {
                     limitSummary += `Initiative reduced by ${limitLevel} after using this Technique. `;
@@ -2060,6 +1988,7 @@
                     limitSt++;
                 } else if(limit.indexOf('mercy') == 0) {
                     limitSummary += 'Cannot reduce a target below 1 HP. ';
+                    displayMods.push('Mercy Limit');
                     limitSt += 3;
                 } else if(limit.indexOf('minimum range') == 0) {
                     limitSummary += `Cannot target characters who are ${limitLevel} or fewer spaces away from you. `;
@@ -2133,6 +2062,7 @@
                 } else if(limit.indexOf('time') == 0) {
                     let time = 5 - limitLevel;
                     limitSummary += `Transformation ends after ${time} ${time == 1 ? 'turn' : 'turns'}. `;
+                    displayMods.push(`Limit ${time}  ${time == 1 ? 'turn' : 'turns'}`);
                     limitSt += 5 * limitLevel;
                 } else if(limit.indexOf('airborne') == 0) {
                     limitSummary += 'You must be Flying to use this Technique. ';
@@ -2181,30 +2111,6 @@
                 } else if(limit.indexOf('sync') == 0) {
                     limitSummary += `You must have at least ${limitLevel} Synchronization with your Ego Weapon to use this Technique. `;
                     limitSt += 2 * limitLevel;
-                } else if(limit.indexOf('bloodseeker') == 0) {
-                    limitSummary += 'Can only affect targets that are at Critical Health. ';
-                    limitSt += 3;
-                } else if(limit.indexOf('body strike') == 0) {
-                    limitSummary += "Can only be used from your body. ";
-                    limitSt += 1;
-                } else if(limit.indexOf('elemental block') == 0) {
-                    limitSummary += "Can't be used if you took damage from a specific element since your last turn. ";
-                    limitSt += 2;
-                } else if(limit.indexOf('exclusive') == 0) {
-                    limitSummary += "Cancels out a specific other technique's effects when used. ";
-                    limitSt += 1;
-                } else if(limit.indexOf('head strike') == 0) {
-                    limitSummary += "Can only be used from your head. ";
-                    limitSt += 1;
-                } else if(limit.indexOf('skill cancel') == 0) {
-                    limitSummary += "When active, you lose a specific Skill. ";
-                    limitSt += limitLevel;
-                } else if(limit.indexOf('tail strike') == 0) {
-                    limitSummary += "Can only be used from your tail. ";
-                    limitSt += limitLevel;
-                } else if(limit.indexOf('water') == 0) {
-                    limitSummary += "Can only be used underwater. ";
-                    limitSt += 3;
                 } else if(limit.length > 0 &&
                           limit.indexOf('slow') == -1 &&
                           limit.indexOf('grant') == -1) {
@@ -2213,7 +2119,7 @@
             });
 
             let cost = 0;
-            if((core || techCore == 'custom') && techCore != 'mimic' && techCore != 'ultMimic') {
+            if((core || techCore == 'custom') && techCore != 'mimic') {
                 if(techCore == 'custom') {
                     cost = techCustomCost;
                 } else {
@@ -2228,12 +2134,10 @@
             summary += limitSummary;
 
             // Determine Flaw SP
-            let flawSpMax = 0;
             let flawSp = 0;
             if(hasFlaws) {
                 switch(techCore) {
                     case 'weaken':
-                    case 'domain':
                     case 'damage':
                         flawSpMax = techCoreLevel;
                         break;
@@ -2293,13 +2197,11 @@
             }
 
             // Determine Skill SP
-            let skillSpMax = 0;
             let skillSp = 0;
             if(hasSkills) {
                 switch(techCore) {
                     case 'boost':
                     case 'ultTransform':
-                    case 'domain':
                         skillSpMax = 2 * techCoreLevel;
                         break;
                 }
@@ -2356,22 +2258,34 @@
                 }
             }
             
-            // Write the small summary
-            switch(techCore) {
-                case 'damage':
-                case 'ultDamage':
-                    microSummary = `Damage: **${amount}**`;
-                    if(defRes) microSummary += ` - ${defRes == 'def' ? 'Defense' : 'Resistance'}`;
-                    break;
-                case 'healing':
-                    microSummary = `Restores **${amount}** HP`;
-                    break;
-                case 'ultTransform':
-                    microSummary = `HP +**${amount}**`;
-                    break;
+            let attrs = {};
+            
+            // Write the in-line summary
+            if(damageAmount > 0) {
+                attrs[`repeating_techs_${techId}_tech_damage_disp`] = damageAmount;
+                if(defRes){
+                    attrs[`repeating_techs_${techId}_tech_defres_disp`] = ` - ${defRes == 'def' ? 'Defense' : 'Resistance'}`;
+                } 
+            } else {
+                attrs[`repeating_techs_${techId}_tech_damage_disp`] = '';
+                attrs[`repeating_techs_${techId}_tech_defres_disp`] = '';
+            }
+            if(healingAmount > 0) {
+                attrs[`repeating_techs_${techId}_tech_healing_disp`] = healingAmount;
+            } else {
+                attrs[`repeating_techs_${techId}_tech_healing_disp`] = '';
+            }
+            if(transformAmount > 0) {
+                attrs[`repeating_techs_${techId}_tech_transform_disp`] = transformAmount;
+            } else {
+                attrs[`repeating_techs_${techId}_tech_transform_disp`] = '';
+            }
+            if(displayMods.length > 0) {
+                attrs[`repeating_techs_${techId}_tech_mods_disp`] = displayMods.join(', ');
+            } else {
+                attrs[`repeating_techs_${techId}_tech_mods_disp`] = '';
             }
             
-            let attrs = {};
             attrs[`repeating_techs_${techId}_tech_summary`] = summary;
             attrs[`repeating_techs_${techId}_tech_warnings`] = warnings.length > 0 ? `WARNING: ${warnings.join(' ')}` : ' ';
             attrs[`repeating_techs_${techId}_tech_mod_level`] = totalModLevel;
@@ -2382,7 +2296,7 @@
             attrs[`repeating_techs_${techId}_tech_flaw_sp_max`] = flawSpMax;
             attrs[`repeating_techs_${techId}_tech_skill_sp`] = skillSp;
             attrs[`repeating_techs_${techId}_tech_skill_sp_max`] = skillSpMax;
-            attrs[`repeating_techs_${techId}_tech_is_mimic`] = techCore == 'mimic' || techCore == 'ultMimic'
+            attrs[`repeating_techs_${techId}_tech_is_mimic`] = techCore == 'mimic'
                 ? 'on' : 'off';
             attrs[`repeating_techs_${techId}_tech_has_flaws`] = hasFlaws
                 ? 'on' : 'off';
@@ -2395,7 +2309,6 @@
             }
             attrs[`repeating_techs_${techId}_tech_can_edit_cost`] = techCore == 'custom' ? 'on' : 'off';
             attrs[`repeating_techs_${techId}_tech_stat_roll`] = techRoll;
-            attrs[`repeating_techs_${techId}_tech_micro_summary`] = microSummary;
             setAttrs(attrs, { silent: true });
         });
     }
@@ -2504,101 +2417,101 @@
         <!-- Sheet header -->
         <div class="attributes-header">
             <div class="attributes-header-label">
-                <span class="label">Level:</span>
+                <span data-i18n="level:" class="label">Level:</span>
             </div>
             <div>
                 <input class="attributes-header-input" type="number" name="attr_level" value="1">
             </div>
             <div class="attributes-header-label">
-                <span class="label">Experience:</span>
+                <span data-i18n="experience:" class="label">Experience:</span>
             </div>
             <div>
                 <input type="number" class="longer-number attributes-header-input" name="attr_experience" value="0">
             </div>
             <div class="attributes-header-label">
-                <span class="label">Type:</span>
+                <span data-i18n="type:" class="label">Type:</span>
             </div>
             <div>
                 <select name="attr_type" class="attributes-header-input">
-                    <option value="flunky">Flunky</option>
-                    <option value="soldier">Summon/Soldier</option>
-                    <option value="swarm">Swarm</option>
-                    <option value="elite" selected="selected">PC/Elite</option>
-                    <option value="master">Master</option>
+                    <option data-i18n="flunky" value="flunky">Flunky</option>
+                    <option data-i18n="soldier" value="soldier">Summon/Soldier</option>
+                    <option data-i18n="swarm" value="swarm">Swarm</option>
+                    <option data-i18n="player-character-elite-abv" value="elite" selected="selected">PC/Elite</option>
+                    <option data-i18n="master" value="master">Master</option>
                 </select>
             </div>
         </div>
 
         <!-- Attributes -->
-        <div class="section-header">ATTRIBUTES</div>
+        <div data-i18n="attributes-u" class="section-header">ATTRIBUTES</div>
         <div class="stats-container">
             <div class="stats">
                 <div class="stats-column stats-orange">
-                    <div class="label stats-column-header">BASE</div>
-                    <div>Strength:</div>
+                    <div data-i18n="base-u" class="label stats-column-header">BASE</div>
+                    <div data-i18n="strength:">Strength:</div>
                     <div>
                         <input type="number" class="number-input-orange" name="attr_strength" value="5">
                     </div>
-                    <div>Agility:</div>
+                    <div data-i18n="agility:">Agility:</div>
                     <div>
                         <input type="number" class="number-input-orange" name="attr_agility" value="5">
                     </div>
-                    <div>Spirit:</div>
+                    <div data-i18n="spirit:">Spirit:</div>
                     <div>
                         <input type="number" class="number-input-orange" name="attr_spirit" value="5">
                     </div>
-                    <div>Mind:</div>
+                    <div data-i18n="mind:">Mind:</div>
                     <div>
                         <input type="number" class="number-input-orange" name="attr_mind" value="5">
                     </div>
-                    <div>Guts:</div>
+                    <div data-i18n="guts:">Guts:</div>
                     <div>
                         <input type="number" class="number-input-orange" name="attr_guts" value="5">
                     </div>
                 </div>
                 <div class="stats-column stats-green">
-                    <div class="label stats-column-header">ACTIVE</div>
-                    <div>Muscle:</div>
+                    <div data-i18n="active-u" class="label stats-column-header">ACTIVE</div>
+                    <div data-i18n="muscle:">Muscle:</div>
                     <div>
                         <span class="derived-value" name="attr_muscle"></span>
                         <button type="roll" value='[[1d10+@{muscle}+@{rollbonus}]] Muscle' name="roll_muscle"></button>
                     </div>
-                    <div>Dexterity:</div>
+                    <div data-i18n="dexterity:">Dexterity:</div>
                     <div>
                         <span class="derived-value" name="attr_dexterity"></span>
                         <button type="roll" value='[[1d10+@{dexterity}+@{rollbonus}]] Dexterity' name="roll_dexterity"></button>
                     </div>
-                    <div>Aura:</div>
+                    <div data-i18n="aura:">Aura:</div>
                     <div>
                         <span class="derived-value" name="attr_aura"></span>
                         <button type="roll" value='[[1d10+@{aura}+@{rollbonus}]] Aura' name="roll_aura"></button>
                     </div>
-                    <div>Intuition:</div>
+                    <div data-i18n="intuition:">Intuition:</div>
                     <div>
                         <span class="derived-value" name="attr_intuition"></span>
                         <button type="roll" value='[[1d10+@{intuition}+@{rollbonus}]] Intuition' name="roll_intuition"></button>
                     </div>
-                    <div>Resolve:</div>
+                    <div data-i18n="resolve:">Resolve:</div>
                     <div>
                         <span class="derived-value" name="attr_resolve"></span>
                         <button type="roll" value='[[1d10+@{resolve}+@{rollbonus}]] Resolve' name="roll_resolve"></button>
                     </div>
                 </div>
                 <div class="stats-column stats-orange">
-                    <div class="label stats-column-header">ATTACK</div>
-                    <div>Strength:</div>
+                    <div data-i18n="attack-u" class="label stats-column-header">ATTACK</div>
+                    <div data-i18n="strength:">Strength:</div>
                     <div class="derived-value">
                         <span name="attr_strengthAttack" />
                     </div>
-                    <div>Agility:</div>
+                    <div data-i18n="agility:">Agility:</div>
                     <div class="derived-value">
                         <span name="attr_agilityAttack" />
                     </div>
-                    <div>Spirit:</div>
+                    <div data-i18n="spirit:">Spirit:</div>
                     <div class="derived-value">
                         <span name="attr_spiritAttack" />
                     </div>
-                    <div>Mind:</div>
+                    <div data-i18n="mind:">Mind:</div>
                     <div class="derived-value">
                         <span name="attr_mindAttack" />
                     </div>
@@ -2607,47 +2520,47 @@
                     </div>
                 </div>
                 <div class="stats-column stats-green">
-                    <div class="label stats-column-header">STATISTICS</div>
-                    <div>Health:</div>
+                    <div data-i18n="statistics-u" class="label stats-column-header">STATISTICS</div>
+                    <div data-i18n="health:">Health:</div>
                     <div class="derived-value">
                         <span name="attr_health_max" />
                     </div>
-                    <div>Stamina:</div>
+                    <div data-i18n="stamina:">Stamina:</div>
                     <div class="derived-value">
                         <span name="attr_stamina_max" />
                     </div>
-                    <div>Defense:</div>
+                    <div data-i18n="defense:">Defense:</div>
                     <div class="derived-value">
                         <span name="attr_defense" />
                     </div>
-                    <div>Resistance:</div>
+                    <div data-i18n="resistance:">Resistance:</div>
                     <div class="derived-value">
                         <span name="attr_resistance" />
                     </div>
-                    <div>Move:</div>
+                    <div data-i18n="move:">Move:</div>
                     <div class="derived-value">
                         <span name="attr_move" />
                     </div>
                 </div>
                 <div class="stats-column stats-orange">
-                    <div class="label stats-column-header">INCREMENTS</div>
-                    <div>HP Increment:</div>
+                    <div data-i18n="increments-allcaps" class="label stats-column-header">INCREMENTS</div>
+                    <div data-i18n="health-increment-abv:">HP Increment:</div>
                     <div class="derived-value">
                         <span name="attr_healthIncrement" />
                     </div>
-                    <div>ST Increment:</div>
+                    <div data-i18n="stamina-increment-abv:">ST Increment:</div>
                     <div class="derived-value">
                         <span name="attr_staminaIncrement" />
                     </div>
-                    <div>Critical HP:</div>
+                    <div data-i18n="critical-health-abv:">Critical HP:</div>
                     <div class="derived-value">
                         <span name="attr_criticalHealth" />
                     </div>
-                    <div>Dmg Increment:</div>
+                    <div data-i18n="damage-increment-abv:">Dmg Increment:</div>
                     <div class="derived-value">
                         <span name="attr_damageIncrement" />
                     </div>
-                    <div>Initiative:</div>
+                    <div data-i18n="initiative:">Initiative:</div>
                     <div class="derived-value">
                         <span name="attr_initiative" ></span>
                         <button type="roll" value="[[1d10+@{initiative}+@{rollbonus} &{tracker} &{noerror}]] Initiative" name="roll_init"></button>
@@ -2655,24 +2568,24 @@
                 </div>
             </div>
         </div>
-        <div class="unspent-ap"><span name="attr_unspentAttributePoints"></span> AP UNSPENT</div>
-        <div class="section-header">BONUSES</div>
+        <div data-i18n="unspent-attribute-points-abv-u" class="unspent-ap"><span name="attr_unspentAttributePoints"></span> AP UNSPENT</div>
+        <div data-i18n="bonuses-u" class="section-header">BONUSES</div>
         <div class="stats-container">
             <div class="stats">
                 <div class="stats-wide-column stats-green stats-short">
-                    <div>All Rolls:</div>
+                    <div data-i18n="all-rolls:">All Rolls:</div>
                     <div>
                         <input type="number" class="number-input-green" name="attr_rollbonus" value="0">
                     </div>
                     <div></div>
-                    <div>Attack Rolls:</div>
+                    <div data-i18n="attack-rolls:">Attack Rolls:</div>
                     <div>
                         <input type="number" class="number-input-green" name="attr_atkrollbonus" value="0">
                     </div>
                     <div>
                         <span name="attr_iatkrollbonusdisp"></span>
                     </div>
-                    <div>Defense Rolls:</div>
+                    <div data-i18n="defense-rolls:">Defense Rolls:</div>
                     <div>
                         <input type="number" class="number-input-green" name="attr_defrollbonus" value="0">
                     </div>
@@ -2681,18 +2594,18 @@
                     </div>
                 </div>
                 <div class="stats-column stats-orange stats-short">
-                    <div>Phys. Attack:</div>
+                    <div data-i18n="physical-attack-abv:">Phys. Attack:</div>
                     <div>
                         <input type="number" class="number-input-orange long-number" name="attr_patkbonus" value="0">
                     </div>
-                    <div>En. Attack:</div>
+                    <div data-i18n="energy-attack-abv:">En. Attack:</div>
                     <div>
                         <input type="number" class="number-input-orange long-number" name="attr_eatkbonus" value="0">
                     </div>
                 </div>
             </div>
         </div>
-        <div class="section-header roll-defense">ROLL DEFENSE</div>
+        <div data-i18n="roll-defense-u" class="section-header roll-defense">ROLL DEFENSE</div>
         <div class="defense-buttons">
             <button class="valor-button" type="roll" value='[[1d10+@{muscle}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Muscle Defense' name="roll_mus_def">Muscle</button>
             <button class="valor-button" type="roll" value='[[1d10+@{dexterity}+@{rollbonus}+@{defrollbonus}+@{idefrollbonus}]] Dexterity Defense' name="roll_dex_def">Dexterity</button>
@@ -2703,300 +2616,243 @@
     </div>
 
     <div class="sheet-tab-content sheet-tab2">
-        <div class="flaws-header">FLAWS</div>
+        <div data-i18n="flaws-u" class="flaws-header">FLAWS</div>
         <fieldset class="repeating_flaws">
             <div class="flaw">
                 <div class="flaw-upper">
                     <select class="flaw-picker" name="attr_flawname" selected="customFlaw">
-                        <option value="customFlaw">Custom Flaw</option>
-                        <option value="aggravatedWounds">Aggravated Wounds (+2)</option>
-                        <option value="berserker">Berserker (+5)</option>
-                        <option value="compulsion">Compulsion (+4)</option>
-                        <option value="despair">Despair (+4)</option>
-                        <option value="energyVulnerability">Energy Vulnerability (+2/+1)</option>
-                        <option value="feeble">Feeble (+3)</option>
-                        <option value="fragile">Fragile (+3/+2)</option>
-                        <option value="lackOfControl">Lack of Control (+2/+1)</option>
-                        <option value="malevolentEntity">Malevolent Entity (+5)</option>
-                        <option value="nonProficient">Non-Proficient (+1)</option>
-                        <option value="oblivious">Oblivious (+3)</option>
-                        <option value="slow">Slow (+2/+1)</option>
-                        <option value="slowHealing">Slow Healing (+2)</option>
-                        <option value="slowToAct">Slow to Act (+1)</option>
-                        <option value="unthreatening">Unthreatening (+3)</option>
-                        <option value="uncoordinated">Uncoordinated (+3)</option>
-                        <option value="violent">Violent (+3)</option>
-                        <option value="weakAura">Weak Aura (+3)</option>
-                        <option value="weakDefender">Weak Defender (+2/+1)</option>
-                        <option value="weakWilled">Weak Willed (+4/+3)</option>
-                        <optgroup label="Optional Rules">
-                            <option value="armorReliant">Armor Reliant (+2/+1)</option>
-                            <option value="elementalVulnerability">Elemental Vulnerability (+2/+1)</option>
-                            <option value="unprincipled">Unprincipled (+1)</option>
-                            <option value="wardReliant">Ward Reliant (+2/+1)</option>
+                        <option data-i18n="option-custom-flaw" value="customFlaw">Custom Flaw</option>
+                        <option data-i18n="option-aggravated-wounds" value="aggravatedWounds">Aggravated Wounds (+2)</option>
+                        <option data-i18n="option-berserker" value="berserker">Berserker (+5)</option>
+                        <option data-i18n="option-compulsion" value="compulsion">Compulsion (+4)</option>
+                        <option data-i18n="option-despair" value="despair">Despair (+4)</option>
+                        <option data-i18n="option-energy-vulnerability" value="energyVulnerability">Energy Vulnerability (+2/+1)</option>
+                        <option data-i18n="option-feeble" value="feeble">Feeble (+3)</option>
+                        <option data-i18n="option-fragile" value="fragile">Fragile (+3/+2)</option>
+                        <option data-i18n="option-lack-of-control" value="lackOfControl">Lack of Control (+2/+1)</option>
+                        <option data-i18n="option-malevolent-entity" value="malevolentEntity">Malevolent Entity (+5)</option>
+                        <option data-i18n="option-non-proficient" value="nonProficient">Non-Proficient (+1)</option>
+                        <option data-i18n="option-oblivious" value="oblivious">Oblivious (+3)</option>
+                        <option data-i18n="option-slow" value="slow">Slow (+2/+1)</option>
+                        <option data-i18n="option-slow-healing" value="slowHealing">Slow Healing (+2)</option>
+                        <option data-i18n="option-slow-to-act" value="slowToAct">Slow to Act (+1)</option>
+                        <option data-i18n="option-unthreatening" value="unthreatening">Unthreatening (+3)</option>
+                        <option data-i18n="option-uncoordinated" value="uncoordinated">Uncoordinated (+3)</option>
+                        <option data-i18n="option-violent" value="violent">Violent (+3)</option>
+                        <option data-i18n="option-weak-aura" value="weakAura">Weak Aura (+3)</option>
+                        <option data-i18n="option-weak-defender" value="weakDefender">Weak Defender (+2/+1)</option>
+                        <option data-i18n="option-weak-willed" value="weakWilled">Weak Willed (+4/+3)</option>
+                        <optgroup data-i18n-label="optional-rules" label="Optional Rules">
+                            <option data-i18n="option-armor-reliant" value="armorReliant">Armor Reliant (+2/+1)</option>
+                            <option data-i18n="option-elemental-vulnerability" value="elementalVulnerability">Elemental Vulnerability (+2/+1)</option>
+                            <option data-i18n="option-unprincipled" value="unprincipled">Unprincipled (+1)</option>
+                            <option data-i18n="option-ward-reliant" value="wardReliant">Ward Reliant (+2/+1)</option>
                         </optgroup>
-                        <optgroup label="NPC Only">
-                            <option value="battleDamage">Battle Damage (+3)</option>
-                        </optgroup>
-                        <optgroup label="Villains, Creatures and Foes (BETA)">
-                            <option value="broadForm">Broad Form (+4)</option>
-                            <option value="fearTheDarkness">Fear the Darkness (+3)</option>
-                            <option value="immobile">Immobile (+7)</option>
-                            <option value="insubstantial">Insubstantial (+3)</option>
-                            <option value="situationalCompulsion">Situational Compulsion (+2)</option>
-                            <option value="sunlightWeakness">Sunlight Weakness (+5)</option>
-                            <option value="thresheld">Thresheld (+3)</option>
-                            <option value="weakGuard">Weak Guard (+2)</option>
-                            <option value="malevolentPossession">Malevolent Possession (+10)</option>
+                        <optgroup data-i18n-label="npc-only" label="NPC Only">
+                            <option data-i18n="option-battle-damage" value="battleDamage">Battle Damage (+3)</option>
                         </optgroup>
                     </select>
                     <span class="label">
-                        Level <input class="flaw-level" type="number" name="attr_flawlevel" value="1" />
+                        <span data-i18n="level">Level</span> <input class="flaw-level" type="number" name="attr_flawlevel" value="1" />
                     </span>
                     <span name="attr_warning"></span>
                 </div>
-                <div><span class="label notes-label">Notes</span> <input class="notes" type="text" name="attr_skillnotes" /></div>
+                <div><span data-i18n="notes" class="label notes-label">Notes</span> <input class="notes" type="text" spellcheck="false" name="attr_skillnotes" /></div>
             </div>
             <div class="flaw-background"></div>
         </fieldset>
 
-        <div class="skills-header">SKILLS</div>
+        <div data-i18n="skills-u" class="skills-header">SKILLS</div>
 
         <fieldset class="repeating_skills">
             <div class="skill">
                 <div class="skill-upper">
                     <select class="skill-picker" name="attr_skillname" selected="customSkill">
-                        <option value="customSkill">Custom Skill</option>
-                        <optgroup label="Season 1 Skills">
-                            <option value="acceleration">Acceleration (5)</option>
-                            <option value="analysis">Analysis (5)</option>
-                            <option value="asset">Asset (3)</option>
-                            <option value="attackNode">Attack Node (5/2)</option>
-                            <option value="balancedFighter">Balanced Fighter (8)</option>
-                            <option value="blazingMight">Blazing Might (6/3)</option>
-                            <option value="bounceBack">Bounce Back (6)</option>
-                            <option value="bravado">Bravado (6/6)</option>
-                            <option value="burningPassion">Burning Passion (5)</option>
-                            <option value="challengeTechnique">Challenge Technique (3)</option>
-                            <option value="combinationAttack">Combination Attack (6)</option>
-                            <option value="companion">Companion (6/4)</option>
-                            <option value="counterattack">Counterattack (6)</option>
-                            <option value="cover">Cover (6/2)</option>
-                            <option value="crisis">Crisis (4/2)</option>
-                            <option value="dangerSense">Danger Sense (3)</option>
-                            <option value="darkHealing">Dark Healing (5)</option>
-                            <option value="darksight">Darksight (4)</option>
-                            <option value="desperation">Desperation (5)</option>
-                            <option value="digDeep">Dig Deep (5)</option>
-                            <option value="dirtyTrick">Dirty Trick (5)</option>
-                            <option value="discreetAura">Discreet Aura (3)</option>
-                            <option value="discretion">Discretion (2)</option>
-                            <option value="duel">Duel (2)</option>
-                            <option value="effectTransfer">Effect Transfer (4/3)</option>
-                            <option value="empowerAttack">Empower Attack (6/3)</option>
-                            <option value="energyAttacker">Energy Attacker (6/3)</option>
-                            <option value="fastCompanion">Fast Companion (2/1)</option>
-                            <option value="fastHealing">Fast Healing (4)</option>
-                            <option value="favorableInsight">Favorable Insight (3)</option>
-                            <option value="feint">Feint (6)</option>
-                            <option value="fightingSpirit">Fighting Spirit (6/3)</option>
-                            <option value="hardenedDefense">Hardened Defense (6/3)</option>
-                            <option value="hardenedResistance">Hardened Resistance (6/3)</option>
-                            <option value="hiddenCompanion">Hidden Companion (4/2)</option>
-                            <option value="ignoreEffect">Ignore Effect (5)</option>
-                            <option value="improvedDamageIncrement">Improved Damage Inc. (4/2)</option>
-                            <option value="improvedSwimming">Improved Swimming (4)</option>
-                            <option value="increasedSize">Increased Size (2/1)</option>
-                            <option value="inspire">Inspire (5)</option>
-                            <option value="interruptAttack">Interrupt Attack (3/2)</option>
-                            <option value="intimidate">Intimidate (5/3)</option>
-                            <option value="ironDefense">Iron Defense (4/2)</option>
-                            <option value="Jump">Jump (4)</option>
-                            <option value="mount">Mount (3/1)</option>
-                            <option value="nimbleMovement">Nimble Movement (4)</option>
-                            <option value="nullify">Nullify (5/3)</option>
-                            <option value="overloadLimits">Overload Limits (6)</option>
-                            <option value="passiveHealing">Passive Healing (4)</option> (6)
-                            <option value="physicalAttacker">Physical Attacker (6/3)</option>
-                            <option value="proficiency">Proficiency (2)</option>
-                            <option value="protector">Protector (5)</option>
-                            <option value="provoke">Provoke (4/2)</option>
-                            <option value="quickToAct">Quick to Act (3)</option>
-                            <option value="recharge">Recharge (5/3)</option>
-                            <option value="recklessAttack">Reckless Attack (5/3)</option>
-                            <option value="recovery">Recovery (3)</option>
-                            <option value="resistant">Resistant (4/2)</option>
-                            <option value="resoluteAura">Resolute Aura (5)</option>
-                            <option value="resoluteStrike">Resolute Strike (5)</option>
-                            <option value="revenge">Revenge (5)</option>
-                            <option value="rollingRecovery">Rolling Recovery (4)</option>
-                            <option value="senseMalice">Sense Malice (2)</option>
-                            <option value="sizeUp">Size Up (3/1)</option>
-                            <option value="spiritSight">Spirit Sight (5)</option>
-                            <option value="sprinter">Sprinter (4/2)</option>
-                            <option value="strengthOfWill">Strength of Will (5)</option>
-                            <option value="teamTactics">Team Tactics (6)</option>
-                            <option value="tireless">Tireless (5/2)</option>
-                            <option value="tough">Tough (6/3)</option>
-                            <option value="toss">Toss (5/2)</option>
-                            <option value="underhanded">Underhanded (5)</option>
-                            <option value="unmovable">Unmovable (4/2)</option>
-                            <option value="versatileFighter">Versatile Fighter (6/3)</option>
+                        <option data-i18n="option-custom-skill" value="customSkill">Custom Skill</option>
+                        <optgroup data-i18n-label="season-1-skills" label="Season 1 Skills">
+                            <option data-i18n="option-acceleration" value="acceleration">Acceleration (5)</option>
+                            <option data-i18n="option-analysis" value="analysis">Analysis (5)</option>
+                            <option data-i18n="option-asset" value="asset">Asset (3)</option>
+                            <option data-i18n="option-attack-node" value="attackNode">Attack Node (5/2)</option>
+                            <option data-i18n="option-balanced-fighter" value="balancedFighter">Balanced Fighter (8)</option>
+                            <option data-i18n="option-blazing-might" value="blazingMight">Blazing Might (6/3)</option>
+                            <option data-i18n="option-bounce-back" value="bounceBack">Bounce Back (6)</option>
+                            <option data-i18n="option-bravado" value="bravado">Bravado (6/6)</option>
+                            <option data-i18n="option-burning-passion" value="burningPassion">Burning Passion (5)</option>
+                            <option data-i18n="option-challenge-technique" value="challengeTechnique">Challenge Technique (3)</option>
+                            <option data-i18n="option-combination-attack" value="combinationAttack">Combination Attack (6)</option>
+                            <option data-i18n="option-companion" value="companion">Companion (6/4)</option>
+                            <option data-i18n="option-counterattack" value="counterattack">Counterattack (6)</option>
+                            <option data-i18n="option-cover" value="cover">Cover (6/2)</option>
+                            <option data-i18n="option-crisis" value="crisis">Crisis (4/2)</option>
+                            <option data-i18n="option-danger-sense" value="dangerSense">Danger Sense (3)</option>
+                            <option data-i18n="option-dark-healing" value="darkHealing">Dark Healing (5)</option>
+                            <option data-i18n="option-darksight" value="darksight">Darksight (4)</option>
+                            <option data-i18n="option-desperation" value="desperation">Desperation (5)</option>
+                            <option data-i18n="option-dig-deep" value="digDeep">Dig Deep (5)</option>
+                            <option data-i18n="option-dirty-trick" value="dirtyTrick">Dirty Trick (5)</option>
+                            <option data-i18n="option-discreet-aura" value="discreetAura">Discreet Aura (3)</option>
+                            <option data-i18n="option-discretion" value="discretion">Discretion (2)</option>
+                            <option data-i18n="option-duel" value="duel">Duel (2)</option>
+                            <option data-i18n="option-effect-transfer" value="effectTransfer">Effect Transfer (4/3)</option>
+                            <option data-i18n="option-empower-attack" value="empowerAttack">Empower Attack (6/3)</option>
+                            <option data-i18n="option-energy-attacker" value="energyAttacker">Energy Attacker (6/3)</option>
+                            <option data-i18n="option-fast-companion" value="fastCompanion">Fast Companion (2/1)</option>
+                            <option data-i18n="option-fast-healing" value="fastHealing">Fast Healing (4)</option>
+                            <option data-i18n="option-favorable-insight" value="favorableInsight">Favorable Insight (3)</option>
+                            <option data-i18n="option-feint" value="feint">Feint (6)</option>
+                            <option data-i18n="option-fighting-spirit" value="fightingSpirit">Fighting Spirit (6/3)</option>
+                            <option data-i18n="option-hardened-defense" value="hardenedDefense">Hardened Defense (6/3)</option>
+                            <option data-i18n="option-hardened-resistance" value="hardenedResistance">Hardened Resistance (6/3)</option>
+                            <option data-i18n="option-hidden-companion" value="hiddenCompanion">Hidden Companion (4/2)</option>
+                            <option data-i18n="option-ignore-effect" value="ignoreEffect">Ignore Effect (5)</option>
+                            <option data-i18n="option-improved-damage-increment-abv" value="improvedDamageIncrement">Improved Damage Inc. (4/2)</option>
+                            <option data-i18n="option-improved-swimming" value="improvedSwimming">Improved Swimming (4)</option>
+                            <option data-i18n="option-increased-size" value="increasedSize">Increased Size (2/1)</option>
+                            <option data-i18n="option-inspire" value="inspire">Inspire (5)</option>
+                            <option data-i18n="option-interrupt-attack" value="interruptAttack">Interrupt Attack (3/2)</option>
+                            <option data-i18n="option-intimidate" value="intimidate">Intimidate (5/3)</option>
+                            <option data-i18n="option-iron-defense" value="ironDefense">Iron Defense (4/2)</option>
+                            <option data-i18n="option-jump" value="Jump">Jump (4)</option>
+                            <option data-i18n="option-mount" value="mount">Mount (3/1)</option>
+                            <option data-i18n="option-nimble-movement" value="nimbleMovement">Nimble Movement (4)</option>
+                            <option data-i18n="option-nullify" value="nullify">Nullify (5/3)</option>
+                            <option data-i18n="option-overload-limits" value="overloadLimits">Overload Limits (6)</option>
+                            <option data-i18n="option-passive-healing" value="passiveHealing">Passive Healing (4)</option> (6)
+                            <option data-i18n="option-physical-attacker" value="physicalAttacker">Physical Attacker (6/3)</option>
+                            <option data-i18n="option-proficiency" value="proficiency">Proficiency (2)</option>
+                            <option data-i18n="option-protector" value="protector">Protector (5)</option>
+                            <option data-i18n="option-provoke" value="provoke">Provoke (4/2)</option>
+                            <option data-i18n="option-quick-to-act" value="quickToAct">Quick to Act (3)</option>
+                            <option data-i18n="option-recharge" value="recharge">Recharge (5/3)</option>
+                            <option data-i18n="option-reckless-attack" value="recklessAttack">Reckless Attack (5/3)</option>
+                            <option data-i18n="option-recovery" value="recovery">Recovery (3)</option>
+                            <option data-i18n="option-resistant" value="resistant">Resistant (4/2)</option>
+                            <option data-i18n="option-resolute-aura" value="resoluteAura">Resolute Aura (5)</option>
+                            <option data-i18n="option-resolute-strike" value="resoluteStrike">Resolute Strike (5)</option>
+                            <option data-i18n="option-revenge" value="revenge">Revenge (5)</option>
+                            <option data-i18n="option-rolling-recovery" value="rollingRecovery">Rolling Recovery (4)</option>
+                            <option data-i18n="option-sense-malice" value="senseMalice">Sense Malice (2)</option>
+                            <option data-i18n="option-size-up" value="sizeUp">Size Up (3/1)</option>
+                            <option data-i18n="option-spirit-sight" value="spiritSight">Spirit Sight (5)</option>
+                            <option data-i18n="option-sprinter" value="sprinter">Sprinter (4/2)</option>
+                            <option data-i18n="option-strength-of-will" value="strengthOfWill">Strength of Will (5)</option>
+                            <option data-i18n="option-team-tactics" value="teamTactics">Team Tactics (6)</option>
+                            <option data-i18n="option-tireless" value="tireless">Tireless (5/2)</option>
+                            <option data-i18n="option-tough" value="tough">Tough (6/3)</option>
+                            <option data-i18n="option-toss" value="toss">Toss (5/2)</option>
+                            <option data-i18n="option-underhanded" value="underhanded">Underhanded (5)</option>
+                            <option data-i18n="option-unmovable" value="unmovable">Unmovable (4/2)</option>
+                            <option data-i18n="option-versatile-fighter" value="versatileFighter">Versatile Fighter (6/3)</option>
                         </optgroup>
-                        <optgroup label="Season 2 Skills">
-                            <option value="abundantCreation">Abundant Creation (5)</option>
-                            <option value="afterimage">Afterimage (4)</option>
-                            <option value="allyMount">Ally Mount (3/1)</option>
-                            <option value="areaShield">Area Shield (4)</option>
-                            <option value="battleAnalysis">Battle Analysis (6)</option>
-                            <option value="clash">Clash (3)</option>
-                            <option value="clone">Clone (6/3)</option>
-                            <option value="cloneTactics">Clone Tactics (5)</option>
-                            <option value="combatToss">Combat Toss (4)</option>
-                            <option value="companionZoneOfControl">Companion ZOC (4/4)</option>
-                            <option value="damageFeedback">Damage Feedback (5)</option>
-                            <option value="daredevil">Daredevil (4)</option>
-                            <option value="divingEscape">Diving Escape (5/2)</option>
-                            <option value="effectCapture">Effect Capture (4)</option>
-                            <option value="extendedRevival">Extended Revival (4)</option>
-                            <option value="favorableSuccess">Favorable Success (4)</option>
-                            <option value="finalAttack">Final Attack (6)</option>
-                            <option value="flankAttack">Flank Attack (4)</option>
-                            <option value="healthTransference">Health Transference (4)</option>
-                            <option value="lineDeflect">Line Deflect (5)</option>v
-                            <option value="mobileCover">Mobile Cover (5)</option>
-                            <option value="mobileDodge">Mobile Dodge (4)</option>
-                            <option value="opportunisticDodge">Opportunistic Dodge (6)</option>
-                            <option value="phasing">Phasing (5)</option>
-                            <option value="portal">Portal (6/3)</option>
-                            <option value="protectAlly">Protect Ally (2)</option>
-                            <option value="protectMaster">Protect Master (3)</option>
-                            <option value="pushAway">Push Away (4/2)</option>
-                            <option value="rangedInterrupt">Ranged Interrupt (4)</option>
-                            <option value="rangedRevival">Ranged Revival (3)</option>
-                            <option value="refractionPoint">Refraction Point (4/2)</option>
-                            <option value="risingAttack">Rising Attack (6)</option>
-                            <option value="seal">Seal (6/3)</option>
-                            <option value="shadowMeld">Shadow Meld (6)</option>
-                            <option value="shrugOff">Shrug Off (6)</option>
-                            <option value="splitMove">Split Move (6)</option>
-                            <option value="staminaTransference">Stamina Transference (6)</option>
-                            <option value="swiftStep">Swift Step (5/2)</option>
-                            <option value="tossingCompanion">Tossing Companion (3/1)</option>
-                            <option value="transposition">Transposition (4)</option>
-                            <option value="trustingCompanion">Trusting Companion (4)</option>
-                            <option value="wallWalk">Wall Walk (4)</option>
-                            <option value="waterAdaptation">Water Adaptation (6)</option>
-                            <option value="waterWalk">Water Walk (4)</option>
-                            <option value="xRayVision">X-Ray Vision (4)</option>
+                        <optgroup data-i18n-label="season-2-skills" label="Season 2 Skills">
+                            <option data-i18n="option-abundant-creation" value="abundantCreation">Abundant Creation (5)</option>
+                            <option data-i18n="option-afterimage" value="afterimage">Afterimage (4)</option>
+                            <option data-i18n="option-ally-mount" value="allyMount">Ally Mount (3/1)</option>
+                            <option data-i18n="option-area-shield" value="areaShield">Area Shield (4)</option>
+                            <option data-i18n="option-battle-analysis" value="battleAnalysis">Battle Analysis (6)</option>
+                            <option data-i18n="option-clash" value="clash">Clash (3)</option>
+                            <option data-i18n="option-clone" value="clone">Clone (6/3)</option>
+                            <option data-i18n="option-clone-tactics" value="cloneTactics">Clone Tactics (5)</option>
+                            <option data-i18n="option-combat-toss" value="combatToss">Combat Toss (4)</option>
+                            <option data-i18n="option-companion-zone-of-control-abv" value="companionZoneOfControl">Companion ZOC (4/4)</option>
+                            <option data-i18n="option-damage-feedback" value="damageFeedback">Damage Feedback (5)</option>
+                            <option data-i18n="option-daredevil" value="daredevil">Daredevil (4)</option>
+                            <option data-i18n="option-diving-escape" value="divingEscape">Diving Escape (5/2)</option>
+                            <option data-i18n="option-effect-capture" value="effectCapture">Effect Capture (4)</option>
+                            <option data-i18n="option-extended-revival" value="extendedRevival">Extended Revival (4)</option>
+                            <option data-i18n="option-favorable-success" value="favorableSuccess">Favorable Success (4)</option>
+                            <option data-i18n="option-final-attack" value="finalAttack">Final Attack (6)</option>
+                            <option data-i18n="option-flank-attack" value="flankAttack">Flank Attack (4)</option>
+                            <option data-i18n="option-health-transference" value="healthTransference">Health Transference (4)</option>
+                            <option data-i18n="option-line-deflect" value="lineDeflect">Line Deflect (5)</option>v
+                            <option data-i18n="option-mobile-cover" value="mobileCover">Mobile Cover (5)</option>
+                            <option data-i18n="option-mobile-dodge" value="mobileDodge">Mobile Dodge (4)</option>
+                            <option data-i18n="option-opportunistic-dodge" value="opportunisticDodge">Opportunistic Dodge (6)</option>
+                            <option data-i18n="option-phasing" value="phasing">Phasing (5)</option>
+                            <option data-i18n="option-portal" value="portal">Portal (6/3)</option>
+                            <option data-i18n="option-protect-ally" value="protectAlly">Protect Ally (2)</option>
+                            <option data-i18n="option-protect-master" value="protectMaster">Protect Master (3)</option>
+                            <option data-i18n="option-push-away" value="pushAway">Push Away (4/2)</option>
+                            <option data-i18n="option-ranged-interrupt" value="rangedInterrupt">Ranged Interrupt (4)</option>
+                            <option data-i18n="option-ranged-revival" value="rangedRevival">Ranged Revival (3)</option>
+                            <option data-i18n="option-refraction-point" value="refractionPoint">Refraction Point (4/2)</option>
+                            <option data-i18n="option-rising-attack" value="risingAttack">Rising Attack (6)</option>
+                            <option data-i18n="option-seal" value="seal">Seal (6/3)</option>
+                            <option data-i18n="option-shadow-meld" value="shadowMeld">Shadow Meld (6)</option>
+                            <option data-i18n="option-shrug-off" value="shrugOff">Shrug Off (6)</option>
+                            <option data-i18n="option-split-move" value="splitMove">Split Move (6)</option>
+                            <option data-i18n="option-stamina-transference" value="staminaTransference">Stamina Transference (6)</option>
+                            <option data-i18n="option-swift-step" value="swiftStep">Swift Step (5/2)</option>
+                            <option data-i18n="option-tossing-companion" value="tossingCompanion">Tossing Companion (3/1)</option>
+                            <option data-i18n="option-transposition" value="transposition">Transposition (4)</option>
+                            <option data-i18n="option-trusting-companion" value="trustingCompanion">Trusting Companion (4)</option>
+                            <option data-i18n="option-wall-walk" value="wallWalk">Wall Walk (4)</option>
+                            <option data-i18n="option-water-adaptation" value="waterAdaptation">Water Adaptation (6)</option>
+                            <option data-i18n="option-water-walk" value="waterWalk">Water Walk (4)</option>
+                            <option data-i18n="option-x-ray-vision" value="xRayVision">X-Ray Vision (4)</option>
                         </optgroup>
-                        <optgroup label="Season 3 Skills">
-                            <option value="attackNodeNetwork">Attack Node Network (4)</option>
-                            <option value="companionSense">Companion Sense (2)</option>
-                            <option value="defensiveClash">Defensive Clash (4)</option>
-                            <option value="deflectingShield">Deflecting Shield (4)</option>
-                            <option value="exploitWeakness">Exploit Weakness (6)</option>
-                            <option value="flunkyDomination">Flunky Domination (5)</option>
-                            <option value="fly">Fly (6/2)</option>
-                            <option value="flyingCompanion">Flying Companion (3/3)</option>
-                            <option value="instantMonut">Instant Mount (3)</option>
-                            <option value="prepared">Prepared (6)</option>
-                            <option value="reactiveCompanion">Reactive Companion (4)</option>
-                            <option value="refractionChain">Refraction Chain (6)</option>
-                            <option value="swiftJump">Swift Jump (3)</option>
-                            <option value="unshakeable">Unshakeable (6)</option>
-                            <option value="unstoppable">Unstoppable (6)</option>
+                        <optgroup data-i18n-label="season-3-skills" label="Season 3 Skills">
+                            <option data-i18n="option-attack-node-network" value="attackNodeNetwork">Attack Node Network (4)</option>
+                            <option data-i18n="option-companion-sense" value="companionSense">Companion Sense (2)</option>
+                            <option data-i18n="option-defensive-clash" value="defensiveClash">Defensive Clash (4)</option>
+                            <option data-i18n="option-deflecting-shield" value="deflectingShield">Deflecting Shield (4)</option>
+                            <option data-i18n="option-exploit-weakness" value="exploitWeakness">Exploit Weakness (6)</option>
+                            <option data-i18n="option-flunky-domination" value="flunkyDomination">Flunky Domination (5)</option>
+                            <option data-i18n="option-fly" value="fly">Fly (6/2)</option>
+                            <option data-i18n="option-flying-companion" value="flyingCompanion">Flying Companion (3/3)</option>
+                            <option data-i18n="option-instant-mount" value="instantMonut">Instant Mount (3)</option>
+                            <option data-i18n="option-prepared" value="prepared">Prepared (6)</option>
+                            <option data-i18n="option-reactive-companion" value="reactiveCompanion">Reactive Companion (4)</option>
+                            <option data-i18n="option-refraction-chain" value="refractionChain">Refraction Chain (6)</option>
+                            <option data-i18n="option-swift-jump" value="swiftJump">Swift Jump (3)</option>
+                            <option data-i18n="option-unshakeable" value="unshakeable">Unshakeable (6)</option>
+                            <option data-i18n="option-unstoppable" value="unstoppable">Unstoppable (6)</option>
                         </optgroup>
-                        <optgroup label="Season 4 Skills">
-                            <option value="breakValorLimit">Break Valor Limit (6)</option>
-                            <option value="expandedReach">Expanded Reach (8)</option>
-                            <option value="extendedRange">Extended Range (4)</option>
-                            <option value="extraAction">Extra Action (12)</option>
-                            <option value="freeFlight">Free Flight (3)</option>
-                            <option value="freeSwiftStep">Free Swift Step (5)</option>
-                            <option value="regeneration">Regeneration (6/4)</option>
-                            <option value="staminaRecovery">Stamina Recovery (4/2)</option>
-                            <option value="teleportation">Teleportation (6)</option>
-                            <option value="unyieldingDetermination">Unyielding Determination (6)</option>
-                            <option value="violentAura">Violent Aura (4)</option>
+                        <optgroup data-i18n-label="season-4-skills" label="Season 4 Skills">
+                            <option data-i18n="option-break-valor-limit" value="breakValorLimit">Break Valor Limit (6)</option>
+                            <option data-i18n="option-expanded-reach" value="expandedReach">Expanded Reach (8)</option>
+                            <option data-i18n="option-extended-range" value="extendedRange">Extended Range (4)</option>
+                            <option data-i18n="option-extra-action" value="extraAction">Extra Action (12)</option>
+                            <option data-i18n="option-free-flight" value="freeFlight">Free Flight (3)</option>
+                            <option data-i18n="option-free-swift-step" value="freeSwiftStep">Free Swift Step (5)</option>
+                            <option data-i18n="option-regeneration" value="regeneration">Regeneration (6/4)</option>
+                            <option data-i18n="option-stamina-recovery" value="staminaRecovery">Stamina Recovery (4/2)</option>
+                            <option data-i18n="option-teleportation" value="teleportation">Teleportation (6)</option>
+                            <option data-i18n="option-unyielding-determination" value="unyieldingDetermination">Unyielding Determination (6)</option>
+                            <option data-i18n="option-violent-aura" value="violentAura">Violent Aura (4)</option>
                         </optgroup>
-                        <optgroup label="Season 1 (Optional Rules)">
-                            <option value="elementalResistance">Elemental Resistance (4/2)</option>
-                            <option value="elementalAttunement">Elemental Attunement (3)</option>
-                            <option value="illusoryDisguise">Illusory Disguise (3)</option>
-                            <option value="illusoryTerrain">Illusory Terrain (4/2)</option>
-                            <option value="pierceIllusion">Pierce Illusion (4)</option>
-                            <option value="principled">Principled (2)</option>
-                            <option value="polearmWielder">Polearm Wielder (5)</option>
-                            <option value="rangedWeaponWielder">Ranged Weapon Wielder (4/2)</option>
+                        <optgroup data-i18n-label="season-1-optional-rules" label="Season 1 (Optional Rules)">
+                            <option data-i18n="option-elemental-resistance" value="elementalResistance">Elemental Resistance (4/2)</option>
+                            <option data-i18n="option-elemental-attunement" value="elementalAttunement">Elemental Attunement (3)</option>
+                            <option data-i18n="option-illusory-disguise" value="illusoryDisguise">Illusory Disguise (3)</option>
+                            <option data-i18n="option-illusory-terrain" value="illusoryTerrain">Illusory Terrain (4/2)</option>
+                            <option data-i18n="option-pierce-illusion" value="pierceIllusion">Pierce Illusion (4)</option>
+                            <option data-i18n="option-principled" value="principled">Principled (2)</option>
+                            <option data-i18n="option-polearm-wielder" value="polearmWielder">Polearm Wielder (5)</option>
+                            <option data-i18n="option-ranged-weapon-wielder" value="rangedWeaponWielder">Ranged Weapon Wielder (4/2)</option>
                         </optgroup>
-                        <optgroup label="Season 2 (Optional Rules)">
-                            <option value="illusoryAssailant">Illusory Assailant (6/3)</option>
+                        <optgroup data-i18n-label="season-2-optional-rules" label="Season 2 (Optional Rules)">
+                            <option data-i18n="option-illusory-assailant" value="illusoryAssailant">Illusory Assailant (6/3)</option>
                         </optgroup>
-                        <optgroup label="Season 1 (NPC Only)">
-                            <option value="invisibility">Invisibility (8)</option>
+                        <optgroup data-i18n-label="season-1-npc-only" label="Season 1 (NPC Only)">
+                            <option data-i18n="option-invisibility" value="invisibility">Invisibility (8)</option>
                         </optgroup>
-                        <optgroup label="Season 2 (NPC Only)">
-                            <option value="revive">Revive (8/3)</option>
+                        <optgroup data-i18n-label="season-2-npc-only" label="Season 2 (NPC Only)">
+                            <option data-i18n="option-revive" value="revive">Revive (8/3)</option>
                         </optgroup>
-                        <optgroup label="Season 4 (NPC Only)">
-                            <option value="limitlessPower">Valiant (12)</option>
-                        </optgroup>
-                        <optgroup label="Villains, Creatures and Foes (BETA)">
-                        </optgroup>
-                        <optgroup label="Traits">
-                            <option value="aquatic">Aquatic (1)</option>
-                            <option value="construct">Construct (8)</option>
-                            <option value="elemental">Elemental (5)</option>
-                            <option value="undead">Undead (8)</option>
-                        </optgroup>
-                        <optgroup label="Season 1">
-                            <option value="diminuitive">Diminuitive (6)</option>
-                            <option value="healer">Healer (4/2)</option>
-                            <option value="increasedLength">Increased Length (1/1)</option>
-                            <option value="morale">Morale (6)</option>
-                            <option value="hardenedResolve">Hardened Resolve (6)</option>
-                            <option value="amphibious">Amphibious (3)</option>
-                            <option value="toweringPresence">Towering Presence (6)</option>
-                            <option value="humanshape">Humanshape (3)</option>
-                            <option value="limitedFlight">Limited Flight (4/2)</option>
-                            <option value="pressingSwarm">Pressing Swarm (6)</option>
-                            <option value="skillCopy">Skill Copy (?)</option>
-                            <option value="swiftStance">Swift Stance (3/1)</option>
-                            <option value="increasedCompanionSize">Increased Companion Size (1/1)</option>
-                        </optgroup>
-                        <optgroup label="Season 2">
-                            <option value="largeHead">Large Head (1)</option>
-                            <option value="limitedRegeneration">Limited Regeneration (4/3)</option>
-                            <option value="longTail">Long Tail (1)</option>
-                            <option value="trample">Trample (8)</option>
-                            <option value="ultimateAttack">Ultimate Attack (12)</option>
-                            <option value="victorAtAnyCost">Victor At Any Cost (8)</option>
-                        </optgroup>
-                        <optgroup label="Season 3">
-                            <option value="alteredDurability">Altered Durability (3)</option>
-                            <option value="burrow">Burrow (6)</option>
-                            <option value="durableFlunky">Durable Flunky (6/3)</option>
-                            <option value="resurrectingFlunky">Resurrecting Flunky (8)</option>
-                            <option value="standTall">Stand Tall (6)</option>
-                            <option value="terrainAdaptation">Terrain Adaptation (6)</option>
-                        </optgroup>
-                        <optgroup label="Season 4">
-                            <option value="destructiveBurrow">Destructive Burrow (6)</option>
-                            <option value="freeBurrow">Free Burrow (3)</option>
-                            <option value="landAdaptation">Land Adaptation (4)</option>
-                            <option value="shapeshifter">Shapeshifter (12)</option>
-                            <option value="unscrupulous">Unscrupulous (6)</option>
+                        <optgroup data-i18n-label="season-4-npc-only" label="Season 4 (NPC Only)">
+                            <option data-i18n="option-valiant" value="limitlessPower">Valiant (12)</option>
                         </optgroup>
                     </select>
-                    <span class="label">Level</span> <input class="skill-level" type="number" name="attr_skilllevel" value="1" />
+                    <span data-i18n="level" class="label">Level</span> <input class="skill-level" type="number" name="attr_skilllevel" value="1" />
                     <span name="attr_warning"></span>
                 </div>
-                <span class="label">Notes</span> <input class="notes" type="text" name="attr_skillnotes" />
+                <span data-i18n="notes" class="label">Notes</span> <input class="notes" type="text" spellcheck="false" name="attr_skillnotes" />
             </div>
         </fieldset>
 
-        <div class="unspent-sp"><span name="attr_unspentSkillPoints"></span> SP UNSPENT</div>
+        <div data-i18n="unspent-skill-points-abv-u" class="unspent-sp"><span name="attr_unspentSkillPoints"></span> SP UNSPENT</div>
     </div>
 
     <div class="sheet-tab-content sheet-tab3">
@@ -3004,45 +2860,47 @@
 
         <fieldset class="repeating_techs">
             <div class="tech-name">
-                <input type="text" class="tech-name" name="attr_tech_name" value="New Technique" />
+                <input type="text" spellcheck="false" class="tech-name" name="attr_tech_name" value="New Technique" />
             </div>
             <div class="tech">
                 <div class="spacer"></div>
                 <div class="tech-level">
                     <div class="tech-header">
-                        <span class="label">Tech Level</span>
+                        <span data-i18n="technique-level-abv" class="label">Tech Level</span>
                         <span class="derived-value" name="attr_tech_level">
                     </div>
                 </div>
                 <div class="tech-button">
-                    <input type="hidden" class="tech-name" name="attr_tech_stat_roll" value="[[1d10+0]] Muscle" />
-                    <input type="hidden" class="tech-name" name="attr_tech_micro_summary" value="" />
+                    <input type="hidden" class="tech-name" name="attr_tech_stat_roll" value="" />
+                    <input type="hidden" class="tech-name" name="attr_tech_damage_disp" value="" />
+                    <input type="hidden" class="tech-name" name="attr_tech_defres_disp" value="" />
+                    <input type="hidden" class="tech-name" name="attr_tech_healing_disp" value="" />
+                    <input type="hidden" class="tech-name" name="attr_tech_transform_disp" value="" />
+                    <input type="hidden" class="tech-name" name="attr_tech_mods_disp" value="" />
                     <button class="valor-button" type='roll' 
-                        value='&{template:valor} {{name=@{tech_name}}} {{roll=@{tech_stat_roll}}} {{summary=@{tech_micro_summary}}} {{skills=@{tech_granted_skills}}} {{flaws=@{tech_inflicted_flaws}}} {{mimic=@{tech_mimic_target}}}'> Use Technique</button>
+                        value='&{template:valor} {{name=@{tech_name}}} {{roll=@{tech_stat_roll}}} {{damage=@{tech_damage_disp}}} {{defres=@{tech_defres_disp}}} {{healing=@{tech_healing_disp}}} {{transform=@{tech_transform_disp}}} {{skills=@{tech_granted_skills}}} {{flaws=@{tech_inflicted_flaws}}} {{mimic=@{tech_mimic_target}}} {{mods=@{tech_mods_disp}}}'> Use Technique</button>
                 </div>
                 <div>
-                    <span class="label">Core:</span>
+                    <span data-i18n="core:" class="label">Core:</span>
                 </div>
                 <div class="tech-core">
                     <select class="tech-field" name="attr_tech_core">
-                        <option value="barrier">Barrier Core</option>
-                        <option value="boost">Boost Core</option>
-                        <option value="damage" selected="selected">Damage Core</option>
-                        <option value="healing">Healing Core</option>
-                        <option value="mimic">Mimic Core</option>
-                        <option value="summoning">Summoning Core</option>
-                        <option value="weaken">Weaken Core</option>
-                        <optgroup label="Ultimate Cores">
-                            <option value="domain">Domain</option>
-                            <option value="ultDamage">Ultimate Attack</option>
-                            <option value="ultMimic">Ultimate Mimic</option>
-                            <option value="ultTransform">Transformation</option>
+                        <option data-i18n="option-barrier-core" value="barrier">Barrier Core</option>
+                        <option data-i18n="option-boost-core" value="boost">Boost Core</option>
+                        <option data-i18n="option-damage-core" value="damage" selected="selected">Damage Core</option>
+                        <option data-i18n="option-healing-core" value="healing">Healing Core</option>
+                        <option data-i18n="option-mimic-core" value="mimic">Mimic Core</option>
+                        <option data-i18n="option-summoning-core" value="summoning">Summoning Core</option>
+                        <option data-i18n="option-weaken-core" value="weaken">Weaken Core</option>
+                        <optgroup data-i18n-label="ultimate-cores" label="Ultimate Cores">
+                            <option data-i18n="option-ultimate-attack" value="ultDamage">Ultimate Attack</option>
+                            <option data-i18n="option-transformation" value="ultTransform">Transformation</option>
                         </optgroup>
-                        <option value="custom">Custom Core</option>
+                        <option data-i18n="option-custom-core" value="custom">Custom Core</option>
                     </select>
                 </div>
                 <div class="tech-core-level">
-                    <span class="label">Core Power:</span>
+                    <span data-i18n="core-power:" class="label">Core Power:</span>
                     <input class="tech-field tech-small-input" type="number" name="attr_tech_core_level" value="1" />
                 </div>
                 <div class="tech-summary">
@@ -3051,31 +2909,31 @@
                     <div><span name="attr_tech_warnings"></span></div>
                 </div>
                 <div>
-                    <span class="label">Attribute:</span>
+                    <span data-i18n="attribute:" class="label">Attribute:</span>
                 </div>
                 <div class="tech-attribute">
                     <select class="tech-field" name="attr_tech_stat">
-                        <option value="none" selected="selected">None</option>
-                        <option value="strength">Strength</option>
-                        <option value="agility">Agility</option>
-                        <option value="spirit">Spirit</option>
-                        <option value="mind">Mind</option>
-                        <option value="guts">Guts</option>
+                        <option data-i18n="none" value="none" selected="selected">None</option>
+                        <option data-i18n="strength" value="strength">Strength</option>
+                        <option data-i18n="agility" value="agility">Agility</option>
+                        <option data-i18n="spirit" value="spirit">Spirit</option>
+                        <option data-i18n="mind" value="mind">Mind</option>
+                        <option data-i18n="guts" value="guts">Guts</option>
                     </select>
                 </div>
                 <div class="tech-cost">
                     <input type="checkbox" class="conditional-check" name="attr_tech_can_edit_cost">
                     <div class="conditional-block">
-                        <span class="label">ST Cost:</span>
+                        <span data-i18n="stamina-cost-abv:" class="label">ST Cost:</span>
                         <input class="tech-field tech-small-input" type="number" name="attr_tech_custom_cost" value="0" />
                     </div>
                     <div class="conditional-block-inverse">
-                        <span class="label">ST Cost</span>
+                        <span data-i18n="stamina-cost-abv" class="label">ST Cost</span>
                         <span class="derived-value" name="attr_tech_cost"></span>
                     </div>
                 </div>
                 <div class="tech-description">
-                    <div class="label">Description</div>
+                    <div data-i18n="description" class="label">Description</div>
                     <div>
                         <textarea class="smallertext tech-field" name="attr_tech_description"></textarea>
                     </div>
@@ -3084,48 +2942,48 @@
                     <div class="tech-conditional-field">
                         <input type="checkbox" class="conditional-check" name="attr_tech_has_skills">
                         <div class="tech-block conditional-block">
-                            <span class="label">Skills:</span>
-                            <input type="text" class="tech-field" name="attr_tech_granted_skills" />
+                            <span data-i18n="skills:" class="label">Skills:</span>
+                            <input type="text" spellcheck="false" class="tech-field" name="attr_tech_granted_skills" />
                             (<span class="sp_label" name="attr_tech_skill_sp"></span>/<span class="sp_label" name="attr_tech_skill_sp_max"></span>)
                         </div>
                     </div>
                     <div class="tech-conditional-field">
                         <input type="checkbox" class="conditional-check" name="attr_tech_has_flaws">
                         <div class="tech-block conditional-block">
-                            <span class="label">Flaws:</span>
-                            <input type="text" class="tech-field" name="attr_tech_inflicted_flaws" />
+                            <span data-i18n="flaws:" class="label">Flaws:</span>
+                            <input type="text" spellcheck="false" class="tech-field" name="attr_tech_inflicted_flaws" />
                             (<span class="sp_label" name="attr_tech_flaw_sp"></span>/<span class="sp_label" name="attr_tech_flaw_sp_max"></span>)
                         </div>
                     </div>
                     <div class="tech-conditional-field">
                         <input type="checkbox" class="conditional-check" name="attr_tech_is_mimic">
                         <div class="tech-block conditional-block">
-                            <span class="label">Mimicked Tech:</span>
-                            <input class="tech-field" type="text" name="attr_tech_mimic_target" />
+                            <span data-i18n="mimicked-technique-abv:" class="label">Mimicked Tech:</span>
+                            <input class="tech-field" type="text" spellcheck="false" name="attr_tech_mimic_target" />
                         </div>
                     </div>
                 </div>
                 <div class="tech-modifiers">
-                    <div class="label">Modifiers (one per line)</div>
+                    <div data-i18n="modifiers-one-per-line" class="label">Modifiers (one per line)</div>
                     <div>
                         <textarea class="smalltext tech-field" name="attr_tech_mods" rows="3" cols="40"></textarea>
                     </div>
                     <div>
-                        Total Mod Levels <span name="attr_tech_mod_level" class="derived-value"></span>
+                        <span data-i18n="total-mod-levels">Total Mod Levels <span name="attr_tech_mod_level" class="derived-value"></span></span>
                     </div>
                 </div>
                 <div class="tech-limits">
-                    <div class="label">Limits (one per line)</div>
+                    <div data-i18n="limits-one-per-line" class="label">Limits (one per line)</div>
                     <div>
                         <textarea class="smalltext tech-field" name="attr_tech_limits" rows="3" cols="40"></textarea>
                     </div>
                     <div>
-                        Total Cost Reduction <span name="attr_tech_limit_st" class="derived-value"></span>
+                        <span data-i18n="total-cost-reduction">Total Cost Reduction <span name="attr_tech_limit_st" class="derived-value"></span></span>
                     </div>
                 </div>
             </div>
         </fieldset>
-        <div class="unspent-tp"><span name="attr_unspentTechPoints"></span> TP UNSPENT</div>
+        <div data-i18n="unspent-technique-points-abv-u" class="unspent-tp"><span name="attr_unspentTechPoints"></span> TP UNSPENT</div>
     </div>
 
 </div>
@@ -3138,18 +2996,35 @@
         <div>
             {{roll}}
         </div>
-        <div>
-            {{summary}}
-        </div>
+        {{#damage}}
+            <div>
+                <span data-i18n="template-damage" data-i18n-vars="{{damage}}|{{defres}}">Damage: <span class="damage-number">{{0}}</span> {{1}}</span>
+            </div>
+        {{/damage}}
+        {{#healing}}
+            <div>
+                <span data-i18n="template-restores-hp" data-i18n-vars="{{healing}}">Restores <span class="healing-number">{{healing}}</span> HP</span>
+            </div>
+        {{/healing}}
+        {{#transform}}
+            <div>
+                <span data-i18n="template-transform-hp" data-i18n-vars="{{transform}}">HP +<span class="healing-number">{{transform}}</span></span>
+            </div>
+        {{/transform}}
         {{#skills}}
         <div>
-            Skills: {{skills}}
+            <span data-i18n="skills:">Skills:</span> {{skills}}
         </div>
         {{/skills}}
         {{#flaws}}
         <div>
-            Flaws: {{flaws}}
+            <span data-i18n="flaws:">Flaws:</span> {{flaws}}
         </div>
         {{/flaws}}
+        {{#mods}}
+        <div class="mods-list">
+            {{mods}}
+        </div>
+        {{/mods}}
     </div>
 </rolltemplate>
