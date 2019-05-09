@@ -134,3 +134,12 @@ v1.4.5 (1/14/2019):
 - Bugfix: "Crisis" always displayed in the title of ults if you had the skill.
 - Bugfix: Initiative button missing.
 - UI: Changed color of tech name on the techs tab.
+
+v1.5.0 (5/9/2019):
+- Bugfix: Various skills had the wrong growth rate.
+- Bugfix: "Jump" didn't process SP cost.
+- Bugfix: Reposition distance and damage didn't render properly when NPC tech effects were hidden.
+- UI: Added a warning if multiple special attack mods are added to the same tech.
+- New: Added checkbox to Throw techniques to reroll the attack at no cost.
+- New: Added experimental feature where damage and weaken techs can be auto-applied to the target by the GM.
+- New: If !effect is used with a duration of 0, it won't track duration for the effect.

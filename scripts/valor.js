@@ -24,6 +24,8 @@ state.rollBehindScreen = false;         // Hide NPC rolls from the players.
 state.autoInitiativeUpdate = true;      // If a character's initiative changes during play, move them accordingly.
 state.autoInitiativeReport = true;      // If a character's initiative changes during play, send a whisper to the GM.
 state.confirmAutoInitiative = true;     // Confirm whether or not to auto-update initiative before each scene.
+state.applyAttackResults = false;       // Allows GM to directly apply attack results with a chat button on a hit. (experimental)
+state.showAttackResults = false;        // Sends messages to the chat when attack results are applied. (experimental)
 
 // Status Tracker
 // While this is active, the system will send an alert when an effect ends.
@@ -423,6 +425,13 @@ function getTechs(charId) {
             } else {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), persist: persist});
             }
+        } else if(techName.indexOf('tech_throw') > -1) {
+            let throwValue = rawTech.get('current') == 'on';
+            if(oldTech) {
+                oldTech.throwValue = throwValue;
+            } else {
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), throwValue: throwValue});
+            }
         } else if(techName.indexOf('custom_cost') > -1) {
             let customCost = parseInt(rawTech.get('current'));
             if(customCost != customCost) {
@@ -556,7 +565,7 @@ function getTechDamage(tech, charId, crit) {
             }
             damage += 3 + crisisLevel * 3;
         }
-        let berserker = getFlaw(charId, 'berserker')
+        let berserker = getFlaw(charId, 'berserker');
         if(berserker) {
             damage += 10;
         }
@@ -1706,6 +1715,12 @@ on('chat:message', function(msg) {
             log('Rerolling persistent tech.');
         }
         
+        // Check for Throw
+        if(tech.throwValue) {
+            overrideLimits = true;
+            log('Rerolling throw tech.');
+        }
+        
         // Pull Skill list
         let skills = getSkills(actor.get('_id'));
         
@@ -1931,6 +1946,7 @@ on('chat:message', function(msg) {
         let rollStat = tech.stat;
         let rollText = '';
         let hiddenRollText = '';
+        let applyButton = '';
         let targets = 1;
         
         if(tech.core == 'damage' ||
@@ -2157,8 +2173,51 @@ on('chat:message', function(msg) {
                         if(state.rollBehindScreen) {
                             hiddenRollText += ', ';
                         }
-                        hiddenRollText += 'Damage [[' + damage + ' - ' + defRes + ']]';
+                        hiddenRollText += 'Damage [[{' + damage + ' - ' + defRes + ', 0}kh1]]';
+                        
+                        // Display reposition distance
+                        let reposition = tech.mods && tech.mods.find(function(m) {
+                            return m.toLowerCase().indexOf('repo') > -1;
+                        });
+                        if(reposition) {
+                            let repositionSplit = reposition.split(' ');
+                            let repositionLevel = parseInt(repositionSplit[repositionSplit.length - 1]);
+                            if(repositionLevel != repositionLevel) repositionLevel = 1;
+                            
+                            let distance = repositionLevel + 1;
+                            if(tech.stat == 'str') {
+                                distance++;
+                            }
+                            let unmovable = getSkill(targetCharId, 'unmovable');
+                            if(unmovable) {
+                                distance = Math.max(0, distance - unmovable.level * 2);
+                            }
+                            
+                            hiddenRollText += ', Reposition ' + distance;
+                        }
                     }
+                }
+                
+                if(state.applyAttackResults) {
+                    const finalDamage = Math.max(0, damage - defRes);
+                    let applyCommand = `!tech-apply ${target.get('_id')}`;
+                    if(finalDamage > 0) {
+                        applyCommand += ` -d ${finalDamage}`;
+                    }
+                    if(tech.hasFlaws) {
+                        // Check valor limit
+                        let temporaryLimit = tech.limits ? tech.limits.find(function(l) {
+                            let name = l.toLowerCase();
+                            return (name.indexOf('temporary') == 0);
+                        }) : null;
+                        
+                        applyCommand += ` -e ${tech.name} ${temporaryLimit ? 2 : 3}`;
+                    }
+                    applyButton = ` <a href="${applyCommand}" style="padding:3px">Apply</a>`;
+                    if(!hiddenFullList) {
+                        hiddenRollText += '<br />VS ' + targetName + ': ';
+                    }
+                    hiddenRollText += applyButton;
                 }
             });
         } else if(rollStat && rollStat != 'none') {
@@ -2198,7 +2257,7 @@ on('chat:message', function(msg) {
         let stCost = tech.core == 'custom' ? tech.customCost : tech.cost;
         let valorCost = 0;
         let initCost = 0;
-        if(token && !tech.persist) {
+        if(token && !tech.persist && !tech.throwValue) {
             if(tech.overloadLimits && tech.limitSt) {
                 stCost += tech.limitSt;
             }
@@ -2439,6 +2498,9 @@ on('chat:message', function(msg) {
         if(tech.persist) {
             techQualifiers.push('Persisting');
         }
+        if(tech.throwValue) {
+            techQualifiers.push('Throwing');
+        }
         
         let messageName = tech.name;
         
@@ -2581,6 +2643,23 @@ on('chat:message', function(msg) {
             }
         }
         
+        if(tech.throwValue) {
+            log('Throw Reroll was enabled.');
+            let techAttrs = filterObjs(function(obj) {
+                if(obj.get('_type') == 'attribute' &&
+                   obj.get('name').indexOf(tech.id) > -1 &&
+                   obj.get('name').indexOf('throw') > -1 &&
+                   obj.get('name').indexOf('can_throw') == -1) {
+                       return true;
+                }
+                return false;
+            });
+            if(techAttrs && techAttrs.length > 0) {
+                let throwValue = techAttrs[0];
+                throwValue.set('current', '0');
+            }
+        }
+        
         // Reset number of targets and roll modifier on tech
         let techTargetAttrs = filterObjs(function(obj) {
             if(obj.get('_type') == 'attribute' &&
@@ -2677,6 +2756,72 @@ on('chat:message', function(msg) {
     }
 });
 
+// !tech-apply command
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!tech-apply') == 0) {
+        startEvent('!apply');
+        // Get params
+        let split = msg.content.match(/(".*?")|(\S+)/g);
+        if(split.length < 2) {
+            log('Not enough arguments.');
+            return;
+        }
+        
+        const tokenId = split[1];
+        let damage = 0;
+        let effect = {};
+        
+        let paramId = 2;
+        while(paramId < split.length) {
+            switch(split[paramId]) {
+                case '-d':
+                    // Apply is inflicting damage
+                    damage = parseInt(split[paramId + 1]);
+                    paramId += 2;
+                    break;
+                case '-e':
+                    // Apply is creating an effect
+                    effect.name = split[paramId + 1];
+                    effect.duration = split[paramId + 2];
+                    paramId += 3;
+                    break;
+                default:
+                    log(`Unrecognized parameter: ${split[paramId]}`);
+                    break;
+            }
+        }
+        
+        let message = []
+        
+        if(damage > 0) {
+            // Time to apply damage
+            updateValue(tokenId, 'hp', -damage);
+        }
+        
+        if(effect.name) {
+            // Time to create an effect
+            let turnOrder = JSON.parse(Campaign().get('turnorder'));
+            addEffect(turnOrder, tokenId, effect.name, effect.duration);
+        }
+        
+        if(state.showAttackResults) {
+            const token = getObj('graphic', tokenId);
+            const tokenName = token.get('name');
+            if(tokenName) {
+                let messages = [];
+                if(damage > 0) {
+                    messages.push(`${tokenName} took ${damage} damage.`);
+                }
+                if(effect.name) {
+                    messages.push(`${tokenName} gained a new weaken effect.`);
+                }
+                
+                sendChat('Valor', messages.join('<br />'));
+            }
+        }
+    }
+});
+
 // !effect command
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!e ') == 0 || 
@@ -2730,17 +2875,18 @@ on('chat:message', function(msg) {
     }
 });
 
-function addEffect(turnOrder, actorId, effectName, duration) {
+function addEffect(turnOrder, id, effectName, duration) {
     // Add a new item to the turn log
     for(i = 0; i < turnOrder.length; i++) {
         if(turnOrder[i].id != '-1') {
             let token = getObj('graphic', turnOrder[i].id);
-            if(token && token.get('represents') == actorId) {
+            if(token && (token.get('represents') == id ||
+                token.get('_id') == id)) {
                 let effect = {
                     id: '-1',
                     custom: effectName,
                     pr: duration,
-                    formula: '-1'
+                    formula: duration == 0 ? null : '-1'
                 };
                 let newTurnOrder = turnOrder.slice(0, i + 1).concat([effect]).concat(turnOrder.slice(i + 1));
                 Campaign().set('turnorder', JSON.stringify(newTurnOrder));

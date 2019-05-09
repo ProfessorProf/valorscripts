@@ -222,13 +222,13 @@
         { cost: 3, levelUp: 0, speed: 0, id: 'elementalAttunement', namePattern: '^elemental attune' },
         { cost: 5, levelUp: 0, speed: 0, id: 'polearmWielder', namePattern: '^polearm wield' },
         { cost: 4, levelUp: 2, speed: 1, id: 'rangedWeaponWielder', namePattern: '^ranged weapon wield' },
-        { cost: 4, levelUp: 2, speed: 0, id: 'aquatic', namePattern: '^aquatic$' },
-        { cost: 4, levelUp: 2, speed: 0, id: 'construct', namePattern: '^construct$' },
-        { cost: 4, levelUp: 2, speed: 0, id: 'elemental', namePattern: '^elemental$' },
-        { cost: 4, levelUp: 2, speed: 0, id: 'undead', namePattern: '^undead$' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'aquatic', namePattern: '^aquatic$' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'construct', namePattern: '^construct$' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'elemental', namePattern: '^elemental$' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'undead', namePattern: '^undead$' },
         { cost: 6, levelUp: 0, speed: 0, id: 'diminuitive', namePattern: '^diminuitive' },
         { cost: 4, levelUp: 2, speed: 1, id: 'healer', namePattern: '^healer' },
-        { cost: 1, levelUp: 1, speed: 0, id: 'increasedLength', namePattern: '^increased length' },
+        { cost: 1, levelUp: 1, speed: 1, id: 'increasedLength', namePattern: '^increased length' },
         { cost: 1, levelUp: 0, speed: 0, id: 'largeHead', namePattern: '^large head' },
         { cost: 4, levelUp: 3, speed: 0, id: 'limitedRegeneration', namePattern: '^limited regen' },
         { cost: 1, levelUp: 0, speed: 0, id: 'longTail', namePattern: '^long tail' },
@@ -247,15 +247,15 @@
         { cost: 8, levelUp: 0, speed: 0, id: 'resurrectingFlunky', namePattern: '^resurrecting flunky' },
         { cost: 8, levelUp: 0, speed: 0, id: 'trample', namePattern: '^trample' },
         { cost: 6, levelUp: 0, speed: 0, id: 'toweringPresence', namePattern: '^towering presence' },
-        { cost: 2, levelUp: 2, speed: 0, id: 'burrow', namePattern: '^burrow' },
+        { cost: 2, levelUp: 2, speed: 1, id: 'burrow', namePattern: '^burrow' },
         { cost: 3, levelUp: 0, speed: 0, id: 'humanshape', namePattern: '^human( )?shape' },
-        { cost: 4, levelUp: 2, speed: 0, id: 'limitedFlight', namePattern: '^limited flight' },
+        { cost: 4, levelUp: 2, speed: 1, id: 'limitedFlight', namePattern: '^limited flight' },
         { cost: 6, levelUp: 0, speed: 0, id: 'pressingSwarm', namePattern: '^pressing swarm' },
         { cost: 12, levelUp: 0, speed: 0, id: 'shapeshifter', namePattern: '^shapeshifter' },
-        { cost: 1, levelUp: 1, speed: 0, id: 'skillCopy', namePattern: '^skill copy' },
-        { cost: 3, levelUp: 1, speed: 0, id: 'swiftStance', namePattern: '^swift stance' },
+        { cost: 1, levelUp: 1, speed: 3, id: 'skillCopy', namePattern: '^skill copy' },
+        { cost: 3, levelUp: 1, speed: 1, id: 'swiftStance', namePattern: '^swift stance' },
         { cost: 8, levelUp: 0, speed: 0, id: 'victorAtAnyCost', namePattern: '^victor(y)? at any cost' },
-        { cost: 1, levelUp: 1, speed: 0, id: 'increasedCompanionSize', namePattern: '^increased companion size' },
+        { cost: 1, levelUp: 1, speed: 1, id: 'increasedCompanionSize', namePattern: '^increased companion size' },
         { cost: 2, levelUp: 0, speed: 0, id: 'changeAttributes', namePattern: '^change attr' },
         { cost: 2, levelUp: 2, speed: 0, id: 'enhancedRange', namePattern: '^enhanced range' },
         { cost: 8, levelUp: 0, speed: 0, id: 'greatAccuracy', namePattern: '^great acc' },
@@ -1559,6 +1559,8 @@
             let hasFlaws = false;
             let barrierFreebie = false;
             let isPersistent = false;
+            let isThrow = false;
+            let hasSpecialAttack = false;
 
             if(techCoreLevel < 1) {
                 warnings.push('Core Power cannot be less than 1.');
@@ -1954,21 +1956,51 @@
                         summary += 'Inflicts Flaws on a hit: ' + techInflictedFlaws + '. ';
                     }
                     hasFlaws = true;
+                    if(hasSpecialAttack) {
+                        warnings.push("Warning: Technique can't have multiple Special Attack modifiers.");
+                    } else {
+                        hasSpecialAttack = true;
+                    }
                 } else if(mod.indexOf('boosting') == 0) {
                     hasSkills = true;
+                    if(hasSpecialAttack) {
+                        warnings.push("Warning: Technique can't have multiple Special Attack modifiers.");
+                    } else {
+                        hasSpecialAttack = true;
+                    }
                 } else if(mod.indexOf('drain') == 0) {
                     summary += 'On a hit, recover Health equal to the largest amount of damage dealt to a single target. ';
+                    if(hasSpecialAttack) {
+                        warnings.push("Warning: Technique can't have multiple Special Attack modifiers.");
+                    } else {
+                        hasSpecialAttack = true;
+                    }
                 } else if(mod.indexOf('persistent') == 0) {
                     summary += 'Attacks again in the same area at the start of your next 2 turns. ';
                     isPersistent = true;
+                    if(hasSpecialAttack) {
+                        warnings.push("Warning: Technique can't have multiple Special Attack modifiers.");
+                    } else {
+                        hasSpecialAttack = true;
+                    }
                 } else if(mod.indexOf('piercing') == 0) {
                     if(techStat == 'str' || techStat == 'agi') {
                         summary += 'Ignores Defense. ';
                     } else {
                         summary += 'Ignores Resistance. ';
                     }
+                    if(hasSpecialAttack) {
+                        warnings.push("Warning: Technique can't have multiple Special Attack modifiers.");
+                    } else {
+                        hasSpecialAttack = true;
+                    }
                 } else if(mod.indexOf('sapping') == 0) {
                     summary += 'On a hit, the target takes ongoing damage equal to a third of initial damage for 3 turns. ';
+                    if(hasSpecialAttack) {
+                        warnings.push("Warning: Technique can't have multiple Special Attack modifiers.");
+                    } else {
+                        hasSpecialAttack = true;
+                    }
                 } else if(mod.indexOf('transform ally') == 0) {
                     summary += 'Can transform an ally within 5 spaces. ';
                     totalModLevel += 1;
@@ -2079,6 +2111,7 @@
                     } else {
                         totalModLevel += 2;
                     }
+                    isThrow = true;
                 } else if(mod.indexOf('violent') == 0) {
                     summary += 'If someone tries to move through the barrier, they take ' + di + ' damage. ';
                     totalModLevel++;
@@ -2584,6 +2617,7 @@
                 techCore == 'ultMimic' || techCore == 'weaken'))
                 ? 'on' : 'off';
             attrs['repeating_techs_' + techId + '_tech_can_persist'] = isPersistent ? 'on' : 'off';
+            attrs['repeating_techs_' + techId + '_tech_can_throw'] = isThrow ? 'on' : 'off';
             attrs['repeating_techs_' + techId + '_tech_can_edit_cost'] = techCore == 'custom' ? 'on' : 'off';
             setAttrs(attrs, { silent: true });
         });
@@ -3044,7 +3078,7 @@
                             <option value="interruptAttack">Interrupt Attack (3/2)</option>
                             <option value="intimidate">Intimidate (5/3)</option>
                             <option value="ironDefense">Iron Defense (4/2)</option>
-                            <option value="Jump">Jump (4)</option>
+                            <option value="jump">Jump (4)</option>
                             <option value="mount">Mount (3/1)</option>
                             <option value="nimbleMovement">Nimble Movement (4)</option>
                             <option value="nullify">Nullify (5/3)</option>
@@ -3306,6 +3340,13 @@
                         <div class="conditional-block">
                             <input type="checkbox" name="attr_tech_persist">
                             <span class="label">Persistent Reroll</span>
+                        </div>
+                    </div>
+                    <div>
+                        <input type="checkbox" class="conditional-check" name="attr_tech_can_throw">
+                        <div class="conditional-block">
+                            <input type="checkbox" name="attr_tech_throw">
+                            <span class="label">Throw Reroll</span>
                         </div>
                     </div>
                 </div>
