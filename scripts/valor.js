@@ -20,12 +20,12 @@ state.showHealthAlerts = true;          // Send alerts when characters enter or 
 state.houseRulesEnabled = true;         // Enables various unsupported house rules.
 state.autoResolveTechBenefits = true;   // Enables automatic adjustment of HP for Healing and Transformations.
 state.hideNpcTechEffects = false;       // For non-player characters, don't show players the tech effect when using !t.
-state.rollBehindScreen = true;         // Hide NPC rolls from the players.
+state.rollBehindScreen = true;          // Hide NPC rolls from the players.
 state.autoInitiativeUpdate = true;      // If a character's initiative changes during play, move them accordingly.
 state.autoInitiativeReport = true;      // If a character's initiative changes during play, send a whisper to the GM.
 state.confirmAutoInitiative = true;     // Confirm whether or not to auto-update initiative before each scene.
-state.applyAttackResults = true;        // Allows GM to directly apply attack results with a chat button on a hit. (experimental)
-state.showAttackResults = true;         // Sends messages to the chat when attack results are applied. (experimental)
+state.applyAttackResults = false;       // Allows GM to directly apply attack results with a chat button on a hit. (experimental)
+state.showAttackResults = false;        // Sends messages to the chat when attack results are applied. (experimental)
 
 // Status Tracker
 // While this is active, the system will send an alert when an effect ends.
