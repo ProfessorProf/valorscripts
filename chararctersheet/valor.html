@@ -1,7 +1,7 @@
 <script type="text/worker">
 
     /**
-     * VALOR CHARACTER SHEET
+     * VALOR CHARACTER SHEET v1.5.1
      *
      * Installation Instructions:
      * - Be a Roll20 Pro user.
@@ -55,11 +55,12 @@
         { cost: 3, levelUp: 0, speed: 0, id: 'thresheld', namePattern: '^thresheld' },
         { cost: 2, levelUp: 0, speed: 0, id: 'weakGuard', namePattern: '^weak guard' },
         { cost: 10, levelUp: 0, speed: 0, id: 'malevolentPossession', namePattern: '^malevolent possess' },
-        { cost: 3, levelUp: 2, speed: 0, id: 'weakPhysicalAttacker', namePattern: '^weak phys(ical)? attack' },
-        { cost: 3, levelUp: 2, speed: 0, id: 'weakEnergyAttacker', namePattern: '^weak en(ergy)? attack' },
+        { cost: 3, levelUp: 2, speed: 2, id: 'weakPhysicalAttacker', namePattern: '^weak phys(ical)? attack' },
+        { cost: 3, levelUp: 2, speed: 2, id: 'weakEnergyAttacker', namePattern: '^weak en(ergy)? attack' },
         { cost: 4, levelUp: 0, speed: 0, id: 'impairedAccuracy', namePattern: '^impaired acc' },
         { cost: 4, levelUp: 0, speed: 0, id: 'impairedEvasion', namePattern: '^impaired (evd|eva)' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'flightless', namePattern: '^malevolent possess' }
+        { cost: 3, levelUp: 0, speed: 0, id: 'flightless', namePattern: '^malevolent possess' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'battleDamage', namePattern: '^battle damage' }
     ];
     let skillLibrary = [
         { cost: 1, levelUp: 1, speed: 3, id: 'customSkill', namePattern: '^custom' },
@@ -222,13 +223,13 @@
         { cost: 3, levelUp: 0, speed: 0, id: 'elementalAttunement', namePattern: '^elemental attune' },
         { cost: 5, levelUp: 0, speed: 0, id: 'polearmWielder', namePattern: '^polearm wield' },
         { cost: 4, levelUp: 2, speed: 1, id: 'rangedWeaponWielder', namePattern: '^ranged weapon wield' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'aquatic', namePattern: '^aquatic$' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'construct', namePattern: '^construct$' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'elemental', namePattern: '^elemental$' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'undead', namePattern: '^undead$' },
+        { cost: 4, levelUp: 2, speed: 0, id: 'aquatic', namePattern: '^aquatic$' },
+        { cost: 4, levelUp: 2, speed: 0, id: 'construct', namePattern: '^construct$' },
+        { cost: 4, levelUp: 2, speed: 0, id: 'elemental', namePattern: '^elemental$' },
+        { cost: 4, levelUp: 2, speed: 0, id: 'undead', namePattern: '^undead$' },
         { cost: 6, levelUp: 0, speed: 0, id: 'diminuitive', namePattern: '^diminuitive' },
         { cost: 4, levelUp: 2, speed: 1, id: 'healer', namePattern: '^healer' },
-        { cost: 1, levelUp: 1, speed: 1, id: 'increasedLength', namePattern: '^increased length' },
+        { cost: 1, levelUp: 1, speed: 0, id: 'increasedLength', namePattern: '^increased length' },
         { cost: 1, levelUp: 0, speed: 0, id: 'largeHead', namePattern: '^large head' },
         { cost: 4, levelUp: 3, speed: 0, id: 'limitedRegeneration', namePattern: '^limited regen' },
         { cost: 1, levelUp: 0, speed: 0, id: 'longTail', namePattern: '^long tail' },
@@ -247,20 +248,21 @@
         { cost: 8, levelUp: 0, speed: 0, id: 'resurrectingFlunky', namePattern: '^resurrecting flunky' },
         { cost: 8, levelUp: 0, speed: 0, id: 'trample', namePattern: '^trample' },
         { cost: 6, levelUp: 0, speed: 0, id: 'toweringPresence', namePattern: '^towering presence' },
-        { cost: 2, levelUp: 2, speed: 1, id: 'burrow', namePattern: '^burrow' },
+        { cost: 2, levelUp: 2, speed: 0, id: 'burrow', namePattern: '^burrow' },
         { cost: 3, levelUp: 0, speed: 0, id: 'humanshape', namePattern: '^human( )?shape' },
-        { cost: 4, levelUp: 2, speed: 1, id: 'limitedFlight', namePattern: '^limited flight' },
+        { cost: 4, levelUp: 2, speed: 0, id: 'limitedFlight', namePattern: '^limited flight' },
         { cost: 6, levelUp: 0, speed: 0, id: 'pressingSwarm', namePattern: '^pressing swarm' },
         { cost: 12, levelUp: 0, speed: 0, id: 'shapeshifter', namePattern: '^shapeshifter' },
-        { cost: 1, levelUp: 1, speed: 3, id: 'skillCopy', namePattern: '^skill copy' },
-        { cost: 3, levelUp: 1, speed: 1, id: 'swiftStance', namePattern: '^swift stance' },
+        { cost: 1, levelUp: 1, speed: 0, id: 'skillCopy', namePattern: '^skill copy' },
+        { cost: 3, levelUp: 1, speed: 0, id: 'swiftStance', namePattern: '^swift stance' },
         { cost: 8, levelUp: 0, speed: 0, id: 'victorAtAnyCost', namePattern: '^victor(y)? at any cost' },
-        { cost: 1, levelUp: 1, speed: 1, id: 'increasedCompanionSize', namePattern: '^increased companion size' },
+        { cost: 1, levelUp: 1, speed: 0, id: 'increasedCompanionSize', namePattern: '^increased companion size' },
         { cost: 2, levelUp: 0, speed: 0, id: 'changeAttributes', namePattern: '^change attr' },
-        { cost: 2, levelUp: 2, speed: 0, id: 'enhancedRange', namePattern: '^enhanced range' },
+        { cost: 2, levelUp: 2, speed: 1, id: 'enhancedRange', namePattern: '^enhanced range' },
         { cost: 8, levelUp: 0, speed: 0, id: 'greatAccuracy', namePattern: '^great acc' },
         { cost: 8, levelUp: 0, speed: 0, id: 'greatEvasion', namePattern: '^great (evd|eva)' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'powerfulBlow', namePattern: '^powerful blow' }
+        { cost: 6, levelUp: 0, speed: 0, id: 'powerfulBlow', namePattern: '^powerful blow' },
+        { cost: 6, levelUp: 0, speed: 0, id: 'longReach', namePattern: '^ long reach'}
     ];
     let coreLibrary = [
         { cost: 2, levelUp: 1, id: 'damage' },
@@ -2053,7 +2055,7 @@
                 } else if(mod.indexOf('destruction') == 0) {
                     let destroy = 2 * modLevel;
                     summary += '+' + destroy + ' Durability damage to objects. ';
-                    totalModLevel++;
+                    totalModLevel += modLevel;
                 } else if(mod.indexOf('dexterous') == 0 ||
                           mod.indexOf('dextrous') == 0) {
                     totalModLevel++;
@@ -2466,6 +2468,7 @@
                     case 'weaken':
                     case 'domain':
                     case 'damage':
+                    case 'ultDamage':
                         flawSpMax = techCoreLevel;
                         break;
                 }
@@ -2616,8 +2619,7 @@
                 (techCore == 'damage' || techCore == 'ultDamage' || techCore == 'mimic' ||
                 techCore == 'ultMimic' || techCore == 'weaken'))
                 ? 'on' : 'off';
-            attrs['repeating_techs_' + techId + '_tech_can_persist'] = isPersistent ? 'on' : 'off';
-            attrs['repeating_techs_' + techId + '_tech_can_throw'] = isThrow ? 'on' : 'off';
+            attrs['repeating_techs_' + techId + '_tech_can_reroll'] = (isPersistent || isThrow) ? 'on' : 'off';
             attrs['repeating_techs_' + techId + '_tech_can_edit_cost'] = techCore == 'custom' ? 'on' : 'off';
             setAttrs(attrs, { silent: true });
         });
@@ -3336,17 +3338,10 @@
                         </div>
                     </div>
                     <div>
-                        <input type="checkbox" class="conditional-check" name="attr_tech_can_persist">
+                        <input type="checkbox" class="conditional-check" name="attr_tech_can_reroll">
                         <div class="conditional-block">
-                            <input type="checkbox" name="attr_tech_persist">
-                            <span class="label">Persistent Reroll</span>
-                        </div>
-                    </div>
-                    <div>
-                        <input type="checkbox" class="conditional-check" name="attr_tech_can_throw">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_tech_throw">
-                            <span class="label">Throw Reroll</span>
+                            <input type="checkbox" name="attr_tech_reroll">
+                            <span class="label">Reroll</span>
                         </div>
                     </div>
                 </div>

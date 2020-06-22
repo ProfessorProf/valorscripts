@@ -143,3 +143,15 @@ v1.5.0 (5/9/2019):
 - New: Added checkbox to Throw techniques to reroll the attack at no cost.
 - New: Added experimental feature where damage and weaken techs can be auto-applied to the target by the GM.
 - New: If !effect is used with a duration of 0, it won't track duration for the effect.
+
+v1.5.1 (6/22/2020):
+- Bugfix: Various incorrect costs.
+- Bugfix: Healing techs didn't heal half value for soldiers.
+- Bugfix: Custom Flaws without names would cause a crash.
+- Bugfix: Using !init in a brand new game would cause a crash.
+- Bugfix: !def didn't display def/res from bonus fields.
+- Bugfix: !crit didn't display damage from attack bonus fields.
+- Bugfix: Deleting the target then using !crit caused a crash.
+- Bugfix: Ultimate attacks with Debilitating always show a max SP of 0.
+- New: Updated Apply logic to apply hits, crits, and damage increments.
+- New: All reroll logic compressed to one checkbox.

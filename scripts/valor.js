@@ -1,5 +1,5 @@
 /**
- * VALOR API SCRIPTS
+ * VALOR API SCRIPTS v1.5.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -20,12 +20,12 @@ state.showHealthAlerts = true;          // Send alerts when characters enter or 
 state.houseRulesEnabled = true;         // Enables various unsupported house rules.
 state.autoResolveTechBenefits = true;   // Enables automatic adjustment of HP for Healing and Transformations.
 state.hideNpcTechEffects = false;       // For non-player characters, don't show players the tech effect when using !t.
-state.rollBehindScreen = false;         // Hide NPC rolls from the players.
+state.rollBehindScreen = true;         // Hide NPC rolls from the players.
 state.autoInitiativeUpdate = true;      // If a character's initiative changes during play, move them accordingly.
 state.autoInitiativeReport = true;      // If a character's initiative changes during play, send a whisper to the GM.
 state.confirmAutoInitiative = true;     // Confirm whether or not to auto-update initiative before each scene.
-state.applyAttackResults = false;       // Allows GM to directly apply attack results with a chat button on a hit. (experimental)
-state.showAttackResults = false;        // Sends messages to the chat when attack results are applied. (experimental)
+state.applyAttackResults = true;        // Allows GM to directly apply attack results with a chat button on a hit. (experimental)
+state.showAttackResults = true;         // Sends messages to the chat when attack results are applied. (experimental)
 
 // Status Tracker
 // While this is active, the system will send an alert when an effect ends.
@@ -418,19 +418,12 @@ function getTechs(charId) {
             } else {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), resoluteStrike: resoluteStrike});
             }
-        } else if(techName.indexOf('tech_persist') > -1) {
-            let persist = rawTech.get('current') == 'on';
+        } else if(techName.indexOf('tech_reroll') > -1) {
+            let reroll = rawTech.get('current') == 'on';
             if(oldTech) {
-                oldTech.persist = persist;
+                oldTech.reroll = reroll;
             } else {
-                techs.push({ id: techId, charId: rawTech.get('_characterid'), persist: persist});
-            }
-        } else if(techName.indexOf('tech_throw') > -1) {
-            let throwValue = rawTech.get('current') == 'on';
-            if(oldTech) {
-                oldTech.throwValue = throwValue;
-            } else {
-                techs.push({ id: techId, charId: rawTech.get('_characterid'), throwValue: throwValue});
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), reroll: reroll});
             }
         } else if(techName.indexOf('custom_cost') > -1) {
             let customCost = parseInt(rawTech.get('current'));
@@ -586,11 +579,13 @@ function getTechDamage(tech, charId, crit) {
         let patk = parseInt(getAttrByName(charId, 'patkbonus'));
         if(patk == patk) {
             damage += patk;
+            if(crit) damage += patk;
         }
     } else {
         let eatk = parseInt(getAttrByName(charId, 'eatkbonus'));
         if(eatk == eatk) {
             damage += eatk;
+            if(crit) damage += eatk;
         }
     }
     
@@ -1273,7 +1268,7 @@ on('chat:message', function(msg) {
         
         let flaws = getFlaws(charId);
         if(flaws && flaws.length > 0) {
-            let flawNames = Array.from(flaws, function(f) {
+            let flawNames = Array.from(flaws.filter(flaw => flaw.name), function(f) {
                 let flawName = f.name.replace( /([A-Z])/g, " $1" );
                 return flawName.charAt(0).toUpperCase() + flawName.slice(1);
             });
@@ -1565,7 +1560,7 @@ on('chat:message', function(msg) {
 // !tech command
 on('chat:message', function(msg) {
     if(msg.type == 'api' && (msg.content.indexOf('!t ') == 0 || 
-    msg.content.indexOf('!tech') == 0 ||
+    msg.content.indexOf('!tech ') == 0 ||
     msg.content == '!t')) {
         startEvent('!tech');
         
@@ -1709,16 +1704,10 @@ on('chat:message', function(msg) {
             log('Overloading limits.');
         }
         
-        // Check for Persist
-        if(tech.persist) {
+        // Check for Reroll
+        if(tech.reroll) {
             overrideLimits = true;
-            log('Rerolling persistent tech.');
-        }
-        
-        // Check for Throw
-        if(tech.throwValue) {
-            overrideLimits = true;
-            log('Rerolling throw tech.');
+            log('Rerolling tech.');
         }
         
         // Pull Skill list
@@ -2092,7 +2081,8 @@ on('chat:message', function(msg) {
                 }
                 
                 // Get damage
-                let damage = getTechDamage(tech, actor.get('_id'));
+                let damage = getTechDamage(tech, actor.get('_id'), false);
+                let critDamage = getTechDamage(tech, actor.get('_id'), true);
                 
                 // Get def/res
                 let defRes = 0;
@@ -2199,25 +2189,38 @@ on('chat:message', function(msg) {
                 }
                 
                 if(state.applyAttackResults) {
-                    const finalDamage = Math.max(0, damage - defRes);
                     let applyCommand = `!tech-apply ${target.get('_id')}`;
-                    if(finalDamage > 0) {
-                        applyCommand += ` -d ${finalDamage}`;
-                    }
+                    let effectPhrase = ''
                     if(tech.hasFlaws) {
-                        // Check valor limit
+                        // Check temporary limit
                         let temporaryLimit = tech.limits ? tech.limits.find(function(l) {
                             let name = l.toLowerCase();
                             return (name.indexOf('temporary') == 0);
                         }) : null;
                         
-                        applyCommand += ` -e ${tech.name} ${temporaryLimit ? 2 : 3}`;
+                        effectPhrase = ` -e ${tech.name} ${temporaryLimit ? 2 : 3}`;
                     }
-                    applyButton = ` <a href="${applyCommand}" style="padding:3px">Apply</a>`;
-                    if(!hiddenFullList) {
-                        hiddenRollText += '<br />VS ' + targetName + ': ';
+                    
+                    if(tech.core == 'damage' || tech.core == 'ultDamage') {
+                        if(!hiddenFullList) {
+                            hiddenRollText += '<br />VS ' + targetName + ': ';
+                        }
+                        // Create the Hit button
+                        let finalDamage = Math.max(0, damage - defRes);
+                        if(finalDamage > 0) {
+                            hiddenRollText += ` <a href="${applyCommand} -d ${finalDamage}${effectPhrase}" style="padding:3px">Hit</a>`;
+                        }
+                        // Create the Crit button
+                        finalDamage = Math.max(0, critDamage - defRes);
+                        if(finalDamage > 0) {
+                            hiddenRollText += ` <a href="${applyCommand} -d ${finalDamage}${effectPhrase}" style="padding:3px">Crit</a>`;
+                        }
+                        // Create the DI button
+                        finalDamage = parseInt(getAttrByName(actor.get('_id'), 'di'));
+                        if(finalDamage > 0) {
+                            hiddenRollText += ` <a href="${applyCommand} -d ${finalDamage}${effectPhrase}" style="padding:3px">DI</a>`;
+                        }
                     }
-                    hiddenRollText += applyButton;
                 }
             });
         } else if(rollStat && rollStat != 'none') {
@@ -2257,7 +2260,7 @@ on('chat:message', function(msg) {
         let stCost = tech.core == 'custom' ? tech.customCost : tech.cost;
         let valorCost = 0;
         let initCost = 0;
-        if(token && !tech.persist && !tech.throwValue) {
+        if(token && !tech.reroll) {
             if(tech.overloadLimits && tech.limitSt) {
                 stCost += tech.limitSt;
             }
@@ -2420,6 +2423,9 @@ on('chat:message', function(msg) {
                         }
                         hpGain += (healerLevel + 1) * 2;
                     }
+                    
+                    if(actorClass == 'flunky' || actorClass == 'soldier') hpGain = Math.ceil(hpGain / 2);
+                    
                     if(regen) {
                         // Add regen effect to character
                         charIds.forEach(function(charId) {
@@ -2495,11 +2501,8 @@ on('chat:message', function(msg) {
                 techQualifiers.push('Berserker');
             }
         }
-        if(tech.persist) {
-            techQualifiers.push('Persisting');
-        }
-        if(tech.throwValue) {
-            techQualifiers.push('Throwing');
+        if(tech.reroll) {
+            techQualifiers.push('Reroll');
         }
         
         let messageName = tech.name;
@@ -2626,37 +2629,20 @@ on('chat:message', function(msg) {
             }
         }
         
-        if(tech.persist) {
-            log('Persistent Reroll was enabled.');
+        if(tech.reroll) {
+            log('Reroll was enabled.');
             let techAttrs = filterObjs(function(obj) {
                 if(obj.get('_type') == 'attribute' &&
                    obj.get('name').indexOf(tech.id) > -1 &&
-                   obj.get('name').indexOf('persist') > -1 &&
-                   obj.get('name').indexOf('can_persist') == -1) {
+                   obj.get('name').indexOf('reroll') > -1 &&
+                   obj.get('name').indexOf('can_reroll') == -1) {
                        return true;
                 }
                 return false;
             });
             if(techAttrs && techAttrs.length > 0) {
-                let persist = techAttrs[0];
-                persist.set('current', '0');
-            }
-        }
-        
-        if(tech.throwValue) {
-            log('Throw Reroll was enabled.');
-            let techAttrs = filterObjs(function(obj) {
-                if(obj.get('_type') == 'attribute' &&
-                   obj.get('name').indexOf(tech.id) > -1 &&
-                   obj.get('name').indexOf('throw') > -1 &&
-                   obj.get('name').indexOf('can_throw') == -1) {
-                       return true;
-                }
-                return false;
-            });
-            if(techAttrs && techAttrs.length > 0) {
-                let throwValue = techAttrs[0];
-                throwValue.set('current', '0');
+                let reroll = techAttrs[0];
+                reroll.set('current', '0');
             }
         }
         
@@ -3250,10 +3236,8 @@ on('chat:message', function(msg) {
         && playerIsGM(msg.playerid)) {
         startEvent('!init');
         let split = msg.content.match(/(".*?")|(\S+)/g);
-        let turnOrder = JSON.parse(Campaign().get('turnorder'));
-        if(!turnOrder) {
-            turnOrder = [];
-        }
+        let rawTurnOrder = Campaign().get('turnorder');
+        let turnOrder = rawTurnOrder ? JSON.parse(rawTurnOrder) : [];
         
         if((split.length < 2 || split[1] != '--confirm') && turnOrder && turnOrder.length > 0) {
             // No --confirm, ask for verification
@@ -3401,8 +3385,12 @@ on('chat:message', function(msg) {
             let actor = getObj('character', actorId);
             
             if(actor) {
-                let def = getAttrByName(actorId, 'defense')
-                let res = getAttrByName(actorId, 'resistance')
+                let def = parseInt(getAttrByName(actorId, 'defense'));
+                let res = parseInt(getAttrByName(actorId, 'resistance'));
+                let defBonus = parseInt(getAttrByName(actorId, 'defensebonus'));
+                let resBonus = parseInt(getAttrByName(actorId, 'resistancebonus'));
+                if (defBonus == defBonus) def += defBonus;
+                if (resBonus == resBonus) res += resBonus;
                 let actorName = actor.get('name');
                 if(message.length > 0) {
                     message += '<br />';
@@ -3498,15 +3486,19 @@ on('chat:message', function(msg) {
         
         let targetsList = techHistory.targets ? techHistory.targets : [];
         
-        let output = 'Critical hit for **' + techHistory.techName + '**:';
+        let output = '';
         
         if(targetsList.length > 0) {
             let firstTarget = true;
             
             targetsList.forEach(function(targetId) {
                 let target = getObj('graphic', targetId);
+                if(!target) return;
                 let targetChar = getObj('character', target.get('represents'));
+                if(!targetChar) return;
                 
+                output += `Critical hit for **${techHistory.techName}**:`
+
                 let targetName = target.get('name');
                 if(!targetName && targetChar) {
                     targetName = targetChar.get('name');
@@ -3562,7 +3554,11 @@ on('chat:message', function(msg) {
                        '**</span>';
         }
         
-        sendChat('Valor', '/w gm ' + output);
+        if(output) {
+            sendChat('Valor', '/w gm ' + output);
+        } else {
+            sendChat('Valor', '/w gm Unable to determine critical damage.');
+        }
         
         endEvent('!crit');
     }
