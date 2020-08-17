@@ -155,3 +155,9 @@ v1.5.1 (6/22/2020):
 - Bugfix: Ultimate attacks with Debilitating always show a max SP of 0.
 - New: Updated Apply logic to apply hits, crits, and damage increments.
 - New: All reroll logic compressed to one checkbox.
+
+v1.5.2 (8/17/2020):
+- Bugfix: Long Reach skill now identified by boosts.
+- Bugfix: !sizeup breaking game if nothing selected.
+- Bugfix: Apply buttons don't loop infinitely on debilitating technique.
+- Bugfix: Critical health warning erroneously saying character was no longer at critical health at the exact critical threshold.

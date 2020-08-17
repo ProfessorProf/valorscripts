@@ -1,5 +1,5 @@
 /**
- * VALOR API SCRIPTS v1.5.1
+ * VALOR API SCRIPTS v1.5.2
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -20,7 +20,7 @@ state.showHealthAlerts = true;          // Send alerts when characters enter or 
 state.houseRulesEnabled = true;         // Enables various unsupported house rules.
 state.autoResolveTechBenefits = true;   // Enables automatic adjustment of HP for Healing and Transformations.
 state.hideNpcTechEffects = false;       // For non-player characters, don't show players the tech effect when using !t.
-state.rollBehindScreen = true;          // Hide NPC rolls from the players.
+state.rollBehindScreen = false;         // Hide NPC rolls from the players.
 state.autoInitiativeUpdate = true;      // If a character's initiative changes during play, move them accordingly.
 state.autoInitiativeReport = true;      // If a character's initiative changes during play, send a whisper to the GM.
 state.confirmAutoInitiative = true;     // Confirm whether or not to auto-update initiative before each scene.
@@ -1232,6 +1232,7 @@ on('chat:message', function(msg) {
         
         if(!token) {
             sendChat('Valor', '/w gm No selected token is linked to a character sheet.');
+            return;
         }
         
         let charId = token.get('represents');
@@ -1935,7 +1936,6 @@ on('chat:message', function(msg) {
         let rollStat = tech.stat;
         let rollText = '';
         let hiddenRollText = '';
-        let applyButton = '';
         let targets = 1;
         
         if(tech.core == 'damage' ||
@@ -2198,7 +2198,9 @@ on('chat:message', function(msg) {
                             return (name.indexOf('temporary') == 0);
                         }) : null;
                         
-                        effectPhrase = ` -e ${tech.name} ${temporaryLimit ? 2 : 3}`;
+                        log(tech);
+                        effectPhrase = ` -e ¶${tech.name}¶ ${temporaryLimit ? 2 : 3}`;
+                        log(effectPhrase);
                     }
                     
                     if(tech.core == 'damage' || tech.core == 'ultDamage') {
@@ -2218,7 +2220,7 @@ on('chat:message', function(msg) {
                         // Create the DI button
                         finalDamage = parseInt(getAttrByName(actor.get('_id'), 'di'));
                         if(finalDamage > 0) {
-                            hiddenRollText += ` <a href="${applyCommand} -d ${finalDamage}${effectPhrase}" style="padding:3px">DI</a>`;
+                            hiddenRollText += ` <a href="${applyCommand} -d ${finalDamage}" style="padding:3px">DI</a>`;
                         }
                     }
                 }
@@ -2745,9 +2747,10 @@ on('chat:message', function(msg) {
 // !tech-apply command
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!tech-apply') == 0) {
-        startEvent('!apply');
+        startEvent('!tech-apply');
+        
         // Get params
-        let split = msg.content.match(/(".*?")|(\S+)/g);
+        let split = msg.content.match(/(¶.*?¶)|(\S+)/g);
         if(split.length < 2) {
             log('Not enough arguments.');
             return;
@@ -2763,21 +2766,23 @@ on('chat:message', function(msg) {
                 case '-d':
                     // Apply is inflicting damage
                     damage = parseInt(split[paramId + 1]);
-                    paramId += 2;
+                    paramId++;
                     break;
                 case '-e':
                     // Apply is creating an effect
                     effect.name = split[paramId + 1];
+                    if(effect.name && effect.name[0] == '¶') {
+                        effect.name = effect.name.substring(1, effect.name.length - 1);
+                    }
                     effect.duration = split[paramId + 2];
-                    paramId += 3;
+                    paramId += 2;
                     break;
                 default:
                     log(`Unrecognized parameter: ${split[paramId]}`);
                     break;
             }
+            paramId++;
         }
-        
-        let message = []
         
         if(damage > 0) {
             // Time to apply damage
@@ -2805,6 +2810,7 @@ on('chat:message', function(msg) {
                 sendChat('Valor', messages.join('<br />'));
             }
         }
+        endEvent('!tech-apply');
     }
 });
 
@@ -4427,7 +4433,7 @@ function criticalHealthWarning(obj, oldHp) {
         var message;
         if(oldHp > critical && newHp <= critical) {
             message = ' is now at critical health.';
-        } else if (oldHp <= critical && newHp >= critical) {
+        } else if (oldHp <= critical && newHp > critical) {
             message = ' is no longer at critical health.';
         }
         if(message) {

@@ -1,7 +1,7 @@
 <script type="text/worker">
 
     /**
-     * VALOR CHARACTER SHEET v1.5.1
+     * VALOR CHARACTER SHEET v1.5.2
      *
      * Installation Instructions:
      * - Be a Roll20 Pro user.
@@ -262,7 +262,7 @@
         { cost: 8, levelUp: 0, speed: 0, id: 'greatAccuracy', namePattern: '^great acc' },
         { cost: 8, levelUp: 0, speed: 0, id: 'greatEvasion', namePattern: '^great (evd|eva)' },
         { cost: 6, levelUp: 0, speed: 0, id: 'powerfulBlow', namePattern: '^powerful blow' },
-        { cost: 6, levelUp: 0, speed: 0, id: 'longReach', namePattern: '^ long reach'}
+        { cost: 6, levelUp: 0, speed: 0, id: 'longReach', namePattern: '^long reach'}
     ];
     let coreLibrary = [
         { cost: 2, levelUp: 1, id: 'damage' },
@@ -2179,7 +2179,7 @@
                         summary += "Your zone of control is expanded by " + limitLevel + " spaces within your domain. ";
                     }
                     totalModLevel += 6 * limitLevel;
-                } else if(mod.indexOf('locked zone') == 0) {
+                } else if(mod.indexOf('locked domain') == 0) {
                     summary += "Characters must succeed at an opposed roll against you to exit your domain. Attacks across the edge of the domain are made at a -2 penalty. ";
                     totalModLevel += 4;
                 } else if(mod.indexOf('shifting tran') == 0) {
@@ -3358,7 +3358,7 @@
                         <option value="summoning">Summoning Core</option>
                         <option value="weaken">Weaken Core</option>
                         <optgroup label="Ultimate Cores">
-                            <option value="domain">Domain</option>
+                            <option value="domain">Personal Domain</option>
                             <option value="ultDamage">Ultimate Attack</option>
                             <option value="ultMimic">Ultimate Mimic</option>
                             <option value="ultTransform">Transformation</option>
