@@ -4319,7 +4319,8 @@ function generateUUID() {
     let a = 0, b = [];
     let c = (new Date()).getTime() + 0, d = c === a;
     a = c;
-    for (let e = new Array(8), f = 7; 0 <= f; f--) {
+    let e = new Array(8);
+    for (e, f = 7; 0 <= f; f--) {
         e[f] = "-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz".charAt(c % 64);
         c = Math.floor(c / 64);
     }
