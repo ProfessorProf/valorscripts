@@ -161,3 +161,7 @@ v1.5.2 (8/17/2020):
 - Bugfix: !sizeup breaking game if nothing selected.
 - Bugfix: Apply buttons don't loop infinitely on debilitating technique.
 - Bugfix: Critical health warning erroneously saying character was no longer at critical health at the exact critical threshold.
+
+v1.5.3 (3/23/2021):
+- Bugfix: Critical Health warnings weren't working right at exactly 40% HP.
+- Bugfix: Infinite loop when trying to auto-apply techs with Debilitating Strike.

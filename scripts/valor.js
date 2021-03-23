@@ -1,5 +1,5 @@
 /**
- * VALOR API SCRIPTS v1.5.2
+ * VALOR API SCRIPTS v1.5.3
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -1936,6 +1936,7 @@ on('chat:message', function(msg) {
         let rollStat = tech.stat;
         let rollText = '';
         let hiddenRollText = '';
+        let applyButton = '';
         let targets = 1;
         
         if(tech.core == 'damage' ||
@@ -2198,9 +2199,7 @@ on('chat:message', function(msg) {
                             return (name.indexOf('temporary') == 0);
                         }) : null;
                         
-                        log(tech);
-                        effectPhrase = ` -e ¶${tech.name}¶ ${temporaryLimit ? 2 : 3}`;
-                        log(effectPhrase);
+                        effectPhrase = ` -e &quot;${tech.name}&quot; ${temporaryLimit ? 2 : 3}`;
                     }
                     
                     if(tech.core == 'damage' || tech.core == 'ultDamage') {
@@ -2748,9 +2747,8 @@ on('chat:message', function(msg) {
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!tech-apply') == 0) {
         startEvent('!tech-apply');
-        
         // Get params
-        let split = msg.content.match(/(¶.*?¶)|(\S+)/g);
+        let split = msg.content.match(/(".*?")|(\S+)/g);
         if(split.length < 2) {
             log('Not enough arguments.');
             return;
@@ -2766,22 +2764,21 @@ on('chat:message', function(msg) {
                 case '-d':
                     // Apply is inflicting damage
                     damage = parseInt(split[paramId + 1]);
-                    paramId++;
+                    paramId += 2;
                     break;
                 case '-e':
                     // Apply is creating an effect
                     effect.name = split[paramId + 1];
-                    if(effect.name && effect.name[0] == '¶') {
+                    if(effect.name && effect.name[0] == '"') 
                         effect.name = effect.name.substring(1, effect.name.length - 1);
-                    }
                     effect.duration = split[paramId + 2];
-                    paramId += 2;
+                    paramId += 3;
                     break;
                 default:
                     log(`Unrecognized parameter: ${split[paramId]}`);
+                    paramId++;
                     break;
             }
-            paramId++;
         }
         
         if(damage > 0) {
@@ -2792,7 +2789,7 @@ on('chat:message', function(msg) {
         if(effect.name) {
             // Time to create an effect
             let turnOrder = JSON.parse(Campaign().get('turnorder'));
-            addEffect(turnOrder, tokenId, effect.name, effect.duration);
+            effect.result = addEffect(turnOrder, tokenId, effect.name, effect.duration);
         }
         
         if(state.showAttackResults) {
@@ -2803,7 +2800,7 @@ on('chat:message', function(msg) {
                 if(damage > 0) {
                     messages.push(`${tokenName} took ${damage} damage.`);
                 }
-                if(effect.name) {
+                if(effect.name && effect.result) {
                     messages.push(`${tokenName} gained a new weaken effect.`);
                 }
                 
@@ -2883,11 +2880,12 @@ function addEffect(turnOrder, id, effectName, duration) {
                 let newTurnOrder = turnOrder.slice(0, i + 1).concat([effect]).concat(turnOrder.slice(i + 1));
                 Campaign().set('turnorder', JSON.stringify(newTurnOrder));
                 log('Effect ' + effectName + ' added to Turn Tracker.');
-                return;
+                return true;
             }
         }
     }
     log('Actor not found on Turn Tracker.');
+    return false;
 }
 
 // !rest command
