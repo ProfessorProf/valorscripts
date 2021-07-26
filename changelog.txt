@@ -172,3 +172,4 @@ v1.5.4 (6/26/2021):
 - Bugfix: Wrong level up cost on Nullify.
 - Bugfix: Techs used with Overload Limits couldn't be undone.
 - New: Offensive techniques will refuse to execute if no attribute is selected.
+- New: Headers in skill/flaw lists no longer use optgroup.
