@@ -1,7 +1,7 @@
 <script type="text/worker">
 
     /**
-     * VALOR CHARACTER SHEET v1.5.2
+     * VALOR CHARACTER SHEET v1.5.4
      *
      * Installation Instructions:
      * - Be a Roll20 Pro user.
@@ -135,7 +135,7 @@
         { cost: 5, levelUp: 0, speed: 0, id: 'inspire', namePattern: '^inspire' }, // ERRATA: Fixed level on Inspire
         { cost: 5, levelUp: 3, speed: 1, id: 'intimidate', namePattern: '^intimidate' },
         { cost: 4, levelUp: 0, speed: 0, id: 'jump', namePattern: '^jump' },
-        { cost: 5, levelUp: 2, speed: 1, id: 'nullify', namePattern: '^nullify' },
+        { cost: 5, levelUp: 3, speed: 1, id: 'nullify', namePattern: '^nullify' },
         { cost: 4, levelUp: 2, speed: 2, id: 'provoke', namePattern: '^provoke' },
         { cost: 5, levelUp: 3, speed: 1, id: 'recharge', namePattern: '^recharge' },
         { cost: 3, levelUp: 1, speed: 2, id: 'sizeUp', namePattern: '^size up' },
@@ -2630,7 +2630,8 @@
     });
 
     on('change:level change:str change:agi change:spr change:mnd change:gut ' +
-        'change:type change:repeating_skills remove:repeating_skills', function() {
+        'change:type change:repeating_skills remove:repeating_skills ' +
+        'change:boostmus change:boostdex change:boostaur change:boostint change:boostres', function() {
         calculateAttack();
         calculateActiveAttributes();
 

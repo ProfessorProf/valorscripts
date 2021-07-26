@@ -165,3 +165,10 @@ v1.5.2 (8/17/2020):
 v1.5.3 (3/23/2021):
 - Bugfix: Critical Health warnings weren't working right at exactly 40% HP.
 - Bugfix: Infinite loop when trying to auto-apply techs with Debilitating Strike.
+
+v1.5.4 (6/26/2021):
+- Bugfix: Overdrive skills weren't updating correctly.
+- Bugfix: Long Reach wasn't recognized as a skill.
+- Bugfix: Wrong level up cost on Nullify.
+- Bugfix: Techs used with Overload Limits couldn't be undone.
+- New: Offensive techniques will refuse to execute if no attribute is selected.

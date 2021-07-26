@@ -1,5 +1,5 @@
 /**
- * VALOR API SCRIPTS v1.5.3
+ * VALOR API SCRIPTS v1.5.4
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -1936,7 +1936,6 @@ on('chat:message', function(msg) {
         let rollStat = tech.stat;
         let rollText = '';
         let hiddenRollText = '';
-        let applyButton = '';
         let targets = 1;
         
         if(tech.core == 'damage' ||
@@ -2052,6 +2051,12 @@ on('chat:message', function(msg) {
             }
         }
         
+        if((tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken') && !rollStat) {
+            sendChat('Valor', '/w "' + actor.get('name') + '" Must specify an attribute for this technique.');
+            log('Tech failed on turn ' + round);
+            endEvent('!tech');
+        }
+
         if(targetsList.length > 0) {
             let fullList = (!state.hideNpcTechEffects || !state.rollBehindScreen || actor.get('controlledby')) &&
                 (tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken' || tech.core == 'custom') && rollStat != 'none';
@@ -2517,7 +2522,7 @@ on('chat:message', function(msg) {
         
         sendChat('character|' + actor.get('_id'), `&{template:valor} {{name=${messageName}}} {{roll=${rollText}}} {{summary=${messageSummary}}}`);
         
-        if(token && !overrideLimits) {
+        if(token) {
             // Add used tech to the technique usage history
             if(!state.techHistory) {
                 state.techHistory = [];
