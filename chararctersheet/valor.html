@@ -1,7 +1,7 @@
 <script type="text/worker">
 
     /**
-     * VALOR CHARACTER SHEET v1.5.4
+     * VALOR CHARACTER SHEET v1.5.5
      *
      * Installation Instructions:
      * - Be a Roll20 Pro user.
@@ -59,7 +59,7 @@
         { cost: 3, levelUp: 2, speed: 2, id: 'weakEnergyAttacker', namePattern: '^weak en(ergy)? attack' },
         { cost: 4, levelUp: 0, speed: 0, id: 'impairedAccuracy', namePattern: '^impaired acc' },
         { cost: 4, levelUp: 0, speed: 0, id: 'impairedEvasion', namePattern: '^impaired (evd|eva)' },
-        { cost: 3, levelUp: 0, speed: 0, id: 'flightless', namePattern: '^malevolent possess' },
+        { cost: 3, levelUp: 0, speed: 0, id: 'flightless', namePattern: '^flightless' },
         { cost: 3, levelUp: 0, speed: 0, id: 'battleDamage', namePattern: '^battle damage' }
     ];
     let skillLibrary = [
@@ -2176,7 +2176,7 @@
                     if(limitLevel == 1) {
                         summary += "Your zone of control is expanded by 1 space within your domain. ";
                     } else {
-                        summary += "Your zone of control is expanded by " + limitLevel + " spaces within your domain. ";
+                        summary += "Your zone of control is expanded by " + modLevel + " spaces within your domain. ";
                     }
                     totalModLevel += 6 * limitLevel;
                 } else if(mod.indexOf('locked domain') == 0) {

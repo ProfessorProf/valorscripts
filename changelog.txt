@@ -173,3 +173,8 @@ v1.5.4 (6/26/2021):
 - Bugfix: Techs used with Overload Limits couldn't be undone.
 - New: Offensive techniques will refuse to execute if no attribute is selected.
 - New: Headers in skill/flaw lists no longer use optgroup.
+
+v1.5.5 (11/4/2021):
+- Bugfix: Offensive techniques really do refuse to execute if no attribute is selected.
+- Bugfix: Flightless couldn't be added as a flaw to techniques.
+- Bugfix: Influential Control mod caused a crash.

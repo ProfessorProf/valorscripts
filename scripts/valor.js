@@ -1,5 +1,5 @@
 /**
- * VALOR API SCRIPTS v1.5.4
+ * VALOR API SCRIPTS v1.5.5
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -2055,6 +2055,7 @@ on('chat:message', function(msg) {
             sendChat('Valor', '/w "' + actor.get('name') + '" Must specify an attribute for this technique.');
             log('Tech failed on turn ' + round);
             endEvent('!tech');
+            return;
         }
 
         if(targetsList.length > 0) {
