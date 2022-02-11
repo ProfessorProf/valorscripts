@@ -1,5 +1,5 @@
 /**
- * VALOR API SCRIPTS v1.5.5
+ * VALOR API SCRIPTS v1.6.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -902,6 +902,8 @@ function updateValor() {
     if(!state.charData) {
         state.charData = {};
     }
+
+    let updatedCharacters = [];
     
     let page = Campaign().get('playerpageid');
     let tokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
@@ -909,8 +911,16 @@ function updateValor() {
         let charId = token.get('represents');
         let maxValor = parseInt(token.get('bar3_max'));
         if(maxValor) {
+            if(charId) {
+                if(updatedCharacters.includes(charId)) {
+                    // This character has already been given valor this round
+                    return;
+                } else {
+                    updatedCharacters.push(charId);
+                }
+            }
             const hp = getHp(token.get('_id'), charId);
-            log(hp)
+            
             if(!hp.val || hp.val <= 0) {
                 // They're KO'd - don't add Valor
                 return;
@@ -3326,7 +3336,8 @@ on('chat:message', function(msg) {
                     turnOrder.push({
                         id: token.get('_id'),
                         pr: init,
-                        custom: ''
+                        custom: '',
+                        _pageid: page
                     });
                     message += '<tr><td>' + actorName + ' - **' + init + '**</td></tr>';
                 }
@@ -3340,7 +3351,8 @@ on('chat:message', function(msg) {
             id: "-1",
             pr: 1,
             custom: 'Round',
-            formula: "1"
+            formula: "1",
+            _pageid: page
         });
         Campaign().set('turnorder', JSON.stringify(turnOrder));
         

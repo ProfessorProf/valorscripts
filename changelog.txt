@@ -178,3 +178,7 @@ v1.5.5 (11/4/2021):
 - Bugfix: Offensive techniques really do refuse to execute if no attribute is selected.
 - Bugfix: Flightless couldn't be added as a flaw to techniques.
 - Bugfix: Influential Control mod caused a crash.
+
+v1.6.0 (2/10/2022):
+- Bugfix: Roll20 changes made turnorder updates no longer work.
+- Bugfix: Characters who are represented by multiple tokens would sometimes gain valor multiple times per round.
