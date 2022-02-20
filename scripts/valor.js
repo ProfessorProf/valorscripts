@@ -1,5 +1,5 @@
 /**
- * VALOR API SCRIPTS v1.6.0
+ * VALOR API SCRIPTS v1.6.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.

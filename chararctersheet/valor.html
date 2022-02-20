@@ -1,7 +1,7 @@
 <script type="text/worker">
 
     /**
-     * VALOR CHARACTER SHEET v1.5.5
+     * VALOR CHARACTER SHEET v1.6.1
      *
      * Installation Instructions:
      * - Be a Roll20 Pro user.
@@ -2589,6 +2589,12 @@
                 if(skillSp > skillSpMax && skillSpMax > 0) {
                     warnings.push('Skills exceed SP limit.');
                 }
+            }
+
+            // Balance out Remaining Max SP for Domains
+            if(techCore == 'domain') {
+                flawSpMax -= Math.ceil(skillSp / 2);
+                skillSpMax -= flawSp * 2;
             }
 
             let attrs = {};

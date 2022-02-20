@@ -182,3 +182,6 @@ v1.5.5 (11/4/2021):
 v1.6.0 (2/10/2022):
 - Bugfix: Roll20 changes made turnorder updates no longer work.
 - Bugfix: Characters who are represented by multiple tokens would sometimes gain valor multiple times per round.
+
+v1.6.1 (2/19/2022):
+- Personal Domain Skill/Flaw SP caps update dynamically as you add Skills and Flaws
