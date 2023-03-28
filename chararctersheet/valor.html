@@ -1,7 +1,7 @@
 <script type="text/worker">
 
     /**
-     * VALOR CHARACTER SHEET v1.6.1
+     * VALOR CHARACTER SHEET v1.7.0
      *
      * Installation Instructions:
      * - Be a Roll20 Pro user.
@@ -269,6 +269,7 @@
         { cost: 1, levelUp: 1, id: 'barrier' },
         { cost: 0, levelUp: 2, id: 'boost' },
         { cost: 1, levelUp: 1, id: 'healing' },
+        { cost: 1, levelUp: 1, id: 'shield' },
         { cost: 0, levelUp: 0, id: 'mimic' },
         { cost: 3, levelUp: 2, id: 'summoning' },
         { cost: 1, levelUp: 1, id: 'weaken' },
@@ -1498,17 +1499,18 @@
                               'level', 'hp_max', 'di', 'type',
                               'hasDigDeep', 'hasOverloadLimits', 'hasEmpowerAttack', 'hasResoluteStrike', 'healerLevel'];
 
-        techFieldNames.push('repeating_techs_' + techId + '_tech_name');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_core_level');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_core');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_stat');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_mods');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_limits');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_description');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_granted_skills');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_inflicted_flaws');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_targets');
-        techFieldNames.push('repeating_techs_' + techId + '_tech_custom_cost');
+        techFieldNames.push(`repeating_techs_${techId}_tech_name`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_core_level`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_core`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_stat`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_mods`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_limits`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_description`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_shield_type`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_granted_skills`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_inflicted_flaws`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_targets`);
+        techFieldNames.push(`repeating_techs_${techId}_tech_custom_cost`);
 
         getAttrs(techFieldNames, function(techValues) {
             let level = parseInt(techValues.level);
@@ -1520,37 +1522,38 @@
             let mnd = parseInt(techValues.mnd);
             let gut = parseInt(techValues.gut);
 
-            let techName = techValues['repeating_techs_' + techId + '_tech_name'];
-            let techStat = techValues['repeating_techs_' + techId + '_tech_stat'];
-            let techGrantedSkills = techValues['repeating_techs_' + techId + '_tech_granted_skills'];
-            let techInflictedFlaws = techValues['repeating_techs_' + techId + '_tech_inflicted_flaws'];
-            let techDescription = techValues['repeating_techs_' + techId + '_tech_description'];
+            let techName = techValues[`repeating_techs_${techId}_tech_name`];
+            let techStat = techValues[`repeating_techs_${techId}_tech_stat`];
+            let techShieldType = techValues[`repeating_techs_${techId}_tech_shield_type`];
+            let techGrantedSkills = techValues[`repeating_techs_${techId}_tech_granted_skills`];
+            let techInflictedFlaws = techValues[`repeating_techs_${techId}_tech_inflicted_flaws`];
+            let techDescription = techValues[`repeating_techs_${techId}_tech_description`];
             let techCore = 'damage';
-            if(techValues['repeating_techs_' + techId + '_tech_core']) {
-                techCore = techValues['repeating_techs_' + techId + '_tech_core'];
+            if(techValues[`repeating_techs_${techId}_tech_core`]) {
+                techCore = techValues[`repeating_techs_${techId}_tech_core`];
             }
             let techMods = '';
-            if(techValues['repeating_techs_' + techId + '_tech_mods']) {
-                techMods = techValues['repeating_techs_' + techId + '_tech_mods'].toLowerCase();
+            if(techValues[`repeating_techs_${techId}_tech_mods`]) {
+                techMods = techValues[`repeating_techs_${techId}_tech_mods`].toLowerCase();
             }
             let techLimits = '';
-            if(techValues['repeating_techs_' + techId + '_tech_limits']) {
+            if(techValues[`repeating_techs_${techId}_tech_limits`]) {
                 techLimits = techValues['repeating_techs_' + techId + '_tech_limits'].toLowerCase();
             }
             let techCoreLevel = 1;
-            if(techValues['repeating_techs_' + techId + '_tech_core_level']) {
-                techCoreLevel = parseInt(techValues['repeating_techs_' + techId + '_tech_core_level']);
+            if(techValues[`repeating_techs_${techId}_tech_core_level`]) {
+                techCoreLevel = parseInt(techValues[`repeating_techs_${techId}_tech_core_level`]);
             }
             let techTargets = 1;
             if(techValues['repeating_techs_' + techId + '_tech_targets']) {
-                techTargets = parseInt(techValues['repeating_techs_' + techId + '_tech_targets']);
+                techTargets = parseInt(techValues[`repeating_techs_${techId}_tech_targets`]);
             }
             if(techTargets > 20) {
                 techTargets = 20;
             }
             let techCustomCost = 0;
-            if(techValues['repeating_techs_' + techId + '_tech_custom_cost']) {
-                techCustomCost = parseInt(techValues['repeating_techs_' + techId + '_tech_custom_cost']);
+            if(techValues[`repeating_techs_${techId}_tech_custom_cost`]) {
+                techCustomCost = parseInt(techValues[`repeating_techs_${techId}_tech_custom_cost`]);
             }
 
             // Build tech summary
@@ -1578,7 +1581,7 @@
             let action = 'Attack';
             if(techCore == 'barrier' || techCore == 'boost' ||
                techCore == 'healing' || techCore == 'weaken' ||
-               techCore == 'ultTransform') {
+               techCore == 'shield' || techCore == 'ultTransform') {
                 action  = 'Support';
             }
             if(techMods.indexOf('rush') > -1 || techMods.indexOf('ramming') > -1) {
@@ -1701,7 +1704,7 @@
                     let healing = 0;
                     switch(techStat) {
                         case 'spr':
-                            healing = Math.ceil(spr / 2); // ERRATA - Reduced Healing power
+                            healing = Math.ceil(spr / 2);
                             break;
                         case 'mnd':
                             healing = Math.ceil(mnd / 2);
@@ -1722,6 +1725,23 @@
                         if(techValues.type == 'flunky' || techValues.type == 'soldier') healing = Math.ceil(healing / 2);
                         summary += 'Restore ' + healing + ' Health to the target. '
                     }
+                    break;
+                case 'shield':
+                    let shield = 0;
+                    switch(techStat) {
+                        case 'spr':
+                            shield = Math.ceil(spr / 2);
+                            break;
+                        case 'mnd':
+                            shield = Math.ceil(mnd / 2);
+                            break;
+                        case 'gut':
+                            shield = Math.ceil(gut / 2);
+                            break;
+                    }
+                    shield += 9 + 3 * techCoreLevel;
+                    if(techValues.type == 'flunky' || techValues.type == 'soldier') shield = Math.ceil(shield / 2);
+                    summary += `Grants the target a ${techShieldType} shield with ${shield} HP.`;
                     break;
                 case 'barrier':
                     summary += 'Create a Barrier of power ' + techCoreLevel + '. ';
@@ -2608,6 +2628,8 @@
             attrs['repeating_techs_' + techId + '_tech_flaw_sp_max'] = flawSpMax;
             attrs['repeating_techs_' + techId + '_tech_skill_sp'] = skillSp;
             attrs['repeating_techs_' + techId + '_tech_skill_sp_max'] = skillSpMax;
+            attrs[`repeating_techs_${techId}_tech_is_shield`] = techCore == 'shield'
+                ? 'on' : 'off';
             attrs['repeating_techs_' + techId + '_tech_is_mimic'] = techCore == 'mimic' || techCore == 'ultMimic'
                 ? 'on' : 'off';
             attrs['repeating_techs_' + techId + '_tech_has_flaws'] = hasFlaws
@@ -2692,7 +2714,7 @@
     on('change:repeating_techs:tech_name change:repeating_techs:tech_core_level ' +
        'change:repeating_techs:tech_core change:repeating_techs:tech_stat ' +
        'change:repeating_techs:tech_mods change:repeating_techs:tech_targets change:repeating_techs:tech_bonus ' +
-       'change:repeating_techs:tech_limits change:repeating_techs:tech_description ' +
+       'change:repeating_techs:tech_limits change:repeating_techs:tech_description change:repeating_techs:tech_shield_type ' +
        'change:repeating_techs:tech_granted_skills change:repeating_techs:tech_inflicted_flaws ' +
        'change:repeating_techs:tech_custom_cost', function(eventInfo) {
         var techId = eventInfo.sourceAttribute.substring(16, 36);
@@ -3108,7 +3130,7 @@
                             <option value="spiritSight">Spirit Sight (5)</option>
                             <option value="sprinter">Sprinter (4/2)</option>
                             <option value="strengthOfWill">Strength of Will (5)</option>
-                            <option value="teamTactics">Team Tactics (6)</option>
+                            <option value="teamTactics">Team Tactics (5)</option>
                             <option value="tireless">Tireless (5/2)</option>
                             <option value="tough">Tough (6/3)</option>
                             <option value="toss">Toss (5/2)</option>
@@ -3343,6 +3365,7 @@
                         <option value="boost">Boost Core</option>
                         <option value="damage" selected="selected">Damage Core</option>
                         <option value="healing">Healing Core</option>
+                        <option value="shield">Shield Core</option>
                         <option value="mimic">Mimic Core</option>
                         <option value="summoning">Summoning Core</option>
                         <option value="weaken">Weaken Core</option>
@@ -3385,6 +3408,21 @@
                     <div class="conditional-block-inverse">
                         <span class="label">ST Cost</span>
                         <span class="derived-value" name="attr_tech_cost"></span>
+                    </div>
+                </div>
+                <div>
+                    <input type="checkbox" class="conditional-check" name="attr_tech_is_shield">
+                    <div class="conditional-block">
+                        <span class="label">Shield Type:</span>
+                    </div>
+                </div>
+                <div>
+                    <input type="checkbox" class="conditional-check" name="attr_tech_is_shield">
+                    <div class="tech-shield-type conditional-block">
+                        <select class="tech-field" name="attr_tech_shield_type" title="@{repeating_techs_#_tech_shield_type}" >
+                            <option value="physical" selected="selected">Physical</option>
+                            <option value="energy">Energy</option>
+                        </select>
                     </div>
                 </div>
                 <div class="tech-description">

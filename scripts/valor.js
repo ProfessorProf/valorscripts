@@ -1,5 +1,5 @@
 /**
- * VALOR API SCRIPTS v1.6.1
+ * VALOR API SCRIPTS v1.7.0
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -13,6 +13,7 @@
 state.statusTrackerEnabled = true;      // Erase statuses on the turn order when they reach 0.
 state.valorUpdaterEnabled = true;       // Add Valor for all Elites and Masters when a new round starts.
 state.maxValueSyncEnabled = true;       // Move HP and ST to match when max HP and max ST change.
+state.sheetSyncEnabled = true;          // Move HP and ST to match when a token changes to a new character sheet.
 state.ongoingEffectProcessor = true;    // Parse regen and ongoing damage as they happen.
 state.ignoreLimitsOnMinions = true;     // Disables limit blocking for Flunkies and Soldiers.
 state.showTechAlerts = true;            // Send alerts for when ammo changes and when techs come off of cooldown.
@@ -24,8 +25,8 @@ state.rollBehindScreen = false;         // Hide NPC rolls from the players.
 state.autoInitiativeUpdate = true;      // If a character's initiative changes during play, move them accordingly.
 state.autoInitiativeReport = true;      // If a character's initiative changes during play, send a whisper to the GM.
 state.confirmAutoInitiative = true;     // Confirm whether or not to auto-update initiative before each scene.
-state.applyAttackResults = false;       // Allows GM to directly apply attack results with a chat button on a hit. (experimental)
-state.showAttackResults = false;        // Sends messages to the chat when attack results are applied. (experimental)
+state.applyAttackResults = true;        // Allows GM to directly apply attack results with a chat button on a hit. (experimental)
+state.showAttackResults = true;         // Sends messages to the chat when attack results are applied. (experimental)
 
 // Status Tracker
 // While this is active, the system will send an alert when an effect ends.
@@ -425,6 +426,14 @@ function getTechs(charId) {
             } else {
                 techs.push({ id: techId, charId: rawTech.get('_characterid'), reroll: reroll});
             }
+        } else if(techName.indexOf('tech_shield_type') > -1) {
+            let shieldType = rawTech.get('current');
+            if(oldTech) {
+                oldTech.shieldType = shieldType;
+            } else {
+                techs.push({ id: techId, charId: rawTech.get('_characterid'), shieldType: shieldType});
+            }
+            log(techs);
         } else if(techName.indexOf('custom_cost') > -1) {
             let customCost = parseInt(rawTech.get('current'));
             if(customCost != customCost) {
@@ -597,6 +606,7 @@ function getTechDescription(tech, charId, suppressDamageDisplay) {
         return '';
     }
     let summary = '';
+    const actorClass = getAttrByName(charId, 'type');
     switch(tech.core) {
         case 'damage':
         case 'ultDamage':
@@ -621,7 +631,7 @@ function getTechDescription(tech, charId, suppressDamageDisplay) {
             break;
         case 'healing':
             let healing;
-            let power = tech.stat ? getAttrByName(charId, tech.stat) : 0;
+            let healPower = tech.stat ? getAttrByName(charId, tech.stat) : 0;
 
             let regen = tech.mods && tech.mods.find(function(m) {
                 return m.toLowerCase().indexOf('continuous r') > -1
@@ -636,18 +646,25 @@ function getTechDescription(tech, charId, suppressDamageDisplay) {
                 }
             }
             
-            const actorClass = getAttrByName(charId, 'type');
             if(regen) {
-                healing = (tech.coreLevel + 3) * 2 + Math.ceil(power / 2);
+                healing = (tech.coreLevel + 3) * 2 + Math.ceil(healPower / 2);
                 if(healerLevel) healing += (healerLevel + 1) * 2;
                 if(actorClass == 'flunky' || actorClass == 'soldier') healing = Math.ceil(healing / 2);
                 summary = 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP per turn';
             } else {
-                healing = (tech.coreLevel + 3) * 3 + Math.ceil(power / 2);
+                healing = (tech.coreLevel + 3) * 3 + Math.ceil(healPower / 2);
                 if(healerLevel) healing += (healerLevel + 1) * 2;
                 if(actorClass == 'flunky' || actorClass == 'soldier') healing = Math.ceil(healing / 2);
                 summary = 'Restores <span style="color:darkgreen">**' + healing + '**</span> HP';
             }
+            break;
+        case 'shield':
+            let shield;
+            let shieldPower = tech.stat ? getAttrByName(charId, tech.stat) : 0;
+
+            shield = (tech.coreLevel + 3) * 3 + Math.ceil(shieldPower / 2);
+            if(actorClass == 'flunky' || actorClass == 'soldier') shield = Math.ceil(shield / 2);
+            summary = `Grants ${tech.shieldType == 'energy' ? 'energy' : 'physical'} shield with <span style="color:darkblue">**${shield}**</span> HP`;
             break;
         case 'barrier':
             summary = 'Barrier power ' + tech.coreLevel;
@@ -2991,6 +3008,17 @@ on('chat:message', function(msg) {
             }
         });
         
+        // Get all character names for logging
+        let characters = filterObjs(function(obj) {
+            return obj.get('_type') == 'character';
+        });
+        
+        let characterNames = {};
+        characters.forEach(function(character) {
+            let charId = character.get('_id');
+            characterNames[charId] = character.get('name');
+        });
+
         // Update every HP attribute
         let hpAttrs = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
@@ -3020,6 +3048,8 @@ on('chat:message', function(msg) {
             }
             
             hpAttr.set('current', newValue);
+            const name = characterNames[charId];
+            log(`Rested ${name} from ${oldValue} to ${newValue} HP`);
         });
         
         // Update every ST attribute
@@ -3045,6 +3075,10 @@ on('chat:message', function(msg) {
             }
             
             stAttr.set('current', newValue);
+            
+            let charId = stAttr.get('_characterid');
+            const name = characterNames[charId];
+            log(`Rested ${name} from ${oldValue} to ${newValue} ST`);
         });
         
         // Update every Valor attribute
@@ -3055,11 +3089,14 @@ on('chat:message', function(msg) {
         
         vAttrs.forEach(function(vAttr) {
             let charId = vAttr.get('_characterid');
+            const name = characterNames[charId];
             
             if(startingValor[charId]) {
                 vAttr.set('current', startingValor[charId]);
+                log(`Reset ${name} to ${startingValor[charId]} Valor`);
             } else {
                 vAttr.set('current', 0);
+                log(`Reset ${name} to 0 Valor`);
             }
         });
         
@@ -3072,6 +3109,7 @@ on('chat:message', function(msg) {
         let tokens = filterObjs(function(obj) {
             return obj.get('_type') == 'graphic' &&
                 obj.get('layer') == 'objects' &&
+                obj.get('_pageid') == page &&
                 !obj.get('isdrawing') &&
                 !obj.get('represents');
         });
@@ -3080,6 +3118,8 @@ on('chat:message', function(msg) {
             updateValue(tokenId, 'hp', 0.2, true);
             updateValue(tokenId, 'st', 0.2, true);
             updateValue(tokenId, 'valor', 0, false, true);
+            log(`Reset token ${token.get('name')} to default values`);
+
         });
         
         state.techData = {};
@@ -3901,465 +3941,6 @@ on('chat:message', function(msg) {
     }
 });
 
-// !mook command
-// Used by character sheet - create a temporary level-up sheet for a given character.
-// Also sets everyone's Valor to starting values.
-on('chat:message', function(msg) {
-    if(msg.type == 'api' && msg.content.indexOf('!mook') == 0) {
-        startEvent('!mook');
-        let split = msg.content.match(/(".*?")|(\S+)/g);
-        
-        // Get parameters
-        let level = 1;
-        let highStatsParam = [];
-        let type = 'flunky';
-        for(let i = 0; i < split.length - 1; i++) {
-            if(split[i] == '--level' || split[i] == '-l') {
-                level = parseInt(split[i+1]);
-                if(level != level) {
-                    level = 1;
-                }
-            }
-            
-            if(split[i] == '--type' || split[i] == '-t') {
-                type = split[i+1];
-                if(type != 'flunky' && type != 'soldier') {
-                    log('Unsupported mook type: ' + type);
-                    type = 'flunky';
-                }
-            }
-            if(split[i] == '--stats' || split[i] == '-s') {
-                highStatsString = split[i+1];
-                if(highStatsString[0] == '"') {
-                    highStatsString = highStatsString.substring(1, highStatsString.length - 1);
-                }
-                highStatsParam = highStatsString.split(',');
-                if(split.length > i + 2 && split[i+2][0] != '-') {
-                    highStatsParam.push(split[i+2]);
-                }
-                if(split.length > i + 3 && split[i+3][0] != '-') {
-                    highStatsParam.push(split[i+3]);
-                }
-            }
-        }
-        
-        let highStats = [];
-        highStatsParam.forEach(function(s) {
-            s = s.trim();
-            if(s.indexOf('str') == 0 || s.indexOf('mus') == 0) {
-                highStats.push(0);
-            }
-            if(s.indexOf('agi') == 0 || s.indexOf('dex') == 0) {
-                highStats.push(1);
-            }
-            if(s.indexOf('spr') == 0 || s.indexOf('aur') == 0 || s.indexOf('spirit') == 0) {
-                highStats.push(2);
-            }
-            if(s.indexOf('mnd') == 0 || s.indexOf('int') == 0 || s.indexOf('mind') == 0) {
-                highStats.push(3);
-            }
-            if(s.indexOf('gut') == 0 || s.indexOf('res') == 0) {
-                highStats.push(4);
-            }
-        });
-        
-        // Don't allow guts-only builds
-        if(highStats.length == 1 && highStats[0] == 4) {
-            highStats.push(randomInteger(4) - 1);
-        }
-        
-        // Determine character attributes
-        let attributes = [0,0,0,0,0];
-        
-        if(highStats.length == 0) {
-            let stats = 2;
-            let roll = randomInteger(10);
-            if(roll == 1) {
-                stats = 1;
-            }
-            else if(roll == 2 || roll == 3) {
-                stats == 3;
-            }
-            
-            let attrs = [0,1,2,3,4];
-            for(let i = 0; i < stats; i++) {
-                let aId = randomInteger(attrs.length) - 1;
-                highStats.push(attrs[aId]);
-                attrs.splice(aId, 1);
-            }
-        }
-        
-        let ap = level * 3 + 22;
-        let attributesLeft = 5;
-        
-        if(highStats.length == 1) {
-            attributes[highStats[0]] = level + 7;
-            ap -= level + 7;
-            attributesLeft = 4;
-        }
-        else if(highStats.length == 2) {
-            attributes[highStats[0]] = level + 7;
-            attributes[highStats[1]] = level + 7;
-            ap -= 2 * level + 14;
-            attributesLeft = 3;
-        }
-        else if(highStats.length == 3) {
-            attributes[highStats[0]] = level + 7;
-            attributes[highStats[1]] = level + 5;
-            attributes[highStats[2]] = level + 5;
-            ap -= 3 * level + 17;
-            attributesLeft = 2;
-        }
-        
-        for(let i = 0; i < 5; i++) {
-            if(attributes[i] == 0) {
-                if(attributesLeft == 1) {
-                    attributes[i] = ap;
-                    attributesLeft = 0;
-                } else {
-                    let value = randomInteger(ap - attributesLeft);
-                    attributes[i] = value;
-                    ap -= value;
-                    attributesLeft--;
-                }
-            }
-        }
-        
-        // Determine set of viable skills
-        let skillLibrary = [];
-        highStats.forEach(function(s) {
-            switch(s) {
-                case 0:
-                    // Strength skills
-                    skillLibrary = skillLibrary.concat([
-                        { name: 'physicalAttacker', progression: 1 },
-                        { name: 'counterattack', progression: 0 },
-                        { name: 'cover', progression: 1 },
-                        { name: 'teamTactics', progression: 0 }
-                        ]);
-                    if(level >= 6) {
-                        skillLibrary = skillLibrary.concat([
-                            { name: 'increasedSize', progression: 0 },
-                            { name: 'damageFeedback', progression: 1 }
-                            ]);
-                    }
-                    break;
-                    
-                case 1:
-                    // Agility skills
-                    skillLibrary = skillLibrary.concat([
-                        { name: 'physicalAttacker', progression: 1 },
-                        { name: 'sprinter', progression: 1 },
-                        { name: 'counterattack', progression: 0 },
-                        { name: 'quickToAct', progression: 0 }
-                        ]);
-                    if(level >= 6) {
-                        skillLibrary = skillLibrary.concat([
-                            { name: 'mobileDodge', progression: 0 },
-                            { name: 'interruptAttack', progression: 0 },
-                            { name: 'splitMove', progression: 0 }
-                            ]);
-                    }
-                    break;
-                    
-                case 2:
-                    // Spirit skills
-                    skillLibrary = skillLibrary.concat([
-                        { name: 'energyAttacker', progression: 1 },
-                        { name: 'tireless', progression: 1 },
-                        { name: 'discretion', progression: 0 }
-                        ]);
-                    if(level >= 6) {
-                        skillLibrary = skillLibrary.concat([
-                            { name: 'lineDeflect', progression: 0 },
-                            { name: 'areaShield', progression: 0 },
-                            { name: 'finalAttack', progression: 0 }
-                            ]);
-                    }
-                    break;
-                    
-                case 3:
-                    // Mind skills
-                    skillLibrary = skillLibrary.concat([
-                        { name: 'energyAttacker', progression: 1 },
-                        { name: 'tireless', progression: 1 },
-                        { name: 'nullify', progression: 0 },
-                        { name: 'versatileFighter', progression: 0 }
-                        ]);
-                    if(level >= 11) {
-                        skillLibrary = skillLibrary.concat([
-                            { name: 'battleAnalysis', progression: 0 },
-                            { name: 'exploitWeakness', progression: 0 }
-                            ]);
-                    }
-                    break;
-                    
-                case 4:
-                    // Guts skills
-                    skillLibrary = skillLibrary.concat([
-                        { name: 'toss', progression: 1 }
-                        ]);
-                    break;
-            }
-        });
-        if(type == 'soldier') {
-            skillLibrary = skillLibrary.concat([
-                { name: 'tough', progression: 2 },
-                { name: 'crisis', progression: 1 },
-                { name: 'unmovable', progression: 1 },
-                { name: 'empowerAttack', progression: 0 },
-                { name: 'resistant', progression: 1 },
-                { name: 'ironDefense', progression: 1 }
-                ]);
-        }
-        
-        let skills = [];
-        let skillCount = 1;
-        if(level >= 6) {
-            skillCount++;
-        }
-        if(level >= 11) {
-            skillCount++;
-        }
-        if(highStats.length == 3) {
-            skills.push({ name: 'balancedFighter' });
-            skillCount--;
-        }
-        
-        for(let i = 0; i < skillCount; i++) {
-            let skill = skillLibrary[randomInteger(skillLibrary.length) - 1];
-            let skillLevel = 1;
-            if(skill.progression == 1) {
-                skillLevel = Math.ceil(level / 5);
-            }
-            else if(skill.progression == 2) {
-                skillLevel = Math.ceil(level / 3);
-            }
-            
-            if(!skills.find(function(s) {
-                return s.name == skill.name;
-            })) {
-                skills.push({
-                    name: skill.name,
-                    level: skillLevel
-                });
-            }
-        }
-        
-        let tp = 1;
-        if(type == 'flunky') {
-            tp = 2 + level;
-            if(level > 5)
-                tp += level - 5;
-        } else {
-            tp = 4 + 2 * level;
-            if(level > 5)
-                tp += level - 5;
-            if(level > 15)
-                tp += level - 15;
-        }
-        
-        let techLevels = [Math.min(level + 3, tp)];
-        tp -= techLevels[0];
-        if(tp > 0 && level > 5) {
-            techLevels.push(Math.min(level, tp));
-        }
-        
-        let techStats = highStats.filter(function(s) {
-            return s != 4
-        });
-        
-        let techs = [];
-        techLevels.forEach(function(techLevel) {
-            let techStatId = techStats[randomInteger(techStats.length) - 1];
-            let techStat = '';
-            let modLibrary = [];
-            switch(techStatId) {
-                case 0:
-                    techStat = 'str';
-                    // Strength mods
-                    modLibrary = modLibrary.concat([
-                        { name: 'Reposition 1', tp: 1 },
-                        { name: 'Whirlwind', tp: 1 }
-                        ]);
-                    if(level > 10) {
-                        modLibrary = modLibrary.concat([
-                            { name: 'Reposition 2', tp: 2 },
-                            { name: 'Knock Down', tp: 3 },
-                            { name: 'Ramming', tp: 1 },
-                            { name: 'Rush Attack', tp: 2 }
-                            ]);
-                    }
-                    break;
-                case 1:
-                    techStat = 'agi';
-                    // Agility mods
-                    modLibrary = modLibrary.concat([
-                        { name: 'Dash 1', tp: 1 },
-                        { name: 'Ranged Technique 1', tp: 1 },
-                        { name: 'Whirlwind', tp: 1 }
-                        ]);
-                    if(level > 10) {
-                        modLibrary = modLibrary.concat([
-                            { name: 'Ranged Technique 2', tp: 2 },
-                            { name: 'Dash 2', tp: 2 },
-                            { name: 'Ranged Technique 1\nMultiple Targets 1', tp: 2 },
-                            { name: 'Rush Attack', tp: 2 }
-                            ]);
-                    }
-                    break;
-                case 2:
-                    // Spirit mods
-                    techStat = 'spr';
-                    modLibrary = modLibrary.concat([
-                        { name: 'Line Attack 1', tp: 1 },
-                        { name: 'Ranged Technique 1', tp: 1 },
-                        { name: 'Blast Radius 1', tp: 1 }
-                        ]);
-                    if(level > 10) {
-                        modLibrary = modLibrary.concat([
-                            { name: 'Ranged Technique 2', tp: 2 },
-                            { name: 'Line Attack 2', tp: 2 },
-                            { name: 'Ranged Technique 1\nBlast Radius 1', tp: 2 }
-                            ]);
-                    }
-                    break;
-                case 3:
-                    // Mind mods
-                    techStat = 'mnd';
-                    modLibrary = modLibrary.concat([
-                        { name: 'Line Attack 1', tp: 1 },
-                        { name: 'Ranged Technique 1', tp: 1 },
-                        { name: 'Debilitating Strike', tp: 1 }
-                        ]);
-                    if(level > 10) {
-                        modLibrary = modLibrary.concat([
-                            { name: 'Ranged Technique 2', tp: 2 },
-                            { name: 'Ranged Technique 2\nMultiple Targets 1', tp: 3 },
-                            { name: 'Line Attack 2\nLine Variation 1', tp: 3 },
-                            { name: 'Indirect Attack', tp: 3 }
-                            ]);
-                    }
-                    break;
-            }
-            if(level > 5) {
-                modLibrary = modLibrary.concat([
-                    { name: 'Piercing Strike', tp: 0 },
-                    { name: 'Sapping Strike', tp: 0 },
-                    { name: 'Accurate Strike', tp: techStat == 'agi' ? 2 : 3 }
-                    ]);
-            }
-            
-            let mods = null;
-            let coreLevel = techLevel;
-            if(randomInteger(10) > 3) {
-                mods = modLibrary[randomInteger(modLibrary.length) - 1];
-                coreLevel -= mods.tp;
-            }
-            if(coreLevel > 0) {
-                techs.push( {
-                    stat: techStat,
-                    core: coreLevel,
-                    mods: mods ? mods.name : ''
-                });
-            }
-        });
-        
-        // Create new character, copy over basic stats
-        let newActor = createObj('character', {
-            name: 'New Mook',
-            type: type,
-            level: level
-        });
-        let newActorId = newActor.get('_id');
-        
-        createObj('attribute', {
-            characterid: newActorId, name: 'type', current: type
-        });
-        createObj('attribute', {
-            characterid: newActorId, name: 'level', current: level
-        });
-        createObj('attribute', {
-            characterid: newActorId, name: 'str', current: attributes[0]
-        });
-        createObj('attribute', {
-            characterid: newActorId, name: 'agi', current: attributes[1]
-        });
-        createObj('attribute', {
-            characterid: newActorId, name: 'spr', current: attributes[2]
-        });
-        createObj('attribute', {
-            characterid: newActorId, name: 'mnd', current: attributes[3]
-        });
-        createObj('attribute', {
-            characterid: newActorId, name: 'gut', current: attributes[4]
-        });
-        
-        skills.forEach(function(skill) {
-            let rowId = generateRowID();
-            
-            createObj('attribute', {
-                characterid: newActorId, name: 'repeating_skills_' + rowId + '_skillname', current: skill.name
-            });
-            createObj('attribute', {
-                characterid: newActorId, name: 'repeating_skills_' + rowId + '_skilllevel', current: skill.level
-            });
-        });
-        
-        techs.forEach(function(tech) {
-            let rowId = generateRowID();
-            
-            createObj('attribute', {
-                characterid: newActorId, name: 'repeating_techs_' + rowId + '_tech_name', current: 'Unnamed Technique'
-            });
-            createObj('attribute', {
-                characterid: newActorId, name: 'repeating_techs_' + rowId + '_tech_stat', current: tech.stat
-            });
-            createObj('attribute', {
-                characterid: newActorId, name: 'repeating_techs_' + rowId + '_tech_core', current: 'damage'
-            });
-            createObj('attribute', {
-                characterid: newActorId, name: 'repeating_techs_' + rowId + '_tech_core_level', current: tech.core
-            });
-            createObj('attribute', {
-                characterid: newActorId, name: 'repeating_techs_' + rowId + '_tech_mods', current: tech.mods
-            });
-        });
-        
-        endEvent('!mook');
-    }
-});
-
-// Generates a unique ID that roll20 can parse. I didn't write this.
-function generateUUID() {
-    let a = 0, b = [];
-    let c = (new Date()).getTime() + 0, d = c === a;
-    a = c;
-    for (let e = new Array(8), f = 7; 0 <= f; f--) {
-        e[f] = "-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz".charAt(c % 64);
-        c = Math.floor(c / 64);
-    }
-    c = e.join("");
-    if (d) {
-        for (f = 11; 0 <= f && 63 === b[f]; f--) {
-            b[f] = 0;
-        }
-        b[f]++;
-    } else {
-        for (f = 0; 12 > f; f++) {
-            b[f] = Math.floor(64 * Math.random());
-        }
-    }
-    for (f = 0; 12 > f; f++){
-        c += "-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz".charAt(b[f]);
-    }
-    return c;
-};
-
-function generateRowID() {
-    return generateUUID().replace(/_/g, "Z");
-};
-
 // !set-vrate command
 // Enter !set-vrate X in the chat to make the selected character gain
 // X valor each round.
@@ -4424,17 +4005,83 @@ on('chat:message', function(msg) {
 // Max Value sync function
 // Makes HP and ST move in sync with their max values.
 on('change:attribute', function(obj, prev) {
-    if(obj.get('name') == 'hp' || 
-        obj.get('name') == 'st') {
-        if(prev.max && obj.get('max') && prev.max != obj.get('max')) {
-            let oldMax = parseInt(prev.max);
-            let newMax = parseInt(obj.get('max'));
-            if(oldMax == oldMax && newMax == newMax) {
-                let maxChange = newMax - oldMax;
-                let charId = obj.get('_characterid');
-                updateValueForCharacter(charId, obj.get('name'), maxChange);
-                log(`Max ${obj.get('name')} for character ${charId} changed from ` +
-                    `${oldMax} to ${newMax}, changing value by ${maxChange}`);
+    if(state.maxValueSyncEnabled) {
+        if(obj.get('name') == 'hp' || 
+            obj.get('name') == 'st') {
+            if(prev.max && obj.get('max') && prev.max != obj.get('max')) {
+                let oldMax = parseInt(prev.max);
+                let newMax = parseInt(obj.get('max'));
+                if(oldMax == oldMax && newMax == newMax) {
+                    let maxChange = newMax - oldMax;
+                    let charId = obj.get('_characterid');
+                    updateValueForCharacter(charId, obj.get('name'), maxChange);
+                    log(`Max ${obj.get('name')} for character ${charId} changed from ` +
+                        `${oldMax} to ${newMax}, changing value by ${maxChange}`);
+                }
+            }
+        }
+    }
+});
+
+// Max Value sync function
+// Makes HP and ST move in sync with their max values.
+on('change:graphic', function(obj, prev) {
+    if(state.sheetSyncEnabled) {
+        const tokenId = obj.get('_id');
+        const oldActorId = prev.represents;
+        const newActorId = obj.get('represents');
+        let newAttrs = filterObjs(function(obj) {
+            return obj.get('_type') == 'attribute' &&
+                obj.get('characterid') == newActorId &&
+                (obj.get('name') == 'hp' || obj.get('name') == 'st' || obj.get('name') == 'valor');
+        });
+        if(oldActorId && newActorId && oldActorId != newActorId) {
+            log(`Token changed from ${prev.represents} to ${obj.get('represents')}, applying bar updates`);
+
+            let oldHealth = {
+                link: prev.bar1_link,
+                value: parseInt(prev.bar1_value),
+                max: parseInt(prev.bar1_max)
+            };
+            let newHealth = {
+                link: obj.get('bar1_link'),
+                value: parseInt(getAttrByName(newActorId, 'hp')),
+                max: parseInt(getAttrByName(newActorId, 'hp', 'max'))
+            };
+            
+            let oldStamina = {
+                link: prev.bar2_link,
+                value: parseInt(prev.bar2_value),
+                max: parseInt(prev.bar2_max)
+            };
+            let newStamina = {
+                link: obj.get('bar2_link'),
+                value: parseInt(getAttrByName(newActorId, 'st')),
+                max: parseInt(getAttrByName(newActorId, 'st', 'max'))
+            };
+            
+            let oldValor = prev.bar3_value;
+            
+            if(oldHealth.link) {
+                newHealth.link = newAttrs.find(a => a.get('name') =='hp').get('_id');
+                const maxHpChange = newHealth.max - oldHealth.max;
+                newHealth.value = oldHealth.value + maxHpChange;
+                
+                newStamina.link = newAttrs.find(a => a.get('name') =='st').get('_id');
+                const maxStChange = newStamina.max - oldStamina.max;
+                newStamina.value = oldStamina.value + maxStChange;
+                
+                let valorLink = newAttrs.find(a => a.get('name') =='valor').get('_id');
+                
+                obj.set('bar1_link', newHealth.link);
+                obj.set('bar2_link', newStamina.link);
+                obj.set('bar3_link', valorLink);
+                setTimeout(function() {
+                    let token = getObj('graphic', tokenId)
+                    token.set('bar1_value', newHealth.value);
+                    token.set('bar2_value', newStamina.value);
+                    token.set('bar3_value', oldValor);
+                }, 1000);
             }
         }
     }
