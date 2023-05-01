@@ -192,3 +192,6 @@ v1.7.0 (3/28/2023):
 - Max HP/ST auto-update when character changes.
 - Removed !mook command.
 - Added more logging.
+
+v1.7.1 (5/1/2023):
+- New: !unmo command.

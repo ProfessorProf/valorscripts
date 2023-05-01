@@ -101,6 +101,11 @@ Syntax: `!di`
 
 Shows you (and only you) the Damage Increment values of everyone on the current map.
 
+### Show Unmovable
+Syntax: `!unmo`
+
+Shows you (and only you) which characters on the current map have the skill Unmovable and at what level.
+
 ### Roll Initiative
 Syntax: `!init`
 

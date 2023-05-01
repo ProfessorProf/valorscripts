@@ -3513,6 +3513,50 @@ on('chat:message', function(msg) {
     }
 });
 
+// !unmo command
+// Displays defense and resistance for all active characters.
+on('chat:message', function(msg) {
+    if(msg.type == 'api' && msg.content.indexOf('!unmo') == 0
+        && playerIsGM(msg.playerid)) {
+        startEvent('!unmo');
+        
+        // Get list of tokens
+        let page = Campaign().get('playerpageid');
+        let allTokens = findObjs({_type: 'graphic', layer:'objects', _pageid: page});
+        let actorIds = [];
+        let tokens = [];
+        
+        allTokens.forEach(function(token) {
+            let actorId = token.get('represents');
+            if(actorId && actorIds.indexOf(actorId) == -1) {
+                log('Adding ' + token.get('name') + ' to token list');
+                actorIds.push(actorId);
+                tokens.push(token);
+            }
+        });
+
+        let message = '';
+        tokens.forEach(function(token) {
+            let actorId = token.get('represents');
+            let actor = getObj('character', actorId);
+            
+            if(actor) {
+                let unmovable = getSkill(charId, 'unmovable');
+                if(unmovable) {
+                    let actorName = actor.get('name');
+                    if(message.length > 0) {
+                        message += '<br />';
+                    }
+                    message += `${actorName}: Unmovable level **${unmovable.level}**`;
+                }
+            }
+        });
+        
+        sendChat('Valor', '/w gm <div>' + message + '</div>');
+        endEvent('!unmo');
+    }
+});
+
 // !crit command
 // Shows critical hit damage for previously-used technique.
 on('chat:message', function(msg) {
