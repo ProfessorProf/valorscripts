@@ -195,3 +195,11 @@ v1.7.0 (3/28/2023):
 
 v1.7.1 (5/1/2023):
 - New: !unmo command.
+
+v1.8.0 (11/30/2024):
+- Bugfix: Shields now give the correct amount of shielding.
+- New: Sapping techniques automatically calculate ongoing damage.
+- New: Shield fields in the bonuses section.
+- New: Shields automatically reduce incoming damage.
+- New: Buttons to display/roll Skills/Flaws.
+- New: Skill/Flaw notes are automatically populated.

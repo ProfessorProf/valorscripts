@@ -485,6 +485,58 @@ select.sheet-number-select {
     line-height: 170%
 }
 
+.sheet-rolltemplate-skill .sheet-outer {
+    font-family: "Segoe UI",Frutiger,"Frutiger Linotype","Dejavu Sans","Helvetica Neue",Arial,sans-serif;
+    color: #757437;
+    background-color: #D4D1C1;
+    margin-left: 8px;
+    padding-left: 5px;
+    padding-bottom: 3px;
+}
+
+.sheet-rolltemplate-skill .sheet-header {
+    position: relative;
+    border: 3px solid #757437;
+    color: black;
+    left: -11px;
+    font-weight: bold;
+    font-size: 11pt;
+    background-color: white;
+    padding: 3px;
+    display: inline-block;
+    border-radius: 3px;
+}
+
+.sheet-rolltemplate-skill .sheet-roll {
+    line-height: 170%
+}
+
+.sheet-rolltemplate-flaw .sheet-outer {
+    font-family: "Segoe UI",Frutiger,"Frutiger Linotype","Dejavu Sans","Helvetica Neue",Arial,sans-serif;
+    color: #730A18;
+    background-color: #e5d4cf;
+    margin-left: 8px;
+    padding-left: 5px;
+    padding-bottom: 3px;
+}
+
+.sheet-rolltemplate-flaw .sheet-header {
+    position: relative;
+    border: 3px solid #730A18;
+    color: black;
+    left: -11px;
+    font-weight: bold;
+    font-size: 11pt;
+    background-color: white;
+    padding: 3px;
+    display: inline-block;
+    border-radius: 3px;
+}
+
+.sheet-rolltemplate-flaw .sheet-roll {
+    line-height: 170%
+}
+
 div.sheet-tab-content { display: none; }
 
 /* Tabbed container */
