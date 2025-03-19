@@ -1,5 +1,5 @@
 /**
- * VALOR API SCRIPTS v1.8.0
+ * VALOR API SCRIPTS v1.8.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -2278,6 +2278,7 @@ on('chat:message', function(msg) {
                         }
                         // Create the Crit button
                         finalDamage = Math.max(0, critDamage - defRes);
+                        damagePhrase = `${finalDamage} ${damageType}`;
                         if(finalDamage > 0) {
                             hiddenRollText += ` <a href="${applyCommand} -d ${damagePhrase}${effectPhrase}" style="padding:3px">Crit</a>`;
                         }
@@ -2572,8 +2573,10 @@ on('chat:message', function(msg) {
                     if(currentShield < shieldPower) {
                         let shieldAttrs = filterObjs(function(obj) {
                             return obj.get('_type') == 'attribute' &&
-                                   obj.get('name') == shieldAttribute;
+                                   obj.get('name') == shieldAttribute &&
+                                   obj.get('_characterid') == charId;
                         });
+                        
                         if(shieldAttrs && shieldAttrs.length > 0) {
                             let shield = shieldAttrs[0];
                             if(shield) {
@@ -2909,7 +2912,7 @@ on('chat:message', function(msg) {
                 }
             }
             
-            if(shield.get('current') > 0) {
+            if(shield && shield.get('current') > 0) {
                 if(damage > shield.get('current')) {
                     damage -= shield.get('current');
                     shieldDamage = shield.get('current');
@@ -4373,6 +4376,8 @@ function processOngoingEffects(turnOrder) {
             lastChar = getObj('graphic', lastCharId);
         }
     }
+    
+    lastCharId = lastChar.get('_id')
     
     // Update HP or ST
     let parts = effectChar.custom.split(' ');
