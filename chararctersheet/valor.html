@@ -1,14 +1,20 @@
 <script type="text/worker">
 
     /**
-     * VALOR CHARACTER SHEET v1.8.1
+     * VALOR CHARACTER SHEET v1.8.1-Neko1
      *
+     * Differences from Mainline:
+     * - Implements Basic Attack "Limit" for house rule use (sets Stamina cost to 0) 
+     * - Implements Free Technique Modifier, which hard-sets the TP Cost to 0 (but changes nothing else)
+     * 
      * Installation Instructions:
      * - Be a Roll20 Pro user.
      * - From your game's main screen, go to Game Settings.
      * - Under Character Sheet Template, select Custom.
      * - Copy the contents of valor.html into the HTML Layout tab.
      * - Copy the contents of valor.css into the CSS Styling tab.
+     * - Turn on Legacy Sanitization, click 'Save Changes'
+     * - Go to Mod (API) Settings
      *
      * Usage:
      * - For Boosts, Weakens, or other techniques that grant skills or flaws, list
@@ -142,8 +148,7 @@
         { cost: 5,  levelUp: 0, speed: 0, id: 'spiritSight', namePattern: '^spirit sight', description: "While active, you can see invisible and concealed targets, and can always tell clones from the original." },
         { cost: 5,  levelUp: 2, speed: 1, id: 'toss', namePattern: '^toss', description: "Move an ally in your Zone of Control up to 4 spaces." },
         { cost: 6,  levelUp: 0, speed: 0, rollStats: ['int'], id: 'battleAnalysis', namePattern: '^battle analysis', description: "On success, may choose once later to gain +5 to a defense roll against the target's attacks." },
-        { cost: 6,  levelUp: 3, speed: 1, id: 'clone', namePattern: '^clone$', description: "Create a clone, who can use techniques in your place. If it's attacked, the clone is destroyed." },
-        { cost: 4,  levelUp: 0, speed: 0, rollStats: ['int', 'aur'], id: 'effectCapture', namePattern: '^effect capture', description: "On success, take control of a Boost, Weaken, Attack Node, Portal, Refraction Point, or Persistent effect." },
+        { cost: 6,  levelUp: 3, speed: 1, id: 'clone', namePattern: '^clone$', description: "Create a clone, who can use techniques in your place. If it's attacked, the clone is destroyed." },        { cost: 4,  levelUp: 0, speed: 0, rollStats: ['int', 'aur'], id: 'effectCapture', namePattern: '^effect capture', description: "On success, take control of a Boost, Weaken, Attack Node, Portal, Refraction Point, or Persistent effect." },
         { cost: 4,  levelUp: 0, speed: 0, id: 'healthTransference', namePattern: '^health transfer', description: "Lose a Health Increment; target ally within 5 spaces gains a Health Increment." },
         { cost: 6,  levelUp: 3, speed: 2, id: 'portal', namePattern: '^portal$', description: "Create a portal within 5 spaces; all spaces containing portals are adjacent." },
         { cost: 4,  levelUp: 2, speed: 2, id: 'refractionPoint', namePattern: '^refraction point', description: "Create a Refraction Point within 5 spaces; if a technique hits it, you can target the technique again originating from that point." },
@@ -1355,6 +1360,7 @@
                             techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_core_level');
                             techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_mod_level');
                             techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_core');
+                            techFieldNames.push('repeating_techs_' + tidarray[i] + '_tech_mods');
                         }
 
                         getAttrs(techFieldNames, function(techValues) {
@@ -1386,6 +1392,10 @@
                                 if(techValues['repeating_techs_' + tidarray[i] + '_tech_mod_level']) {
                                     techModsLevel = parseInt(techValues['repeating_techs_' + tidarray[i] + '_tech_mod_level']);
                                 }
+                                let isFree = false;
+                                if(techValues['repeating_techs_' + tidarray[i] + '_tech_mods'].toLowerCase().includes("free technique")) {
+                                    isFree = true;
+                                }
 
                                 let spentTP = techModsLevel + techCoreLevel;
 
@@ -1399,6 +1409,11 @@
                                     // Use the next Ult to offset the TP cost
                                     spentTP -= ults[0];
                                     ults.splice(0,1);
+                                }
+
+                                if(isFree == true) {
+                                    log('Free Technique Detected!');
+                                    spentTP = 0;
                                 }
 
                                 if(spentTP > 0) {
@@ -1474,6 +1489,7 @@
             if(techBonus) {
                  techCommand += ' +@{tech_bonus}';
             }
+
             if(techTargets > 0 && hasTargets) {
                 techCommand += ' --targets'
                 for(let j = 0; j < techTargets; j++) {
@@ -2219,7 +2235,10 @@
                 } else if(mod.indexOf('touch of mal') == 0) {
                     summary += "Whenever you hit a target with a Damage or Weaken tech in this form, they gain 1 Malevolence. ";
                     totalModLevel += 6;
-                } else if(mod.indexOf('continuous r') == 0) {
+                } else if(mod.indexOf('free technique' == 0)) {
+                    summary += "Technique TP Cost set to 0.";
+                } 
+                else if(mod.indexOf('continuous r') == 0) {
                     // Add nothing, already explained in core description
                 } else if(mod.length > 0) {
                     warnings.push(`Unrecognized Modifier '${mod}'.`);
@@ -2245,6 +2264,7 @@
             let limitSummary = '';
             let limitSt = 0;
             let limits = techLimits.split('\n');
+            let isBasic = false;
             limits.forEach(function(limit) {
                 // Try to get the level
                 let split = limit.split(' ');
@@ -2466,6 +2486,9 @@
                 } else if(limit.indexOf('water') == 0) {
                     limitSummary += "Can only be used underwater. ";
                     limitSt += 3;
+                } else if(limit.indexOf('basic attack') == 0) {
+                    //limitSummary += "This is a Basic Attack.";
+                    isBasic = true;
                 } else if(limit.length > 0 &&
                           limit.indexOf('slow') == -1 &&
                           limit.indexOf('grant') == -1) {
@@ -2477,14 +2500,23 @@
             if((core || techCore == 'custom') && techCore != 'mimic' && techCore != 'ultMimic') {
                 if(techCore == 'custom') {
                     cost = techCustomCost;
-                } else {
+                } else if (isBasic == true) {
+                    cost = 0;
+                } 
+                else {
                     cost = core.cost + core.levelUp * (techCoreLevel + totalModLevel) - limitSt;
                 }
                 if(cost < 0) {
                     cost = 0;
                 }
 
-                summary += 'Costs ' + cost + ' Stamina. '
+                if (isBasic == true) {
+                    summary += 'This is a Basic Attack, costing 0 Stamina.';
+                }
+                else { 
+                    summary += 'Costs ' + cost + ' Stamina. ';
+                }
+                
             }
             summary += limitSummary;
 
@@ -2703,21 +2735,35 @@
         });
     }
 
+     
+
     // Fix any null shield values    
+ 
+
     function calculateShields(skillId) {
+ 
+
         log('VALOR - Recalculating Shields');
+ 
+
+
+ 
 
         let fieldNames = ['pshield', 'eshield', 'vshield'];
+ 
+
+
+ 
 
         getAttrs(fieldNames, function(fieldValues) {
             var pshield = fieldValues['pshield'];
             var eshield = fieldValues['eshield'];
             var vshield = fieldValues['vshield'];
-            
+ 
             if(!pshield) pshield = 0
             if(!eshield) eshield = 0
             if(!vshield) vshield = 0
-            
+ 
             setAttrs({
                 pshield: pshield,
                 eshield: eshield,
