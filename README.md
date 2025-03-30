@@ -1,4 +1,16 @@
+# Valor Scripts - NekoMod
+
+This is a slightly modified version of the Valor Scripts developed by Quinn Gordon, implementing a few mods specific for games run by a few of NekoIncardine's friends.
+
+To wit:
+- It implements a "Basic Attack" limit, which zeroes out the Stamina cost. It's intended for a Basic Attacks houserule derived from Valor Alter (also by Quinn Gordon).
+- It implements a "Free Technique" modifier, which zeroes out the Technique Point cost. It's intended for things like picking weapons up off the floor, akin to the Valor Fighting Game rules.
+
+Future objectives in scope include:
+- Extending the sheet with a dedicated page for Challenge Points from Tools of the Trade
+
 # Valor Script Repository
+
 These files should help you run Valor games on Roll20 with a minimum of pain and a maximum of fun streamlining quality-of-life features.
 
 The files here are split into two sub-projects - Scripts, and Character Sheet.
