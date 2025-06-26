@@ -1,7 +1,7 @@
 <script type="text/worker">
 
     /**
-     * VALOR CHARACTER SHEET v1.8.1
+     * VALOR CHARACTER SHEET v1.9.0
      *
      * Installation Instructions:
      * - Be a Roll20 Pro user.
@@ -142,7 +142,7 @@
         { cost: 5,  levelUp: 0, speed: 0, id: 'spiritSight', namePattern: '^spirit sight', description: "While active, you can see invisible and concealed targets, and can always tell clones from the original." },
         { cost: 5,  levelUp: 2, speed: 1, id: 'toss', namePattern: '^toss', description: "Move an ally in your Zone of Control up to 4 spaces." },
         { cost: 6,  levelUp: 0, speed: 0, rollStats: ['int'], id: 'battleAnalysis', namePattern: '^battle analysis', description: "On success, may choose once later to gain +5 to a defense roll against the target's attacks." },
-        { cost: 6,  levelUp: 3, speed: 1, id: 'clone', namePattern: '^clone$', description: "Create a clone, who can use techniques in your place. If it's attacked, the clone is destroyed." },
+        { cost: 6,  levelUp: 0, speed: 1, id: 'clone', namePattern: '^clone$', description: "Create a clone, who can use techniques in your place. If it's attacked, the clone is destroyed." },
         { cost: 4,  levelUp: 0, speed: 0, rollStats: ['int', 'aur'], id: 'effectCapture', namePattern: '^effect capture', description: "On success, take control of a Boost, Weaken, Attack Node, Portal, Refraction Point, or Persistent effect." },
         { cost: 4,  levelUp: 0, speed: 0, id: 'healthTransference', namePattern: '^health transfer', description: "Lose a Health Increment; target ally within 5 spaces gains a Health Increment." },
         { cost: 6,  levelUp: 3, speed: 2, id: 'portal', namePattern: '^portal$', description: "Create a portal within 5 spaces; all spaces containing portals are adjacent." },
@@ -1739,6 +1739,7 @@
                     }
                     shield += 12 + 4 * techCoreLevel;
                     if(techValues.type == 'flunky' || techValues.type == 'soldier') shield = Math.ceil(shield / 2);
+                    
                     switch(techShieldType) {
                         case 'energy':
                             summary += `Grants the target an energy shield with ${shield} HP.`;
@@ -3255,6 +3256,7 @@
                             <option value="counterattack">Counterattack (6)</option>
                             <option value="cover">Cover (6/2)</option>
                             <option value="crisis">Crisis (4/2)</option>
+                            <option value="curseResistance">Curse Resistance (6)</option>
                             <option value="dangerSense">Danger Sense (3)</option>
                             <option value="darkHealing">Dark Healing (5)</option>
                             <option value="darksight">Darksight (4)</option>
