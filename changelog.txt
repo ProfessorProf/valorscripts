@@ -203,3 +203,18 @@ v1.8.0 (11/30/2024):
 - New: Shields automatically reduce incoming damage.
 - New: Buttons to display/roll Skills/Flaws.
 - New: Skill/Flaw notes are automatically populated.
+
+v1.8.1-Neko1 (3/29/2025):
+- New: Added "Basic Attack" 'Limit', which sets Stamina cost for a technique to 0.
+- New: Added "Free Technique" 'Modifier', which sets Technique Point cost for a technique to 0 (think temporary weapon pickups).
+
+v1.9.0 (6/26/2025):
+- Bugfix: Shields didn't work in various ways.
+- New: Apply button usable for boosts and weakens.
+- New: Automated defense roll buttons.
+
+v1.9.0-Neko1 (6/28/2025)
+- Implements all changes from master branch 1.9.0
+- New: Proficiencies Tab, implementing the Challenge Points variant from Valor: Tools of the Trade's drafts.
+- New: Proficiencies options "Custom Proficiency", "General Proficiency", "Specialized Proficiency", 
+    and "Basic/Conversational/Fluent/Mastered Language".
