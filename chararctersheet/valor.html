@@ -1,11 +1,11 @@
 <script type="text/worker">
-
     /**
-     * VALOR CHARACTER SHEET v1.8.1-Neko1
+     * VALOR CHARACTER SHEET v1.9.0-Neko1
      *
      * Differences from Mainline:
      * - Implements Basic Attack "Limit" for house rule use (sets Stamina cost to 0) 
      * - Implements Free Technique Modifier, which hard-sets the TP Cost to 0 (but changes nothing else)
+     * - Implements Proficiencies Tab, an implementation of the Challenge Skills tab from Valor: Tools of the Trade
      * 
      * Installation Instructions:
      * - Be a Roll20 Pro user.
@@ -280,6 +280,40 @@
         { cost: 0, levelUp: 3, id: 'ultTransform' },
         { cost: 0, levelUp: 3, id: 'ultMimic' },
         { cost: 3, levelUp: 3, id: 'domain' }
+    ];
+
+    // Speed 0 = Max Level is 1, i.e. not a skill that levels. (Fixed)
+    // Speed 1 = Max Level equal to Season. (Fast)
+    // Speed 2 = Max Level equal to 1/3rd of level round up. (Slow)
+    // Speed 3 = Max Level equal to 100, i.e. basically unlimited. (Custom proficiency)
+    let proficiencyLibrary = [
+        { cost: 1, levelUp: 1, speed: 3, id: 'customProficiency',
+            namePattern: '^custom Proficiency'
+        },
+        { cost: 2, levelUp: 2, speed: 1, id: 'generalProficiency',
+            namePattern: '^general Proficiency',
+            description: "+(Level) to all rolls for a Challenge Action category."
+        },
+        { cost: 1, levelUp: 1, speed: 1, id: 'specializedProficiency',
+            namePattern: '^specialized Proficiency',
+            description: "+(Level) to all rolls for a specific Challenge Action."
+        },
+        { cost: 1, levelUp: 0, speed: 0, id: 'basicLanguage',
+            namePattern: '^basic Language',
+            description: "You have basic proficiency with a language - critical questions and answers."
+        },
+        { cost: 2, levelUp: 0, speed: 0, id: 'conversationalLanguage',
+            namePattern: '^converstational Language',
+            description: "You have reasonable proficiency with a language - basic conversations and communication."
+        },
+        { cost: 3, levelUp: 0, speed: 0, id: 'fluentLanguage',
+            namePattern: '^fluent Language',
+            description: "You are fluent with a language - comparable to native speaker."
+        },
+        { cost: 4, levelUp: 0, speed: 0, id: 'masterLanguage',
+            namePattern: '^mastered Language',
+            description: "You have mastered a language - specialized vocabulary, structures, and idiosyncracies."
+        }
     ];
 
     function calculateBaseAttributes() {
@@ -1277,6 +1311,92 @@
         });
     }
 
+    function calculateProficiencies() {
+        log('VALOR - Recalculating Proficiencies');
+        getAttrs(['level', 'type'], function(values) {
+            var level = parseInt(values.level);
+            var maxPP = 4 + 2 * level;
+            var unspentPP = maxPP;
+            var proficiencyInvestment = 0;
+
+            // Other vars TBD
+            // TODO: Add a Proficiency Investment skill to Skills; scan for it and add proficiencyInvestment here.
+
+            maxPP += proficiencyInvestment;
+            unspentPP += proficiencyInvestment;
+
+            var proficiencyFieldNames = [];
+            getSectionIDs('repeating_proficiencies', function(idarray) {
+                log('VALOR - beginning Proficiency Calculations loop. idarray Length: ' + idarray.length);
+                for (var i=0; i < idarray.length; i++) {
+                    proficiencyFieldNames.push('repeating_proficiencies_' + idarray[i] + '_profname');
+                    proficiencyFieldNames.push('repeating_proficiencies_' + idarray[i] + '_proflevel');
+                }
+
+                log('VALOR - Proficiency Field Names Length:' + proficiencyFieldNames.length);
+
+                getAttrs(proficiencyFieldNames, function(proficiencyValues) {
+                    var profPP = 0;
+                    for (var i = 0; i < idarray.length; i++) {
+                        var warning = ' ';
+                        var profName = proficiencyValues['repeating_proficiencies_' + idarray[i] + '_profname'];
+                        if(!profName) { 
+                            profName = 'customProficiency'; 
+                        }
+                        var profLevel = 1;
+                        if (proficiencyValues['repeating_proficiencies_' + idarray[i] + '_proflevel']) {
+                            profLevel = parseInt(proficiencyValues['repeating_proficiencies_' + idarray[i] + '_proflevel']);
+                        }
+
+                        var proficiency = proficiencyLibrary.find(function(p) {
+                            return p.id == profName;
+                        });
+
+                        if(proficiency) {
+                            var profMaxLevel = 1;
+                            switch(proficiency.speed) {
+                                case 1:
+                                    profMaxLevel = Math.ceil(level / 5);
+                                    break;
+                                case 2:
+                                    profMaxLevel = Math.ceil(level / 3);
+                                    break;
+                                case 3:
+                                    profMaxLevel = 100; // Custom or Unlimited
+                                    break;
+                            }
+
+                            if (profLevel > profMaxLevel) {
+                                warning = 'Warning: Level cap for this Proficiency is ' + profMaxLevel + '.';
+                            }
+
+                            var profAttrs = {};
+                            profAttrs['repeating_proficiencies_' + idarray[i] + '_warning'] = warning;
+                            setAttrs(profAttrs, {silent: true});
+                            
+                            var proficiencyCost = proficiency.cost + ((profLevel - 1) * proficiency.levelUp);
+
+                            log('VALOR - Proficiency Name: ' + profName + ' - Cost: ' + 
+                                proficiencyCost
+                            );
+
+                            unspentPP -= proficiencyCost;
+                        }
+                    } // End for loop; proficiency costs calculated, warnings applied.
+
+                    log('VALOR - completed Proficiency Calculations loop, PP is ' + unspentPP + ' / ' + maxPP);
+                    // Set attributes
+                    setAttrs({
+                        unspentProficiencyPoints: unspentPP,
+                        maxProficiencyPoints: maxPP
+                    });
+                });
+            });
+        });
+
+
+    }
+
     function calculateTP() {
         log('VALOR - Recalculating Unspent TP');
         getAttrs(['level', 'type'], function(values) {
@@ -1755,6 +1875,7 @@
                     }
                     shield += 12 + 4 * techCoreLevel;
                     if(techValues.type == 'flunky' || techValues.type == 'soldier') shield = Math.ceil(shield / 2);
+                    
                     switch(techShieldType) {
                         case 'energy':
                             summary += `Grants the target an energy shield with ${shield} HP.`;
@@ -1847,6 +1968,7 @@
             // Display mods
             let totalModLevel = 0;
             let mods = techMods.split('\n');
+            let isFree = false;
             mods.forEach(function(mod) {
                 // Try to get the level
                 let split = mod.split(' ');
@@ -2735,25 +2857,35 @@
         });
     }
 
-     
+    function calculateProficiency(profId) {
+        log('VALOR - Recalculating Proficiency ID ' + profId);
+
+        let proficiencyFieldNames = [];
+        proficiencyFieldNames.push(`repeating_proficiencies_${profId}_profname`);
+
+        getAttrs(proficiencyFieldNames, function(proficiencyValues) {
+            let profName = proficiencyValues[`repeating_proficiencies_${profId}_profname`];
+            let proficiency = proficiencyLibrary.find(function(s) {
+                return s.id = profName;
+            });
+
+            let attrs = [];
+            if(proficiency.description) {
+                attrs[`repeating_proficiencies_${profId}_profnotes`] = proficiency.description;
+            }
+
+            setAttrs(attrs, {silent: true});
+        });
+    }
 
     // Fix any null shield values    
  
 
     function calculateShields(skillId) {
  
-
         log('VALOR - Recalculating Shields');
- 
-
-
- 
 
         let fieldNames = ['pshield', 'eshield', 'vshield'];
- 
-
-
- 
 
         getAttrs(fieldNames, function(fieldValues) {
             var pshield = fieldValues['pshield'];
@@ -2771,6 +2903,8 @@
             }, { silent: true });
         });
     }
+
+    // BEGIN Event Handlers
     
     on("clicked:repeating_skills:useskill", function(eventInfo) {
         // Check the current value of the hidden attribute.
@@ -2899,6 +3033,11 @@
         calculateFlawsAndSkills();
     });
 
+    on('change:level change:type change:repeating_proficiencies remove:repeating_proficiencies ', 
+            function() {
+        calculateProficiencies();
+    });
+
     on('change:type change:repeating_skills remove:repeating_skills', function() {
         calculateBonuses();
     });
@@ -2938,6 +3077,12 @@
         calculateFlaw(flawId);
     });
 
+    on('change:repeating_proficiencies:profname', function(eventInfo) {
+        //log('VALOR - Change to Proficiency Name, new name: ' + eventInfo.sourceAttribute.substring(24, 44));
+        var profId = eventInfo.sourceAttribute.substring(24, 44);
+        calculateProficiency(profId);
+    });
+
     on('sheet:opened', function() {
         // Update attributes
         calculateBaseAttributes();
@@ -2951,6 +3096,7 @@
         calculateDamageIncrement();
         calculateInitiative();
         calculateFlawsAndSkills();
+        calculateProficiencies();
         calculateBonuses();
         calculateTP();
         calculateShields();
@@ -2967,9 +3113,10 @@
 
 <div class="sheet-container">
     <!-- Tabs -->
-    <input type="radio" name="attr_tab" class="sheet-tab sheet-tab1" value="1" checked="checked"><span title="Attributes"></span>
-    <input type="radio" name="attr_tab" class="sheet-tab sheet-tab2" value="2"><span title="Skills & Flaws"></span>
-    <input type="radio" name="attr_tab" class="sheet-tab sheet-tab3" value="3"><span title="Techniques"></span>
+    <input type="radio" name="attr_tab" class="sheet-tab sheet-tab1" value="1" checked="checked"/><span title="Attributes"></span>
+    <input type="radio" name="attr_tab" class="sheet-tab sheet-tab2" value="2"/><span title="Skills & Flaws"></span>
+    <input type="radio" name="attr_tab" class="sheet-tab sheet-tab3" value="3"/><span title="Techniques"></span>
+    <input type="radio" name="attr_tab" class="sheet-tab sheet-tab4" value="4"/><span title="Proficiencies"></span>
 
     <div class="sheet-tab-content sheet-tab1">
         <!-- Sheet header -->
@@ -3702,11 +3849,45 @@
         <div class="unspent-tp"><span name="attr_unspentTP"></span> TP UNSPENT</div>
     </div>
 
+    <div class="sheet-tab-content sheet-tab4">
+        <div class="proficiencies-header">PROFICIENCIES</div>
+
+        <fieldset class="repeating_proficiencies">
+            <div class="proficiency">
+                <div class="proficiency-upper">
+                    <select class="proficiency-picker" name="attr_profname" selected="customProficiency">
+                        <option value="customProficiency">Custom Proficiency</option>
+                        <option value="generalProficiency">General Proficiency (2/2, Slow)</option>
+                        <option value="specializedProficiency">Specialized Proficiency (1/1, Slow)</option>
+                        <option value="basicLanguage">Basic Language (1)</option>
+                        <option value="conversationalLanguage">Conversational Language (2)</option>
+                        <option value="fluentLanguage">Fluent Language (3)</option>
+                        <option value="masterLanguage">Mastered Language (4)</option>
+                    </select>
+
+                    <span class="label">Level</span>
+                    <input class="proficiency-level" type="number" name="attr_proflevel" value="1"/>
+                    <span name="attr_warning"></span>
+                    <button class="prof-button" type="action" name="act_useprof">Use</button>
+                </div>
+                <span class="label">Notes</span> 
+                <input class="notes" type="text" name="attr_profnotes" />
+            </div>
+            <div class="proficiency-background"> </div>
+        </fieldset>
+
+        <div class="unspent-pp">
+            <span name="attr_unspentProficiencyPoints"> </span> /  
+            <span name="attr_maxProficiencyPoints"> </span>
+            CHALLENGE POINTS UNSPENT
+        </div>
+    </div>
+
 </div>
 
 <br />
 
-<div>
+<div> <!-- Level Up Sheet Section -->
     <input type="checkbox" class="conditional-check" name="attr_is_duplicate">
     <div class="tech-block conditional-block">
         <button type='roll' value='!d-finalize @{character_id}' name='roll_resolve'>Finalize Level-up</button>
@@ -3755,6 +3936,25 @@
 </rolltemplate>
 
 <rolltemplate class="sheet-rolltemplate-flaw">
+    <div class="outer">
+        <div class="header">
+            {{name}}
+        </div>
+        {{#roll}}
+        <br />
+        <div class="roll">
+            {{roll}}
+        </div>
+        {{/roll}}
+        {{#summary}}
+        <div>
+            {{summary}}
+        </div>
+        {{/summary}}
+    </div>
+</rolltemplate>
+
+<rolltemplate class="sheet-rolltemplate-challenge">
     <div class="outer">
         <div class="header">
             {{name}}
