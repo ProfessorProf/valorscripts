@@ -186,6 +186,15 @@ select {
     margin: 10px 0 20px; 
 }
 
+.sheet-unspent-pp {
+    width: 100%; 
+    color: #3e11e0;
+    text-align: right;
+    font-size: 12pt;
+    font-weight: bold;
+    margin: 10px 0 20px; 
+}
+
 hr {
     display: block;
     height: 1px;
@@ -438,6 +447,60 @@ select.sheet-number-select {
     margin-bottom: 8px;
 }
 
+/* Proficiencies */
+
+.sheet-proficiencies-header {
+    color: #3e11e0;
+    text-align: center;
+    font-size: 24pt;
+    font-weight: bold;
+    letter-spacing: 10px;
+    margin-bottom: 20px;
+    margin-top: 20px;
+}
+
+.sheet-proficiency {
+    color: #3e11e0;
+    background-color: #a094df;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    margin-left: 8px;
+    padding-left: 4px;
+    width: 95%;
+}
+
+.sheet-proficiency select {
+    color: black;
+}
+
+.sheet-proficiency-upper {
+    padding-left: -5px;
+    padding-bottom: 5px;
+    align-items: center;
+}
+
+.sheet-proficiency-picker {
+    border: 3px solid #3e11e0;
+    border-radius: 0;
+    position: relative;
+    color: black;
+    top: -8px;
+    left: -8px;
+}
+
+.sheet-proficiency-level {
+    border-color: #3e11e0;
+    border-width: 2px;
+    border-radius: 0;
+    border-style: solid;
+    background-color: #a094df;
+    padding-bottom: 0px;
+    color: #3e11e0;
+    text-align: right;
+    font-weight: bold;
+}
+
+
 /* Conditionals */
 
 .sheet-conditional-check {
@@ -543,7 +606,8 @@ div.sheet-tab-content { display: none; }
 
 input.sheet-tab1:checked ~ div.sheet-tab1,
 input.sheet-tab2:checked ~ div.sheet-tab2,
-input.sheet-tab3:checked ~ div.sheet-tab3 { display: block; }
+input.sheet-tab3:checked ~ div.sheet-tab3,
+input.sheet-tab4:checked ~ div.sheet-tab4 { display: block; }
 
 input.sheet-tab {
     width: 150px;
@@ -582,8 +646,9 @@ input.sheet-tab:checked + span::before {
 }
 
 input.sheet-tab2 + span::before { left: 181px; }
-
 input.sheet-tab3 + span::before { left: 331px; }
+input.sheet-tab4 + span::before { left: 501px; }
+
 div.sheet-tab-content {
     border: 2px solid #bababa;
     margin: 2px 0 0 0;
