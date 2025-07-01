@@ -1,5 +1,5 @@
 /**
- * VALOR API SCRIPTS v1.9.0
+ * VALOR API SCRIPTS v1.9.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -501,7 +501,8 @@ function resetValor(charId, skills, flaws) {
 // Resets all bonus fields for all characterse
 function resetBonuses() {
     let bonusList = ['rollbonus', 'atkrollbonus', 'defrollbonus',
-                     'patkbonus', 'eatkbonus', 'defensebonus', 'resistancebonus'];
+                     'patkbonus', 'eatkbonus', 'defensebonus', 'resistancebonus',
+                     'pshield', 'eshield', 'vshield'];
     bonusList.forEach(function(b) {
         let bonuses = filterObjs(function(obj) {
             return obj.get('_type') == 'attribute' &&
@@ -825,6 +826,7 @@ function getTechByName(techId, charId, suppressDamageDisplay) {
         }
         
         tech.summary = getTechDescription(tech, charId, suppressDamageDisplay);
+        tech.rawName = tech.name;
     
         if((tech.core == 'mimic' || tech.core == 'ultMimic') && tech.mimicTarget && charId) {
             log('Mimic target: ' + tech.mimicTarget);
@@ -836,9 +838,11 @@ function getTechByName(techId, charId, suppressDamageDisplay) {
             let resoluteStrike = tech.resoluteStrike;
             let oldId = tech.id;
             let mimicTech = tech;
+            let rawName = tech.rawName;
             tech = getTechByName(tech.mimicTarget, null, suppressDamageDisplay);
             if(tech) {
                 tech.name = mimicTech.name + ' [' + tech.name + ']';
+                tech.rawName = rawName;
         
                 // Revise core level
                 tech.coreLevel = mimicTech.coreLevel - (tech.techLevel - tech.coreLevel);
@@ -2301,7 +2305,7 @@ on('chat:message', function(msg) {
                     }
                 }
                 
-                if(state.sendDefenseButtons && (tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken')) {
+                if(state.sendDefenseButtons && targetChar && (tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken')) {
                     // Get target's active attributes
                     let highest = 0;
                     const targetMuscle = getAttrByName(targetCharId, 'mus');
@@ -2315,27 +2319,29 @@ on('chat:message', function(msg) {
                     const targetResolve = getAttrByName(targetCharId, 'res');
                     if(targetResolve > highest) highest = targetResolve;
                     
-                    let text = 'Defend:'
+                    let text = `${targetChar.get('name')}, Defend:<br>`;
+                    let escapedTech = escape(tech.rawName);
+                    
                     if(targetMuscle == highest) {
-                        text += ` <a href="!d-roll ${actorId} ${targetCharId} ${tech.name} mus">Muscle</a>`;
+                        text += ` <a href="!d-roll ${actorId} ${targetCharId} &${escapedTech}& mus">Muscle</a>`;
                     }
                     if(targetDexterity == highest) {
-                        text += ` <a href="!d-roll ${actorId} ${targetCharId} ${tech.name} dex">Dexterity</a>`;
+                        text += ` <a href="!d-roll ${actorId} ${targetCharId} &${escapedTech}& dex">Dexterity</a>`;
                     }
                     if(targetAura == highest) {
-                        text += ` <a href="!d-roll ${actorId} ${targetCharId} ${tech.name} aur">Aura</a>`;
+                        text += ` <a href="!d-roll ${actorId} ${targetCharId} &${escapedTech}& aur">Aura</a>`;
                     }
                     if(targetIntuition == highest) {
-                        text += ` <a href="!d-roll ${actorId} ${targetCharId} ${tech.name} int">Intuition</a>`;
+                        text += ` <a href="!d-roll ${actorId} ${targetCharId} &${escapedTech}& int">Intuition</a>`;
                     }
                     if(targetResolve == highest) {
                         const valor = getAttrByName(targetCharId, 'valor');
                         if(valor >= 2) {
-                            text += ` <a href="!d-roll ${actorId} ${targetCharId} ${tech.name} res">Resolve</a>`;
+                            text += ` <a href="!d-roll ${actorId} ${targetCharId} ${escapedTech} res">Resolve</a>`;
                         }
                     }
                     
-                    defenseButtons.push({name: targetName, text: text});
+                    defenseButtons.push({name: targetChar.get('name'), text: text});
                 }
             });
         } else if(rollStat && rollStat != 'none') {
@@ -4250,7 +4256,11 @@ on('chat:message', function(msg) {
 // Meant to be used by the character sheet, not the user.
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!d-roll') == 0) {
-        let split = msg.content.match(/(".*?")|(\S+)/g);
+        let split = [];
+        const regex = new RegExp('&.+?&|[^ ]+', 'g');
+        msg.content.match(regex).forEach(e => {
+            split.push(e.replace(/&/g, ''));
+        });
         
         if(split.length < 3) {
             log('!d-roll: Not enough arguments.');
@@ -4258,9 +4268,9 @@ on('chat:message', function(msg) {
         
         let attackerId = split[1];
         let defenderId = split[2];
-        let techName = split[3];
+        let techName = unescape(split[3]);
         let attribute = split[4];
-
+        
         let attributeName = '';
         switch(attribute) {
             case 'mus': 
@@ -4287,8 +4297,9 @@ on('chat:message', function(msg) {
         const techs = getTechs(attackerId);
         const tech = techs.find(t => t.name == techName);
         
-        const defender = getObj('character', defenderId);
         const attributeValue = getAttrByName(defenderId, attribute);
+        const rollBonus = getAttrByName(defenderId, 'rollbonus');
+        const defRollBonus = getAttrByName(defenderId, 'defrollbonus');
         
         if(attribute != tech.stat) {
             log(`!d-roll: Substituting ${attribute} for ${tech.stat}`);
@@ -4303,7 +4314,7 @@ on('chat:message', function(msg) {
             }
         }
         
-        let roll = `[[1d10+${attributeValue}]] ${attributeName} Defense`;
+        let roll = `[[1d10+${attributeValue}+${rollBonus}+${defRollBonus}]] ${attributeName} Defense`;
         
         sendChat('character|' + defenderId, roll);
     }

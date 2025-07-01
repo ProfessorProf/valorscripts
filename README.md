@@ -33,20 +33,6 @@ For maximum benefit, associate a token with a character sheet, then set the thre
 
 ## Valor Commands
 
-### Use Tech
-Syntax: `!t Fireball 3 +1`
-
-Performs a technique as your character. If you're the GM, it'll pick one based on selected tokens. Tech can be indicated by number (1 is the top of the list), name, or start of name. Optionally, add a number indicating the number of targets, and/or a number with a + or - before it indicating a bonus or penalty to the roll (order doesn't matter). Stamina, Health and Valor on the user will be used up automatically. `!t`, `!tech` and `!technique` can be used interchangeably.
-
-Any of these will work:
-* `!t 1` Performs the first technique on your tech list.
-* `!tech Fi` Performs the first technique on your tech list starting with 'Fi' (i.e. Fireball).
-* `!technique Doom Fist` Performs the first technique on your tech list starting with 'Doom Fist'.
-* `!t Fireball 3` Performs the Fireball technique and rolls against 3 targets.
-* `!t Fireball +1` Performs the Fireball technique and rolls against 1 target with a +1 bonus to the attack roll (if the second parameter starts with + or -, it'll read it as a roll bonus instead of a target count).
-* `!t "Doom F" 2 -1` Performs the Doom Fist technique and rolls against 2 targets with a -1 penalty to the attack roll.
-* `!t Doom Fist +2 3` Performs the Doom Fist technique and rolls against 3 targets with a +2 bonus to the attack roll.
-
 ### Undo Tech Usage
 Syntax: `!t-undo`
 Reverses any expended resources from the most-recently used technique. Remembers up to the last 20 techniques used.
@@ -54,10 +40,6 @@ Reverses any expended resources from the most-recently used technique. Remembers
 ### Get Tech Status
 Syntax: `!status`
 Shows you (and only you) which of your techniques are ready to use, and which are blocked by Limits.
-
-### Get Critical Hit Damage
-Syntax: `!crit`
-Shows you (and only you) how much damage the previous technique would have done if it had scored a critical hit.
 
 ### Add Effect
 Syntax: `!e Poison 2`
@@ -92,7 +74,7 @@ Syntax: `!set-vrate 2`
 Sets any selected characters to gain an amount of Valor per turn equal to the provided number. Use for anyone with the Limitless Power skill (Masters will automatically gain 2 Valor per round).
 
 ### Show defenses
-Syntax: `!def`
+Syntax: `!defres`
 
 Shows you (and only you) the Defense and Resistance values of everyone on the current map.
 
@@ -110,16 +92,6 @@ Shows you (and only you) which characters on the current map have the skill Unmo
 Syntax: `!init`
 
 Erases everything on the turn tracker and automatically rolls initiative for all combatants, setting everything up for a new scene. If multiple tokens represent the same character, initiative will be rolled just once for the whole group.
-
-### Create Mook
-Syntax: `!mook -l 10 -t soldier -s str guts`
-
-Creates a randomly-generated mook character sheet. Newly-created sheet will have the name 'New Mook', and will include a couple random skills and techniques based on its attributes.
-
-Has three parameters:
-* Level (`-l [level]`) sets the level of the character. Defaults to 1.
-* Type (`-t [type]`) sets the type. Accepted values are 'flunky' and 'soldier'. Defaults to Flunky.
-* Stats (`-s [stats separated by spaces]`) sets the high attributes for the character. Maximum three. Defaults to a random selection.
 
 ### Size Up
 Syntax: `!sizeup`
@@ -152,16 +124,22 @@ Enables a set of unsupported alternate rules. Current changes:
 * Treat Bravado as a fixed-level Skill, but give all characters +1 starting Valor for each season past the first.
 
 ## Options
-To change the usage options, go to lines 14-22 of valor.js in the API editor. Each of these lines ends in either `true` or `false` - swap out true/false to turn these features on/off.
+To change the usage options, go to the top of valor.js in the API editor. Each of these lines ends in either `true` or `false` - swap out true/false to turn these features on/off.
 
 Available options:
-* `StatusTrackerEnabled` - Enables automatic tracking of temporary effects. Enabled by default.
-* `ValorUpdaterEnabled` - Enables automatic increase of Valor each round for all characters. On by default.
-* `MaxValuesSyncEnabled` - Enables automatic updating of current HP/ST as max values change. On by default.
-* `OngoingEffectProcessor` - Enables autommatic processing of regeneration and dongoing damage. On by default.
-* `IgnoreLimitsOnMinions` - Disables processing of limits when using techniques for Flunkies or Soldiers. On by default.
-* `HideNpcTechEffects` - When NPCs use techniques, displays the damage output and other effects only for the GM. Off by default.
-* `ShowTechAlerts` - Enables private alerts when techniques exit cooldown or run out of ammunition. On by default.
-* `ShowHealthAlerts` - Enables private alerts when entering or leaving critical health. On by default.
+* `StatusTrackerEnabled` - Enables automatic tracking of temporary effects.
+* `ValorUpdaterEnabled` - Enables automatic increase of Valor each round for all characters.
+* `MaxValuesSyncEnabled` - Enables automatic updating of current HP/ST as max values change.
+* `OngoingEffectProcessor` - Enables autommatic processing of regeneration and dongoing damage.
+* `IgnoreLimitsOnMinions` - Disables processing of limits when using techniques for Flunkies or Soldiers.
+* `HideNpcTechEffects` - When NPCs use techniques, displays the damage output and other effects only for the GM.
+* `ShowTechAlerts` - Enables private alerts when techniques exit cooldown or run out of ammunition.
+* `ShowHealthAlerts` - Enables private alerts when entering or leaving critical health.
 * `HouseRulesEnabled` - Enables various unsupported house rules. Off by default.
-* `RollBehindScreen` - When NPCs use techniques, displays any dice rolls only for the GM. Off by default.
+* `RollBehindScreen` - When NPCs use techniques, displays any dice rolls only for the GM.
+* `autoInitiativeUpdate` - Automatically move characters up and down the turn tracker if their initiative value changes.
+* `autoInitiativeReport` - When characters are moved bu auto initiative update, reports it to the GM as a whisper.
+* `confirmAutoInitiative` - Asks the GM at the start of each encounter whether or not they want to use auto initiative updating.
+* `applyAttackResults` - When a technique is used, the GM is shown buttons to deal damage for a hit, a crit, or a damage increment.
+* `showAttackResults` - When the buttons from apply attack results are clicked, reports the damage in the game chat.
+* `sendDefenseButtons` - When a technique is used, the defending player is sent a set of buttons to defend with their best stats.

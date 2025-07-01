@@ -208,3 +208,9 @@ v1.9.0 (6/26/2025):
 - Bugfix: Shields didn't work in various ways.
 - New: Apply button usable for boosts and weakens.
 - New: Automated defense roll buttons.
+
+v1.9.1 (7/1/2025):
+- Bugfix: Defense buttons now work for techniques with long names.
+- Bugfix: Defense buttons now work for mimic techs.
+- Bugfix: Defense buttons now honor defense roll bonuses.
+- Bugfix: Shields are now reset at the start of a scene.
