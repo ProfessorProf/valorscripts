@@ -1,5 +1,5 @@
 /**
- * VALOR API SCRIPTS v1.9.1
+ * VALOR API SCRIPTS v1.9.2
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -28,6 +28,7 @@ state.confirmAutoInitiative = true;     // Confirm whether or not to auto-update
 state.applyAttackResults = true;        // Allows GM to directly apply attack results with a chat button on a hit. (experimental)
 state.showAttackResults = true;         // Sends messages to the chat when attack results are applied. (experimental)
 state.sendDefenseButtons = true;        // Sends buttons players can click to automatically defend.
+state.groupDefenseButtons = true;       // If multiple tokens representing the same character are attacked, you roll them all at once.
 
 // Status Tracker
 // While this is active, the system will send an alert when an effect ends.
@@ -2262,7 +2263,7 @@ on('chat:message', function(msg) {
                             return (name.indexOf('temporary') == 0);
                         }) : null;
                         
-                        effectPhrase = ` -e &quot;${tech.name}&quot; ${temporaryLimit ? 2 : 3}`;
+                        effectPhrase = ` -e &quot;${escape(tech.name)}&quot; ${temporaryLimit ? 2 : 3}`;
                     }
                     
                     if(tech.core == 'damage' || tech.core == 'ultDamage') {
@@ -2305,43 +2306,50 @@ on('chat:message', function(msg) {
                     }
                 }
                 
-                if(state.sendDefenseButtons && targetChar && (tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken')) {
-                    // Get target's active attributes
-                    let highest = 0;
-                    const targetMuscle = getAttrByName(targetCharId, 'mus');
-                    if(targetMuscle > highest) highest = targetMuscle;
-                    const targetDexterity = getAttrByName(targetCharId, 'dex');
-                    if(targetDexterity > highest) highest = targetDexterity;
-                    const targetAura = getAttrByName(targetCharId, 'aur');
-                    if(targetAura > highest) highest = targetAura;
-                    const targetIntuition = getAttrByName(targetCharId, 'int');
-                    if(targetIntuition > highest) highest = targetIntuition;
-                    const targetResolve = getAttrByName(targetCharId, 'res');
-                    if(targetResolve > highest) highest = targetResolve;
+                if(state.sendDefenseButtons && targetChar 
+                    && (tech.core == 'damage' || tech.core == 'ultDamage' || tech.core == 'weaken')) {
+                    var index = defenseButtons.findIndex(b => b.id == targetCharId);
                     
-                    let text = `${targetChar.get('name')}, Defend:<br>`;
-                    let escapedTech = escape(tech.rawName);
-                    
-                    if(targetMuscle == highest) {
-                        text += ` <a href="!d-roll ${actorId} ${targetCharId} &${escapedTech}& mus">Muscle</a>`;
-                    }
-                    if(targetDexterity == highest) {
-                        text += ` <a href="!d-roll ${actorId} ${targetCharId} &${escapedTech}& dex">Dexterity</a>`;
-                    }
-                    if(targetAura == highest) {
-                        text += ` <a href="!d-roll ${actorId} ${targetCharId} &${escapedTech}& aur">Aura</a>`;
-                    }
-                    if(targetIntuition == highest) {
-                        text += ` <a href="!d-roll ${actorId} ${targetCharId} &${escapedTech}& int">Intuition</a>`;
-                    }
-                    if(targetResolve == highest) {
-                        const valor = getAttrByName(targetCharId, 'valor');
-                        if(valor >= 2) {
-                            text += ` <a href="!d-roll ${actorId} ${targetCharId} ${escapedTech} res">Resolve</a>`;
+                    if(index > -1) {
+                        defenseButtons[index].count++;
+                    } else {
+                        // Get target's active attributes
+                        let highest = 0;
+                        const targetMuscle = getAttrByName(targetCharId, 'mus');
+                        if(targetMuscle > highest) highest = targetMuscle;
+                        const targetDexterity = getAttrByName(targetCharId, 'dex');
+                        if(targetDexterity > highest) highest = targetDexterity;
+                        const targetAura = getAttrByName(targetCharId, 'aur');
+                        if(targetAura > highest) highest = targetAura;
+                        const targetIntuition = getAttrByName(targetCharId, 'int');
+                        if(targetIntuition > highest) highest = targetIntuition;
+                        const targetResolve = getAttrByName(targetCharId, 'res');
+                        if(targetResolve > highest) highest = targetResolve;
+                        
+                        let text = `${targetChar.get('name')}, Defend:<br>`;
+                        let escapedTech = escape(tech.rawName);
+                        
+                        if(targetMuscle == highest) {
+                            text += ` <a href="!d-roll ${actorId} ${targetCharId} &${escapedTech}& mus {0}">Muscle</a>`;
                         }
+                        if(targetDexterity == highest) {
+                            text += ` <a href="!d-roll ${actorId} ${targetCharId} &${escapedTech}& dex {0}">Dexterity</a>`;
+                        }
+                        if(targetAura == highest) {
+                            text += ` <a href="!d-roll ${actorId} ${targetCharId} &${escapedTech}& aur {0}">Aura</a>`;
+                        }
+                        if(targetIntuition == highest) {
+                            text += ` <a href="!d-roll ${actorId} ${targetCharId} &${escapedTech}& int {0}">Intuition</a>`;
+                        }
+                        if(targetResolve == highest) {
+                            const valor = getAttrByName(targetCharId, 'valor');
+                            if(valor >= 2) {
+                                text += ` <a href="!d-roll ${actorId} ${targetCharId} ${escapedTech} res {0}">Resolve</a>`;
+                            }
+                        }
+                        
+                        defenseButtons.push({id: targetCharId, name: targetChar.get('name'), text: text, count: 1});
                     }
-                    
-                    defenseButtons.push({name: targetChar.get('name'), text: text});
                 }
             });
         } else if(rollStat && rollStat != 'none') {
@@ -2729,7 +2737,10 @@ on('chat:message', function(msg) {
         
         if(state.sendDefenseButtons) {
             defenseButtons.forEach(function(button) {
-                sendChat('Valor', `/w "${button.name}" ${button.text}`);
+                var text = button.text;
+                var count = state.groupDefenseButtons ? button.count : 1;
+                text = text.replaceAll('{0}', count);
+                sendChat('Valor', `/w "${button.name}" ${text}`);
             });
         }
         
@@ -2916,7 +2927,12 @@ on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!tech-apply') == 0) {
         startEvent('!tech-apply');
         // Get params
-        let split = msg.content.match(/(".*?")|(\S+)/g);
+        let split = [];
+        const regex = new RegExp('&.+?&|[^ ]+', 'g');
+        msg.content.match(regex).forEach(e => {
+            split.push(e.replace(/&/g, ''));
+        });
+        
         if(split.length < 2) {
             log('Not enough arguments.');
             return;
@@ -2943,7 +2959,7 @@ on('chat:message', function(msg) {
                     break;
                 case '-e':
                     // Apply is creating an effect
-                    effect.name = split[paramId + 1];
+                    effect.name = unescape(split[paramId + 1]);
                     if(effect.name && effect.name[0] == '"') 
                         effect.name = effect.name.substring(1, effect.name.length - 1);
                     effect.duration = split[paramId + 2];
@@ -4270,6 +4286,7 @@ on('chat:message', function(msg) {
         let defenderId = split[2];
         let techName = unescape(split[3]);
         let attribute = split[4];
+        let count = split.length > 5 ? parseInt(split[5]) : 1;
         
         let attributeName = '';
         switch(attribute) {
@@ -4314,7 +4331,11 @@ on('chat:message', function(msg) {
             }
         }
         
-        let roll = `[[1d10+${attributeValue}+${rollBonus}+${defRollBonus}]] ${attributeName} Defense`;
+        let roll = '';
+        for(let i = 0; i < count; i++) {
+            roll += `[[1d10+${attributeValue}+${rollBonus}+${defRollBonus}]] `;
+        }
+        roll += `${attributeName} Defense`;
         
         sendChat('character|' + defenderId, roll);
     }

@@ -214,3 +214,8 @@ v1.9.1 (7/1/2025):
 - Bugfix: Defense buttons now work for mimic techs.
 - Bugfix: Defense buttons now honor defense roll bonuses.
 - Bugfix: Shields are now reset at the start of a scene.
+
+v1.9.2 (7/9/2025):
+- Changed: Only show one set of defense buttons when multiple of the same character are attacked
+- Bugfix: Apply Effect button now works with longer technique names
+- New: Option to roll multiple times for group defense buttons
