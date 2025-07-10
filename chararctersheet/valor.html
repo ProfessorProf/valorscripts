@@ -283,8 +283,8 @@
     ];
 
     // Speed 0 = Max Level is 1, i.e. not a skill that levels. (Fixed)
-    // Speed 1 = Max Level equal to Season. (Fast)
-    // Speed 2 = Max Level equal to 1/3rd of level round up. (Slow)
+    // Speed 1 = Max Level equal to Season. (Slow)
+    // Speed 2 = Max Level equal to 1/3rd of level round up. (Fast)
     // Speed 3 = Max Level equal to 100, i.e. basically unlimited. (Custom proficiency)
     let proficiencyLibrary = [
         { cost: 1, levelUp: 1, speed: 3, id: 'customProficiency',
@@ -297,6 +297,10 @@
         { cost: 1, levelUp: 1, speed: 1, id: 'specializedProficiency',
             namePattern: '^specialized Proficiency',
             description: "+(Level) to all rolls for a specific Challenge Action."
+        },
+        { cost: 1, levelUp: 1, speed: 1, id: 'asset',
+            namePattern: '^asset',
+            description: "(ASSETNAME): +3 to one check per Challenge Scene where applicable, once per level."
         },
         { cost: 1, levelUp: 0, speed: 0, id: 'basicLanguage',
             namePattern: '^basic Language',
@@ -1332,9 +1336,7 @@
                     proficiencyFieldNames.push('repeating_proficiencies_' + idarray[i] + '_profname');
                     proficiencyFieldNames.push('repeating_proficiencies_' + idarray[i] + '_proflevel');
                 }
-
                 log('VALOR - Proficiency Field Names Length:' + proficiencyFieldNames.length);
-
                 getAttrs(proficiencyFieldNames, function(proficiencyValues) {
                     var profPP = 0;
                     for (var i = 0; i < idarray.length; i++) {
@@ -1376,11 +1378,11 @@
                             
                             var proficiencyCost = proficiency.cost + ((profLevel - 1) * proficiency.levelUp);
 
-                            log('VALOR - Proficiency Name: ' + profName + ' - Cost: ' + 
-                                proficiencyCost
-                            );
-
                             unspentPP -= proficiencyCost;
+
+                            log('VALOR - Proficiency Name: ' + profName + ' - Cost: ' + 
+                                proficiencyCost + ' - remaining PP: ' + unspentPP
+                            );
                         }
                     } // End for loop; proficiency costs calculated, warnings applied.
 
@@ -3857,8 +3859,9 @@
                 <div class="proficiency-upper">
                     <select class="proficiency-picker" name="attr_profname" selected="customProficiency">
                         <option value="customProficiency">Custom Proficiency</option>
-                        <option value="generalProficiency">General Proficiency (2/1, Slow)</option>
+                        <option value="generalProficiency">General Proficiency (2/2, Slow)</option>
                         <option value="specializedProficiency">Specialized Proficiency (1/1, Slow)</option>
+                        <option value="asset">Asset (1/1, Slow)</option>
                         <option value="basicLanguage">Basic Language (1)</option>
                         <option value="conversationalLanguage">Conversational Language (2)</option>
                         <option value="fluentLanguage">Fluent Language (3)</option>
