@@ -1,7 +1,7 @@
 <script type="text/worker">
 
     /**
-     * VALOR CHARACTER SHEET v1.9.2
+     * VALOR CHARACTER SHEET v1.9.3
      *
      * Installation Instructions:
      * - Be a Roll20 Pro user.
@@ -1579,7 +1579,8 @@
             let action = 'Attack';
             if(techCore == 'barrier' || techCore == 'boost' ||
                techCore == 'healing' || techCore == 'weaken' ||
-               techCore == 'shield' || techCore == 'ultTransform') {
+               techCore == 'shield' || techCore == 'ultTransform' ||
+               techCore == 'domain') {
                 action  = 'Support';
             }
             if(techMods.indexOf('rush') > -1 || techMods.indexOf('ramming') > -1) {

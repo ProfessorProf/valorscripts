@@ -1,5 +1,5 @@
 /**
- * VALOR API SCRIPTS v1.9.2
+ * VALOR API SCRIPTS v1.9.3
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -4289,21 +4289,27 @@ on('chat:message', function(msg) {
         let count = split.length > 5 ? parseInt(split[5]) : 1;
         
         let attributeName = '';
+        let primaryName = '';
         switch(attribute) {
             case 'mus': 
                 attributeName = 'Muscle';
+                primaryName = 'str';
                 break;
             case 'dex': 
                 attributeName = 'Dexterity';
+                primaryName = 'agi';
                 break;
             case 'aur': 
                 attributeName = 'Aura';
+                primaryName = 'spr';
                 break;
             case 'int': 
                 attributeName = 'Intuition';
+                primaryName = 'mnd';
                 break;
             case 'res': 
                 attributeName = 'Resolve';
+                primaryName = 'gut';
                 break;
         }
         
@@ -4318,7 +4324,7 @@ on('chat:message', function(msg) {
         const rollBonus = getAttrByName(defenderId, 'rollbonus');
         const defRollBonus = getAttrByName(defenderId, 'defrollbonus');
         
-        if(attribute != tech.stat) {
+        if(primaryName != tech.stat) {
             log(`!d-roll: Substituting ${attribute} for ${tech.stat}`);
             
             switch(attribute) {

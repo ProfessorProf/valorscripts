@@ -219,3 +219,7 @@ v1.9.2 (7/9/2025):
 - Changed: Only show one set of defense buttons when multiple of the same character are attacked
 - Bugfix: Apply Effect button now works with longer technique names
 - New: Option to roll multiple times for group defense buttons
+
+v1.9.3 (7/16/2025):
+- Bugfix: Using Aura to guard against Spirit Techniques no longer costs Stamina.
+- Bugfix: Domain techs now list the correct action.
