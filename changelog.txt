@@ -223,3 +223,6 @@ v1.9.2 (7/9/2025):
 v1.9.3 (7/16/2025):
 - Bugfix: Using Aura to guard against Spirit Techniques no longer costs Stamina.
 - Bugfix: Domain techs now list the correct action.
+
+v1.10.0 (11/2/2025):
+- Added buttons to shrink and expand tech blocks for more streamlined play.

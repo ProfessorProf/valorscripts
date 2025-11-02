@@ -1,7 +1,7 @@
 <script type="text/worker">
 
     /**
-     * VALOR CHARACTER SHEET v1.9.3
+     * VALOR CHARACTER SHEET v1.10.0
      *
      * Installation Instructions:
      * - Be a Roll20 Pro user.
@@ -3462,195 +3462,284 @@
 
         <fieldset class="repeating_techs">
             <div class="tech-name">
-                <input type="text" class = "tech-name" name="attr_tech_name" value="New Technique" />
+                <input type="text" class="tech-name" name="attr_tech_name" value="New Technique" />
             </div>
-            <div class="tech">
-                <div class="spacer"></div>
-                <div class="tech-level">
-                    <div class="tech-header">
-                        <span class="label">Tech Level</span>
-                        <span class="derived-value" name="attr_tech_level">
+            <div class="togglebar">
+                <label>
+                    <input type="checkbox" class="togglebutton" name="attr_tech_displaytoggle">
+                    <span>y</span>
+                </label>
+            </div>
+            
+            <input type="checkbox" class="conditional-check" name="attr_tech_displaytoggle">
+            <div class="conditional-block-inverse">
+                <div class="tech">
+                    <div class="spacer"></div>
+                    <div class="tech-level">
+                        <div class="tech-header">
+                            <span class="label">Tech Level</span>
+                            <span class="derived-value" name="attr_tech_level">
+                        </div>
                     </div>
-                </div>
-                <div class="tech-button">
-                    <button class="valor-button" type='roll' name='attr_tech_command'> Use Technique</button>
-                    <span class="label">Targets</span>
-                    <select name="attr_tech_targets" class="number-select tech-field tech-small-input">
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                        <option value="8">8</option>
-                        <option value="9">9</option>
-                        <option value="10">10</option>
-                        <option value="11">11</option>
-                        <option value="12">12</option>
-                        <option value="13">13</option>
-                        <option value="14">14</option>
-                        <option value="15">15</option>
-                        <option value="16">16</option>
-                        <option value="17">17</option>
-                        <option value="18">18</option>
-                        <option value="19">19</option>
-                        <option value="20">20</option>
-                    </select>
-                    <span class="label">Bonus</span> <input class="tech-field tech-small-input" type='number' value='0' name='attr_tech_bonus'>
-                    <div>
-                        <input type="checkbox" class="conditional-check" name="attr_tech_can_dig_deep">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_tech_digDeep">
-                            <span class="label">Use Dig Deep</span>
+                    <div class="tech-button">
+                        <button class="valor-button" type='roll' name='attr_tech_command'> Use Technique</button>
+                        <span class="label">Targets</span>
+                        <select name="attr_tech_targets" class="number-select tech-field tech-small-input">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                            <option value="13">13</option>
+                            <option value="14">14</option>
+                            <option value="15">15</option>
+                            <option value="16">16</option>
+                            <option value="17">17</option>
+                            <option value="18">18</option>
+                            <option value="19">19</option>
+                            <option value="20">20</option>
+                        </select>
+                        <span class="label">Bonus</span> <input class="tech-field tech-small-input" type='number' value='0' name='attr_tech_bonus'>
+                        <div>
+                            <input type="checkbox" class="conditional-check" name="attr_tech_can_dig_deep">
+                            <div class="conditional-block">
+                                <input type="checkbox" name="attr_tech_digDeep">
+                                <span class="label">Use Dig Deep</span>
+                            </div>
+                        </div>
+                        <div>
+                            <input type="checkbox" class="conditional-check" name="attr_tech_can_overload_limits">
+                            <div class="conditional-block">
+                                <input type="checkbox" name="attr_tech_overloadLimits">
+                                <span class="label">Use Overload Limits</span>
+                            </div>
+                        </div>
+                        <div>
+                            <input type="checkbox" class="conditional-check" name="attr_tech_can_empower">
+                            <div class="conditional-block">
+                                <input type="checkbox" name="attr_tech_empowerAttack">
+                                <span class="label">Use Empower Attack</span>
+                            </div>
+                        </div>
+                        <div>
+                            <input type="checkbox" class="conditional-check" name="attr_tech_can_resolute_strike">
+                            <div class="conditional-block">
+                                <input type="checkbox" name="attr_tech_resoluteStrike">
+                                <span class="label">Use Resolute Strike</span>
+                            </div>
+                        </div>
+                        <div>
+                            <input type="checkbox" class="conditional-check" name="attr_tech_can_reroll">
+                            <div class="conditional-block">
+                                <input type="checkbox" name="attr_tech_reroll">
+                                <span class="label">Reroll</span>
+                            </div>
                         </div>
                     </div>
                     <div>
-                        <input type="checkbox" class="conditional-check" name="attr_tech_can_overload_limits">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_tech_overloadLimits">
-                            <span class="label">Use Overload Limits</span>
-                        </div>
+                        <span class="label">Core:</span>
                     </div>
-                    <div>
-                        <input type="checkbox" class="conditional-check" name="attr_tech_can_empower">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_tech_empowerAttack">
-                            <span class="label">Use Empower Attack</span>
-                        </div>
-                    </div>
-                    <div>
-                        <input type="checkbox" class="conditional-check" name="attr_tech_can_resolute_strike">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_tech_resoluteStrike">
-                            <span class="label">Use Resolute Strike</span>
-                        </div>
-                    </div>
-                    <div>
-                        <input type="checkbox" class="conditional-check" name="attr_tech_can_reroll">
-                        <div class="conditional-block">
-                            <input type="checkbox" name="attr_tech_reroll">
-                            <span class="label">Reroll</span>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <span class="label">Core:</span>
-                </div>
-                <div class="tech-core">
-                    <select class="tech-field" name="attr_tech_core">
-                        <option value="barrier">Barrier Core</option>
-                        <option value="boost">Boost Core</option>
-                        <option value="damage" selected="selected">Damage Core</option>
-                        <option value="healing">Healing Core</option>
-                        <option value="shield">Shield Core</option>
-                        <option value="mimic">Mimic Core</option>
-                        <option value="summoning">Summoning Core</option>
-                        <option value="weaken">Weaken Core</option>
-                        <option disabled style="font-weight:bold" label="Ultimate Cores">
-                            <option value="domain">Personal Domain</option>
-                            <option value="ultDamage">Ultimate Attack</option>
-                            <option value="ultMimic">Ultimate Mimic</option>
-                            <option value="ultTransform">Transformation</option>
-                        <option value="custom">Custom Core</option>
-                    </select>
-                </div>
-                <div class="tech-core-level">
-                    <span class="label">Core Power:</span>
-                    <input class="tech-field tech-small-input" type="number" name="attr_tech_core_level" value="1" />
-                </div>
-                <div class="tech-summary">
-                    <div><span name="attr_tech_description"></span></div>
-                    <div><span name="attr_tech_summary"></span></div>
-                    <div><span name="attr_tech_warnings"></span></div>
-                </div>
-                <div>
-                    <span class="label">Attribute:</span>
-                </div>
-                <div class="tech-attribute">
-                    <select class="tech-field" name="attr_tech_stat">
-                        <option value="none" selected="selected">None</option>
-                        <option value="str">Strength</option>
-                        <option value="agi">Agility</option>
-                        <option value="spr">Spirit</option>
-                        <option value="mnd">Mind</option>
-                        <option value="gut">Guts</option>
-                    </select>
-                </div>
-                <div class="tech-cost">
-                    <input type="checkbox" class="conditional-check" name="attr_tech_can_edit_cost">
-                    <div class="conditional-block">
-                        <span class="label">ST Cost:</span>
-                        <input class="tech-field tech-small-input" type="number" name="attr_tech_custom_cost" value="0" />
-                    </div>
-                    <div class="conditional-block-inverse">
-                        <span class="label">ST Cost</span>
-                        <span class="derived-value" name="attr_tech_cost"></span>
-                    </div>
-                </div>
-                <div>
-                    <input type="checkbox" class="conditional-check" name="attr_tech_is_shield">
-                    <div class="conditional-block">
-                        <span class="label">Shield Type:</span>
-                    </div>
-                </div>
-                <div>
-                    <input type="checkbox" class="conditional-check" name="attr_tech_is_shield">
-                    <div class="tech-shield-type conditional-block">
-                        <select class="tech-field" name="attr_tech_shield_type" title="@{repeating_techs_#_tech_shield_type}" >
-                            <option value="physical" selected="selected">Physical</option>
-                            <option value="energy">Energy</option>
-                            <option value="versatile">Versatile</option>
+                    <div class="tech-core">
+                        <select class="tech-field" name="attr_tech_core">
+                            <option value="barrier">Barrier Core</option>
+                            <option value="boost">Boost Core</option>
+                            <option value="damage" selected="selected">Damage Core</option>
+                            <option value="healing">Healing Core</option>
+                            <option value="shield">Shield Core</option>
+                            <option value="mimic">Mimic Core</option>
+                            <option value="summoning">Summoning Core</option>
+                            <option value="weaken">Weaken Core</option>
+                            <option disabled style="font-weight:bold" label="Ultimate Cores">
+                                <option value="domain">Personal Domain</option>
+                                <option value="ultDamage">Ultimate Attack</option>
+                                <option value="ultMimic">Ultimate Mimic</option>
+                                <option value="ultTransform">Transformation</option>
+                            <option value="custom">Custom Core</option>
                         </select>
                     </div>
-                </div>
-                <div class="tech-description">
-                    <div class="label">Description</div>
-                    <div>
-                        <textarea class="smallertext tech-field" name="attr_tech_description"></textarea>
+                    <div class="tech-core-level">
+                        <span class="label">Core Power:</span>
+                        <input class="tech-field tech-small-input" type="number" name="attr_tech_core_level" value="1" />
                     </div>
-                </div>
-                <div class="tech-optional-fields">
-                    <div class="tech-conditional-field">
-                        <input type="checkbox" class="conditional-check" name="attr_tech_has_skills">
-                        <div class="tech-block conditional-block">
-                            <span class="label">Skills:</span>
-                            <input type="text" class="tech-field" name="attr_tech_granted_skills" />
-                            (<span class="sp_label" name="attr_tech_skill_sp"></span>/<span class="sp_label" name="attr_tech_skill_sp_max"></span>)
+                    <div class="tech-summary">
+                        <div><span name="attr_tech_description"></span></div>
+                        <div><span name="attr_tech_summary"></span></div>
+                        <div><span name="attr_tech_warnings"></span></div>
+                    </div>
+                    <div>
+                        <span class="label">Attribute:</span>
+                    </div>
+                    <div class="tech-attribute">
+                        <select class="tech-field" name="attr_tech_stat">
+                            <option value="none" selected="selected">None</option>
+                            <option value="str">Strength</option>
+                            <option value="agi">Agility</option>
+                            <option value="spr">Spirit</option>
+                            <option value="mnd">Mind</option>
+                            <option value="gut">Guts</option>
+                        </select>
+                    </div>
+                    <div class="tech-cost">
+                        <input type="checkbox" class="conditional-check" name="attr_tech_can_edit_cost">
+                        <div class="conditional-block">
+                            <span class="label">ST Cost:</span>
+                            <input class="tech-field tech-small-input" type="number" name="attr_tech_custom_cost" value="0" />
+                        </div>
+                        <div class="conditional-block-inverse">
+                            <span class="label">ST Cost</span>
+                            <span class="derived-value" name="attr_tech_cost"></span>
                         </div>
                     </div>
-                    <div class="tech-conditional-field">
-                        <input type="checkbox" class="conditional-check" name="attr_tech_has_flaws">
-                        <div class="tech-block conditional-block">
-                            <span class="label">Flaws:</span>
-                            <input type="text" class="tech-field" name="attr_tech_inflicted_flaws" />
-                            (<span class="sp_label" name="attr_tech_flaw_sp"></span>/<span class="sp_label" name="attr_tech_flaw_sp_max"></span>)
+                    <div>
+                        <input type="checkbox" class="conditional-check" name="attr_tech_is_shield">
+                        <div class="conditional-block">
+                            <span class="label">Shield Type:</span>
                         </div>
                     </div>
-                    <div class="tech-conditional-field">
-                        <input type="checkbox" class="conditional-check" name="attr_tech_is_mimic">
-                        <div class="tech-block conditional-block">
-                            <span class="label">Mimicked Tech:</span>
-                            <input class="tech-field" type="text" name="attr_tech_mimic_target" />
+                    <div>
+                        <input type="checkbox" class="conditional-check" name="attr_tech_is_shield">
+                        <div class="tech-shield-type conditional-block">
+                            <select class="tech-field" name="attr_tech_shield_type" title="@{repeating_techs_#_tech_shield_type}" >
+                                <option value="physical" selected="selected">Physical</option>
+                                <option value="energy">Energy</option>
+                                <option value="versatile">Versatile</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="tech-description">
+                        <div class="label">Description</div>
+                        <div>
+                            <textarea class="smallertext tech-field" name="attr_tech_description"></textarea>
+                        </div>
+                    </div>
+                    <div class="tech-optional-fields">
+                        <div class="tech-conditional-field">
+                            <input type="checkbox" class="conditional-check" name="attr_tech_has_skills">
+                            <div class="tech-block conditional-block">
+                                <span class="label">Skills:</span>
+                                <input type="text" class="tech-field" name="attr_tech_granted_skills" />
+                                (<span class="sp_label" name="attr_tech_skill_sp"></span>/<span class="sp_label" name="attr_tech_skill_sp_max"></span>)
+                            </div>
+                        </div>
+                        <div class="tech-conditional-field">
+                            <input type="checkbox" class="conditional-check" name="attr_tech_has_flaws">
+                            <div class="tech-block conditional-block">
+                                <span class="label">Flaws:</span>
+                                <input type="text" class="tech-field" name="attr_tech_inflicted_flaws" />
+                                (<span class="sp_label" name="attr_tech_flaw_sp"></span>/<span class="sp_label" name="attr_tech_flaw_sp_max"></span>)
+                            </div>
+                        </div>
+                        <div class="tech-conditional-field">
+                            <input type="checkbox" class="conditional-check" name="attr_tech_is_mimic">
+                            <div class="tech-block conditional-block">
+                                <span class="label">Mimicked Tech:</span>
+                                <input class="tech-field" type="text" name="attr_tech_mimic_target" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tech-modifiers">
+                        <div class="label">Modifiers (one per line)</div>
+                        <div>
+                            <textarea class="smalltext tech-field" name="attr_tech_mods" rows="3" cols="40"></textarea>
+                        </div>
+                        <div>
+                            Total Mod Levels <span name="attr_tech_mod_level" class="derived-value"></span>
+                        </div>
+                    </div>
+                    <div class="tech-limits">
+                        <div class="label">Limits (one per line)</div>
+                        <div>
+                            <textarea class="smalltext tech-field" name="attr_tech_limits" rows="3" cols="40"></textarea>
+                        </div>
+                        <div>
+                            Total Cost Reduction <span name="attr_tech_limit_st" class="derived-value"></span>
                         </div>
                     </div>
                 </div>
-                <div class="tech-modifiers">
-                    <div class="label">Modifiers (one per line)</div>
-                    <div>
-                        <textarea class="smalltext tech-field" name="attr_tech_mods" rows="3" cols="40"></textarea>
+            </div>
+            <input type="checkbox" class="conditional-check" name="attr_tech_displaytoggle">
+            <div class="conditional-block">
+                <div class="tech2">
+                    <div></div>
+                    <div class="tech-level">
+                        <div class="tech-header">
+                            <span class="label">Tech Level</span>
+                            <span class="derived-value" name="attr_tech_level">
+                        </div>
                     </div>
-                    <div>
-                        Total Mod Levels <span name="attr_tech_mod_level" class="derived-value"></span>
+                    <div class="tech-button">
+                        <button class="valor-button" type='roll' name='attr_tech_command'> Use Technique</button>
+                        <span class="label">Targets</span>
+                        <select name="attr_tech_targets" class="number-select tech-field tech-small-input">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                            <option value="13">13</option>
+                            <option value="14">14</option>
+                            <option value="15">15</option>
+                            <option value="16">16</option>
+                            <option value="17">17</option>
+                            <option value="18">18</option>
+                            <option value="19">19</option>
+                            <option value="20">20</option>
+                        </select>
+                        <span class="label">Bonus</span> <input class="tech-field tech-small-input" type='number' value='0' name='attr_tech_bonus'>
+                        <div>
+                            <input type="checkbox" class="conditional-check" name="attr_tech_can_dig_deep">
+                            <div class="conditional-block">
+                                <input type="checkbox" name="attr_tech_digDeep">
+                                <span class="label">Use Dig Deep</span>
+                            </div>
+                        </div>
+                        <div>
+                            <input type="checkbox" class="conditional-check" name="attr_tech_can_overload_limits">
+                            <div class="conditional-block">
+                                <input type="checkbox" name="attr_tech_overloadLimits">
+                                <span class="label">Use Overload Limits</span>
+                            </div>
+                        </div>
+                        <div>
+                            <input type="checkbox" class="conditional-check" name="attr_tech_can_empower">
+                            <div class="conditional-block">
+                                <input type="checkbox" name="attr_tech_empowerAttack">
+                                <span class="label">Use Empower Attack</span>
+                            </div>
+                        </div>
+                        <div>
+                            <input type="checkbox" class="conditional-check" name="attr_tech_can_resolute_strike">
+                            <div class="conditional-block">
+                                <input type="checkbox" name="attr_tech_resoluteStrike">
+                                <span class="label">Use Resolute Strike</span>
+                            </div>
+                        </div>
+                        <div>
+                            <input type="checkbox" class="conditional-check" name="attr_tech_can_reroll">
+                            <div class="conditional-block">
+                                <input type="checkbox" name="attr_tech_reroll">
+                                <span class="label">Reroll</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="tech-limits">
-                    <div class="label">Limits (one per line)</div>
-                    <div>
-                        <textarea class="smalltext tech-field" name="attr_tech_limits" rows="3" cols="40"></textarea>
-                    </div>
-                    <div>
-                        Total Cost Reduction <span name="attr_tech_limit_st" class="derived-value"></span>
+                    <div class="tech-summary2">
+                        <div><span name="attr_tech_description"></span></div>
+                        <div><span name="attr_tech_summary"></span></div>
+                        <div><span name="attr_tech_warnings"></span></div>
                     </div>
                 </div>
             </div>
