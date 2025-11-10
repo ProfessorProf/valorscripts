@@ -226,3 +226,6 @@ v1.9.3 (7/16/2025):
 
 v1.10.0 (11/2/2025):
 - Added buttons to shrink and expand tech blocks for more streamlined play.
+
+v1.10.0a (11/9/2025):
+- Fixed the hitbox on the collapse/expand gear.
