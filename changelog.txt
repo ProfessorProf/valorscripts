@@ -229,3 +229,17 @@ v1.10.0 (11/2/2025):
 
 v1.10.0a (11/9/2025):
 - Fixed the hitbox on the collapse/expand gear.
+
+v2.0.0 (3/16/2026):
+- Full code rewrite.
+- Bugfix: Too many to count.
+- Improved overall performance.
+- New: Techs prompt for number of targets as needed without having a dropdown.
+- New: Fourth tab that shows all available actions.
+- New: Temporary Skill/Flaw sections for boost/transform use.
+- New: "Detail" section for certain Skills/Flaws.
+- New: Skill/Flaw summary is separate from notes.
+- New: Hidden characters are given hidden initiative rolls.
+- New: Automatic processing of elemental damage adjustments.
+- New: Proper adjustment of attack/defense rolls for characters under berserker effect.
+- Probably even more I forgot.
