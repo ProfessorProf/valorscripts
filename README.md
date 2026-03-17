@@ -23,13 +23,13 @@ This is a collection of scripts that will automate a lot of important Valor logi
 ## Usage
 Mostly self-explanatory - just put values into boxes, and the sheet will update other values as necessary. For Skills such as Proficiency that require extra info, enter it into the Notes field to the right of the Skill/Flaw. If you want to use a custom Skill or Flaw that isn't in the system, enter Custom Skill or Custom Flaw, and add details to the right. Set the Skill/Flaw level to equal the amount of SP you want the Custom trait to be worth.
 
-For Techniques, Tech Level is automatically calculated based on core level and the list of modifiers. Put each mod on a separate line, ending with the mod level if relevant - if you want a Level 2 Ranged Technique modifier, put in something like "Ranged Technique 2" or "Ranged 2" - as long as it starts with 'ranged' and ends in '2', it'll read correctly. If there's no number listed, it will assume level 1. Clicking the "Use Technique" button will automatically deduct from your resources as required for the tech's limits. If you set "Targets" or "Bonus" to the right of the button before clicking, it will execute with the appropriate number of targets and the appropriate bonus to the attack roll.
+For Techniques, Tech Level is automatically calculated based on core level and the list of modifiers. Put each mod on a separate line, ending with the mod level if relevant - if you want a Level 2 Ranged Technique modifier, put in something like "Ranged Technique 2" or "Ranged 2" - as long as it starts with 'ranged' and ends in '2', it'll read correctly. If there's no number listed, it will assume level 1. Clicking the "Use Technique" button will automatically deduct from your resources as required for the tech's limits. If the tech is capable of hitting multiple targets, it will ask you for the number of targets to hit when used.
 
 Limits work the same way. For either one, if you want to use a mod or limit that isn't in the game library, preface it with Custom, i.e. "Custom - Encroachment Limit 4". The number will be used for either how many levels the mod adds to the technique, or as how much the limit reduces the Stamina cost by.
 
-For Mimic Core techniques, put the exact name of the target technique in the "Mimic Tech" field.
+For Mimic Core techniques, put the exact name of the target technique in the "Mimic Tech" field. To be sure, you can click "Check" to get a short description of the technique you're mimicking.
 
-For maximum benefit, associate a token with a character sheet, then set the three bars to represent "hp", "st" and "valor", in that order.
+For maximum benefit, associate a token with a character sheet, then set the three bars to represent "health", "stamina" and "valor", in that order.
 
 ## Valor Commands
 
@@ -66,15 +66,10 @@ Depending on the command, adds or subtracts one increment of HP or ST from all s
 ### Reset
 Syntax: `!reset`
 
-Wipes tech usage history for cooldown or ammo limits, sets Valor to original values. Doesn't recover any HP or ST.
-
-### Set Valor Rate
-Syntax: `!set-vrate 2`
-
-Sets any selected characters to gain an amount of Valor per turn equal to the provided number. Use for anyone with the Limitless Power skill (Masters will automatically gain 2 Valor per round).
+Wipes tech usage history for cooldown or ammo limits, sets Valor to original values. Sets all bonus fields to 0, removes all temporary skills and limits.
 
 ### Show defenses
-Syntax: `!defres`
+Syntax: `!def`
 
 Shows you (and only you) the Defense and Resistance values of everyone on the current map.
 
@@ -91,7 +86,7 @@ Shows you (and only you) which characters on the current map have the skill Unmo
 ### Roll Initiative
 Syntax: `!init`
 
-Erases everything on the turn tracker and automatically rolls initiative for all combatants, setting everything up for a new scene. If multiple tokens represent the same character, initiative will be rolled just once for the whole group.
+Erases everything on the turn tracker and automatically rolls initiative for all combatants, setting everything up for a new scene. If multiple tokens represent the same character, initiative will be rolled just once for the whole group. If there are tokens on the GM layer, they will be given initiative values and added to the turn tracker, but will only be visible to the GM.
 
 ### Size Up
 Syntax: `!sizeup`
