@@ -243,3 +243,9 @@ v2.0.0 (3/16/2026):
 - New: Automatic processing of elemental damage adjustments.
 - New: Proper adjustment of attack/defense rolls for characters under berserker effect.
 - Probably even more I forgot.
+
+v2.0.1 (4/21/2026):
+- Custom Core now fully implemented.
+- Bugfix: Certain commands erroneously could/couldn't be used if you aren't the GM.
+- New: Specify action when making a custom core technique.
+- New: "Specify Bonus" toggle for using techs.

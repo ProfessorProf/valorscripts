@@ -1,5 +1,5 @@
 /**
- * VALOR API SCRIPTS v2.0.0
+ * VALOR API SCRIPTS v2.0.1
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -37,6 +37,7 @@ const resetAttributes = ['rollbonus', 'attackrollbonus', 'defenserollbonus', 'ph
 
 const coreLibrary = [
     { cost: 2, levelUp: 1, id: 'damage', action: 'Attack', needsStat: true },
+    { cost: 0, levelUp: 0, id: 'custom' },
     { cost: 1, levelUp: 1, id: 'barrier', action: 'Support' },
     { cost: 0, levelUp: 2, id: 'boost', action: 'Support' },
     { cost: 1, levelUp: 1, id: 'healing', action: 'Support' },
@@ -501,7 +502,7 @@ on('chat:message', function(msg) {
 
 // !roll-as command
 on('chat:message', function(msg) {
-    if(msg.type == 'api' && msg.content.indexOf('!roll-as') == 0 && playerIsGM(msg.playerid)) {
+    if(msg.type == 'api' && msg.content.indexOf('!roll-as') == 0) {
         let split = getParams(msg.content);
         if(split.length < 3) {
             log('Not enough arguments.');
@@ -540,8 +541,8 @@ on('chat:message', function(msg) {
 
 // !tech-undo command
 on('chat:message', function(msg) {
-    if(msg.type == 'api' && msg.content.indexOf('!t-undo') == 0 || 
-    msg.type == 'api' && msg.content.indexOf('!tech-undo') == 0) {
+    if((msg.type == 'api' && msg.content.indexOf('!t-undo') == 0 || 
+    msg.type == 'api' && msg.content.indexOf('!tech-undo') == 0) && playerIsGM(msg.playerid)) {
         undoTech();
     }
 });
@@ -566,8 +567,8 @@ on('chat:message', function(msg) {
 
 // !effect command
 on('chat:message', function(msg) {
-    if(msg.type == 'api' && msg.content.indexOf('!e ') == 0 || 
-       msg.type == 'api' && msg.content.indexOf('!effect') == 0) {
+    if((msg.type == 'api' && msg.content.indexOf('!e ') == 0 || 
+       msg.type == 'api' && msg.content.indexOf('!effect') == 0) && playerIsGM(msg.playerid)) {
         // Get params
         let split = getParams(msg.content);
         if(split.length < 1) {
@@ -678,7 +679,7 @@ on('chat:message', function(msg) {
 // !tech command
 on('chat:message', function(msg) {
     if(msg.type == 'api' && msg.content.indexOf('!tech') == 0 
-    && msg.content.indexOf('!tech-apply') == -1 && playerIsGM(msg.playerid)) {
+    && msg.content.indexOf('!tech-apply') == -1) {
         let split = getParams(msg.content);
         if(split.length < 2) {
             log('Not enough arguments.');
@@ -687,6 +688,7 @@ on('chat:message', function(msg) {
             let actorId = '';
             let targets = [];
             let override = false;
+            let bonus = 0;
             
             for(let i = 1; i < split.length - 1; i += 2) {
                 let paramname = split[i];
@@ -704,9 +706,12 @@ on('chat:message', function(msg) {
                     case 'override':
                         override = true;
                         break;
+                    case 'bonus':
+                        bonus = parseInt(paramvalue) || 0;
+                        break;
                 }
             }
-            performTech(techId, actorId, targets, msg.content, override);
+            performTech(techId, actorId, targets, msg.content, bonus, override);
         }
     }
 });
@@ -1337,12 +1342,15 @@ function getTech(techId) {
         output.limits = [];
     }
     
+    if(output.core == 'custom') {
+        output.cost = output.customcost;
+    }
+    
     // Default values
     if(!output.core) output.core = 'damage';
     if(!output.corepower) output.corepower = 1;
     
     output.id = techId;
-    
     return output;
 }
 
@@ -1958,7 +1966,7 @@ function resetBonuses() {
 }
 
 
-function performTech(techId, actorId, targets, msg, override = false) {
+function performTech(techId, actorId, targets, msg, bonus, override = false) {
     let actor = getTechUser(actorId);
     let tech = getTech(techId);
     
@@ -2035,8 +2043,7 @@ function performTech(techId, actorId, targets, msg, override = false) {
         if(coreData.ultimate && !tech.mods.find(m => m.id)) {
             error += 'Already used. ';
         }
-        
-        if(actor.stamina < tech.cost) {
+        if(parseInt(actor.stamina) < parseInt(tech.cost)) {
             error = 'Not enough stamina. ';
         }
         
@@ -2245,7 +2252,9 @@ function performTech(techId, actorId, targets, msg, override = false) {
         rollBonus += 2;
     }
     rollBonus += parseInt(actor.adjustaccuracy) || 0;
-    rollBonus += parseInt(actor.attackrollbonus) || 0;
+    rollBonus += parseInt(actor.attackrollbonus) || 0
+    
+    rollBonus += bonus;
     
     let lines = [];
     let hiddenLines = [];
@@ -3833,7 +3842,6 @@ function undoTech() {
     }
     
     // Refund lost resources
-    log(techLog.cost);
     let hpCost = parseInt(techLog.cost.hp) || 0;
     let stCost = parseInt(techLog.cost.st) || 0;
     let valorCost = parseInt(techLog.cost.valor) || 0;

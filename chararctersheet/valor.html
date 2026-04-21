@@ -1,7 +1,7 @@
 <script type="text/worker">
 
 /**
- * VALOR CHARACTER SHEET v2.0.0
+ * VALOR CHARACTER SHEET v2.0.1
  *
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -266,6 +266,7 @@ const skillLibrary = [
 ];
 
 const coreLibrary = [
+    { cost: 0, levelUp: 0, id: 'custom' },
     { cost: 2, levelUp: 1, id: 'damage', action: 'Attack' },
     { cost: 1, levelUp: 1, id: 'barrier', action: 'Support' },
     { cost: 0, levelUp: 2, id: 'boost', action: 'Support' },
@@ -1061,7 +1062,7 @@ function updateTech(id) {
     
     getSectionIDs('repeating_skill', function(sidarray) {
         let requestedAttrs = ['corepower', 'core', 'stat', 'mods', 'limits', 'skills', 'flaws',
-            'shieldtype', 'mimicsummary'];
+            'shieldtype', 'mimicsummary', 'customcost', 'customaction'];
         let fieldNames = requestedAttrs.map(a => `${header}_${a}`);
         fieldNames.push('type');
 
@@ -1092,6 +1093,8 @@ function updateTech(id) {
             let flaws = values[`${header}_flaws`];
             let mods = values[`${header}_mods`].split('\n');
             let limits = values[`${header}_limits`].split('\n');
+            let customcost = parseInt(values[`${header}_customcost`]) || 0;
+            let customaction = values[`${header}_customaction`];
             
             let hp = parseInt(values['health_max']) || 1;
             let di = parseInt(values['damageincrement']) || 1;
@@ -1116,9 +1119,8 @@ function updateTech(id) {
             let action = '';
             
             let coreData = coreLibrary.find(c => c.id == core);
-            if(coreData) {
-                if(coreData.action) action = coreData.action;
-            }
+            if(!coreData) return;
+            if(coreData.action) action = coreData.action;
             
             let rollStatActive = '';
             let requiresRoll = false;
@@ -1140,12 +1142,17 @@ function updateTech(id) {
             let targetMode = 'single';
             
             switch(core) {
+                case 'custom':
+                    hasSkills = true;
+                    hasFlaws = true;
+                    action = customaction;
+                    break;
                 case 'damage':
                     requiresRoll = true;
                     damage = corepower * 5 + 15;
                     damage += parseInt(values[`${rollStat}attack`]) || 0;
                     damageType = 'physical';
-                    if(rollStat == 'mind' || rollStat == 'spirit') damageType == 'energy';
+                    if(rollStat == 'mind' || rollStat == 'spirit') damageType = 'energy';
                     break;
                 case 'healing':
                     healing = corepower * 3 + 9;
@@ -1177,7 +1184,7 @@ function updateTech(id) {
                     damage = corepower * 8 + 24;
                     damage += parseInt(values[`${rollStat}attack`]) || 0;
                     damageType = 'physical';
-                    if(rollStat == 'mind' || rollStat == 'spirit') damageType == 'energy';
+                    if(rollStat == 'mind' || rollStat == 'spirit') damageType = 'energy';
                     break;
                 case 'ultTransform':
                     targetMode = 'self';
@@ -1442,7 +1449,12 @@ function updateTech(id) {
             }
             
             techLevel += modLevels;
-            stcost = Math.max(coreData.cost + coreData.levelUp * techLevel - limitSt, 0);
+            
+            if(core == 'custom') {
+                stcost = customcost;
+            } else {
+                stcost = Math.max(coreData.cost + coreData.levelUp * techLevel - limitSt, 0);
+            }
             
             let costs = [];
             let quickCosts = [];
@@ -1619,6 +1631,7 @@ function updateTech(id) {
             attrs[`${header}_limitstamina`] = limitSt;
             attrs[`${header}_isshield`] = core == 'shield' ? 'on' : 'off';
             attrs[`${header}_ismimic`] = isMimic ? 'on' : 'off';
+            attrs[`${header}_iscustom`] = core == 'custom' ? 'on' : 'off';
             attrs[`${header}_haselement`] = hasElement ? 'on' : 'off';
             attrs[`${header}_hasreroll`] = hasReroll ? 'on' : 'off';
             attrs[`${header}_hasdigdeep`] = hasDigDeep ? 'on' : 'off';
@@ -2391,7 +2404,8 @@ function updateActions() {
     });
 }
 
-const techniqueRoll = async (techId, targetMode) => {
+const techniqueRoll = async (techId, targetMode, specifyBonus) => {
+    log(specifyBonus);
     let targets = 1;
     if(targetMode == 'self') {
         targets = 0;
@@ -2405,9 +2419,14 @@ const techniqueRoll = async (techId, targetMode) => {
         for(let i = 0; i < targets; i++) {
             command += ` @{target|Target #${i + 1}|token_id}`;
         }
-        command += '"';
+        command += '" ';
     } else if(targetMode == 'self') {
-        command += '--targets "self"';
+        command += '--targets "self" ';
+    }
+
+    if(specifyBonus) {
+        bonus = await getQuery(`?{Roll Bonus?|0}`);
+        command += `--bonus ${bonus} `;
     }
 
     let techCommand = await startRoll(command);
@@ -2420,10 +2439,12 @@ function useTechnique(techId) {
     
     let requestedAttrs = ['targetmode'];
     let fieldNames = requestedAttrs.map(a => `${header}_${a}`);
+    fieldNames.push('specifybonus');
     
     getAttrs(fieldNames, function(values) {
         let targetMode = values[`${header}_targetmode`];
-        techniqueRoll(techId, targetMode);
+        let specifyBonus = values['specifybonus'] == 'on';
+        techniqueRoll(techId, targetMode, specifyBonus);
     });
 }
 
@@ -3429,7 +3450,10 @@ on("clicked:cleartemps", function(eventInfo) {
 
     <div class="sheet-tab-content sheet-tab3">
         <div class="techs-header">TECHNIQUES</div>
-
+        <div>
+            <input type="checkbox" name="attr_specifybonus"> 
+            <span class="specify">Specify roll bonus</span>
+        </div>
         <fieldset class="repeating_tech">
             <div class="tech-name">
                 <input type="text" class="tech-name" name="attr_name" value="New Technique" />
@@ -3533,7 +3557,7 @@ on("clicked:cleartemps", function(eventInfo) {
                         </select>
                     </div>
                     <div class="tech-cost">
-                        <input type="checkbox" class="conditional-check" name="attr_caneditcost">
+                        <input type="checkbox" class="conditional-check" name="attr_iscustom">
                         <div class="conditional-block">
                             <span class="valor-label">ST Cost:</span>
                             <input class="tech-field tech-small-input" type="number" name="attr_customcost" value="0" />
@@ -3541,6 +3565,24 @@ on("clicked:cleartemps", function(eventInfo) {
                         <div class="conditional-block-inverse">
                             <span class="valor-label">ST Cost:</span>
                             <span class="derived-value" name="attr_cost"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <input type="checkbox" class="conditional-check" name="attr_iscustom">
+                        <div class="conditional-block">
+                            <span class="valor-label">Action:</span>
+                        </div>
+                    </div>
+                    <div>
+                        <input type="checkbox" class="conditional-check" name="attr_iscustom">
+                        <div class="tech-shield-type conditional-block">
+                            <select class="tech-field" name="attr_customaction" title="@{repeating_techs_#_customaction}" >
+                                <option value="Attack" selected="selected">Attack Action</option>
+                                <option value="Support">Support Action</option>
+                                <option value="Move">Move Action</option>
+                                <option value="Slow">Slow Action</option>
+                                <option value="Free">Free Action</option>
+                            </select>
                         </div>
                     </div>
                     <div>
