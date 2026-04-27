@@ -249,3 +249,8 @@ v2.0.1 (4/21/2026):
 - Bugfix: Certain commands erroneously could/couldn't be used if you aren't the GM.
 - New: Specify action when making a custom core technique.
 - New: "Specify Bonus" toggle for using techs.
+
+v2.0.2 (4/27/2026):
+- Warnings added to tech description.
+- Bugfix: Balanced Fighter was producing inconsistent values.
+- Bugfix: TP didn't display until first technique was created.

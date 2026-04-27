@@ -1,7 +1,7 @@
 <script type="text/worker">
 
 /**
- * VALOR CHARACTER SHEET v2.0.1
+ * VALOR CHARACTER SHEET v2.0.2
  *
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -866,34 +866,35 @@ const getQuery = async (queryText) => {
     return queryResponse;
 };
 
-function initialize() {
-    getSectionIDs('repeating_skill', function(sidarray) {
+async function initialize() {
+    await getSectionIDs('repeating_skill', function(sidarray) {
         sidarray.forEach(function(s) {
-            updateSkill(s, false);
+            updateSkill(s, false, false);
         });
     });
-    getSectionIDs('repeating_flaw', function(fidarray) {
+    await getSectionIDs('repeating_flaw', function(fidarray) {
         fidarray.forEach(function(f) {
-            updateFlaw(f, false);
+            updateFlaw(f, false, false);
         });
     });
-    getSectionIDs('repeating_tempskill', function(sidarray) {
+    await getSectionIDs('repeating_tempskill', function(sidarray) {
         sidarray.forEach(function(s) {
-            updateSkill(s, true);
+            updateSkill(s, false, true);
         });
     });
-    getSectionIDs('repeating_tempflaw', function(fidarray) {
+    await getSectionIDs('repeating_tempflaw', function(fidarray) {
         fidarray.forEach(function(f) {
-            updateFlaw(f, true);
+            updateFlaw(f, false, true);
         });
     });
-    getSectionIDs('repeating_tech', function(tidarray) {
+    await getSectionIDs('repeating_tech', function(tidarray) {
         tidarray.forEach(function(t) {
             updateTech(t);
         });
     });
     updateStatBonuses();
     updateActions();
+    updateTP();
 }
 
 function parseText(text, attrs) {
@@ -933,7 +934,7 @@ function updatePrimaryStat(statName) {
     });
 }
 
-function updateSkill(id, temporary = false) {
+function updateSkill(id, updateBonuses, temporary = false) {
     log(`VALOR - Updating Skill ${id}`);
     let header = temporary ? `repeating_tempskill_${id}`
         : `repeating_skill_${id}`;
@@ -958,7 +959,6 @@ function updateSkill(id, temporary = false) {
             return;
         }
         let hasDetail = skillData.detail ? 'on' : 'off';
-        log(skillData);
         let description = skillData.description;
         let name = skillData.name;
         let warning = ' ';
@@ -993,11 +993,12 @@ function updateSkill(id, temporary = false) {
         
         setAttrs(attrs);
         
-        updateStatBonuses();
+        if(updateBonuses)
+            updateStatBonuses();
     });
 }
 
-function updateFlaw(id, temporary = false) {
+function updateFlaw(id, updateBonuses, temporary = false) {
     log(`VALOR - Updating Flaw ${id}`);
     let header = temporary ? `repeating_tempflaw_${id}`
         : `repeating_flaw_${id}`;
@@ -1052,7 +1053,8 @@ function updateFlaw(id, temporary = false) {
         
         setAttrs(attrs);
         
-        updateStatBonuses();
+        if(updateBonuses)
+            updateStatBonuses();
     });
 }
 
@@ -1095,6 +1097,7 @@ function updateTech(id) {
             let limits = values[`${header}_limits`].split('\n');
             let customcost = parseInt(values[`${header}_customcost`]) || 0;
             let customaction = values[`${header}_customaction`];
+            let warnings = '';
             
             let hp = parseInt(values['health_max']) || 1;
             let di = parseInt(values['damageincrement']) || 1;
@@ -1217,6 +1220,9 @@ function updateTech(id) {
                         break;
                     case 'guts':
                         rollStatActive = 'Resolve';
+                        break;
+                    default:
+                        warnings += 'Must pick an attribute. ';
                         break;
                 }
                 rollBonus = parseInt(values[rollStatActive.toLowerCase()]) || 0;
@@ -1450,6 +1456,10 @@ function updateTech(id) {
             
             techLevel += modLevels;
             
+            if(techLevel > level + 3) {
+                warnings += `Your max technique level is ${level + 3}.`;
+            }
+            
             if(core == 'custom') {
                 stcost = customcost;
             } else {
@@ -1626,6 +1636,7 @@ function updateTech(id) {
             attrs[`${header}_level`] = techLevel;
             attrs[`${header}_summary`] = summary;
             attrs[`${header}_quicksummary`] = quickSummary;
+            attrs[`${header}_warnings`] = warnings.length > 0 ? `WARNING: ${warnings}` : ' ';
             attrs[`${header}_modlevel`] = modLevels;
             attrs[`${header}_cost`] = stcost;
             attrs[`${header}_limitstamina`] = limitSt;
@@ -1691,7 +1702,7 @@ function updateStatBonuses() {
                         fieldNames.push(`repeating_tempflaw_${id}_id`);
                     }
                     
-                    fieldNames = fieldNames.concat(['muscle', 'dexterity', 'aura', 'intuition', 'resolve', 'type']);
+                    fieldNames = fieldNames.concat(['basemuscle', 'basedexterity', 'baseaura', 'baseintuition', 'baseresolve', 'type']);
                     
                     getAttrs(fieldNames, function(values) {
                         let attrs = {};
@@ -1761,14 +1772,14 @@ function updateStatBonuses() {
                                     let highestActiveName = '';
                                     let highestActiveValue = 0;
                                     for(const activeName of actives) {
-                                        let activeValue = parseInt(values[activeName]) || 0;
+                                        let activeValue = parseInt(values[`base${activeName}`]) || 0;
                                         if(activeValue > highestActiveValue) {
                                             highestActiveName = activeName;
                                             highestActiveValue = activeValue;
                                         }
                                     }
                                     for(const activeName of actives) {
-                                        let activeValue = parseInt(values[activeName]) || 0;
+                                        let activeValue = parseInt(values[`base${activeName}`]) || 0;
                                         if(activeValue < highestActiveValue) {
                                             attrs[`adjust${activeName}`]++;
                                         }
@@ -1865,7 +1876,7 @@ function updateStatBonuses() {
 }
 
 function updateSP() {
-    log(`VALOR - Updating Stat Bonuses`);
+    log(`VALOR - Updating SP`);
     getSectionIDs('repeating_skill', function(sidarray) {
         getSectionIDs('repeating_flaw', function(fidarray) {
             let fieldNames = [];
@@ -1958,7 +1969,6 @@ function updateTP() {
                     
                     
                     for(id of sidarray) {
-                        log(`repeating_skill_${id}_id`);
                         let skillId = values[`repeating_skill_${id}_id`];
                         if(skillId == 'ultimateAttack') ultimates.push(level);
                     }
@@ -2405,7 +2415,6 @@ function updateActions() {
 }
 
 const techniqueRoll = async (techId, targetMode, specifyBonus) => {
-    log(specifyBonus);
     let targets = 1;
     if(targetMode == 'self') {
         targets = 0;
@@ -2571,24 +2580,32 @@ on('change:guts', function(eventInfo) {
     updatePrimaryStat('guts');
 });
 
+on('change:level', function(eventInfo) {
+    updatePrimaryStat('strength');
+    updatePrimaryStat('agility');
+    updatePrimaryStat('spirit');
+    updatePrimaryStat('mind');
+    updatePrimaryStat('guts');
+});
+
 on('change:repeating_skill:id change:repeating_skill:level change:repeating_skill:detail', function(eventInfo) {
     let skillId = eventInfo.sourceAttribute.split('_')[2];
-    updateSkill(skillId, false);
+    updateSkill(skillId, true, false);
 });
 
 on('change:repeating_flaw:id change:repeating_flaw:level change:repeating_flaw:detail', function(eventInfo) {
     let flawId = eventInfo.sourceAttribute.split('_')[2];
-    updateFlaw(flawId, false);
+    updateFlaw(flawId, true, false);
 });
 
 on('change:repeating_tempskill:id change:repeating_tempskill:level change:repeating_tempskill:detail', function(eventInfo) {
     let skillId = eventInfo.sourceAttribute.split('_')[2];
-    updateSkill(skillId, true);
+    updateSkill(skillId, true, true);
 });
 
 on('change:repeating_tempflaw:id change:repeating_tempflaw:level change:repeating_tempflaw:detail', function(eventInfo) {
     let flawId = eventInfo.sourceAttribute.split('_')[2];
-    updateFlaw(flawId, true);
+    updateFlaw(flawId, true, true);
 });
 
 on('change:repeating_tech:corepower change:repeating_tech:core change:repeating_tech:mods change:repeating_tech:limits change:repeating_tech:stat '
