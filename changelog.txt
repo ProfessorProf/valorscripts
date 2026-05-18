@@ -254,3 +254,11 @@ v2.0.2 (4/27/2026):
 - Warnings added to tech description.
 - Bugfix: Balanced Fighter was producing inconsistent values.
 - Bugfix: TP didn't display until first technique was created.
+
+v2.0.3 (5/18/2026):
+- New: Verbose Techniques.
+- Bugfix: Quick Summon showed wrong action type.
+- Bugfix: Support Move action showed wrong move distance.
+- Bugfix: Immobile characters no longer show move actions on actions tab.
+- Bugfix: Crash on certain tech names.
+- Bugfix: Now properly handles non-character objects.

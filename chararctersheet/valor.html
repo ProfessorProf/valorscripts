@@ -1,7 +1,7 @@
 <script type="text/worker">
 
 /**
- * VALOR CHARACTER SHEET v2.0.2
+ * VALOR CHARACTER SHEET v2.0.3
  *
  * Installation Instructions:
  * - Be a Roll20 Pro user.
@@ -1298,7 +1298,7 @@ function updateTech(id) {
                             rollBonus = parseInt(values['strength']) || 0;
                             break;
                         case 'quicksummon':
-                            action = 'Support';
+                            action = 'Attack';
                             break;
                         case 'damageshift':
                             modSummary += damageType == 'physical' ? 'Hits Resistance instead of Defense. '
@@ -2101,6 +2101,7 @@ function performAction(fieldId, actionType) {
         if(actionData) {
             let move = parseInt(values['move']) || 0;
             let stinc = parseInt(values['staminaincrement']) || 0;
+            if(actionType == 'support') move = Math.ceil(move / 2);
             
             let summary = parseText(actionData.summary, [
                 { name: 'mv', value: move },
@@ -2232,6 +2233,7 @@ function updateActions() {
                                             }
                                         }
                                         
+                                        let mobile = true;
                                         
                                         for(var flawId of fidarray) {
                                             let id = values[`repeating_flaw_${flawId}_id`];
@@ -2240,12 +2242,18 @@ function updateActions() {
                                                 case 'compulsion':
                                                     supportActions.push({name: 'Compulsion', eventtype: 'action' , eventid: 'compulsion'});
                                                     break;
+                                                case 'immobile':
+                                                    mobile = false;
+                                                    break;
                                             }
                                         }
                                         
                                         let move = parseInt(values['move']) || 0;
-                                        moveActions.push({name: `Move ${move}`, eventtype: 'action' , eventid: 'move'});
-                                        supportActions.push({name: `Move ${Math.ceil(move / 2)}`, eventtype: 'action' , eventid: 'supportmove'});
+                                        if(mobile) {
+                                            moveActions.push({name: `Move ${move}`, eventtype: 'action' , eventid: 'move'});
+                                            let supportMove = Math.ceil(move / 2);
+                                            supportActions.push({name: `Move ${supportMove}`, eventtype: 'action' , eventid: 'supportmove'});
+                                        }
                                         attackActions.push({name: `Partial Defense`, eventtype: 'action' , eventid: 'partialdefense'});
                                         slowActions.push({name: `Full Defense`, eventtype: 'action' , eventid: 'fulldefense'});
                                         slowActions.push({name: `Charge Stamina`, eventtype: 'action' , eventid: 'chargestamina'});
@@ -2313,7 +2321,7 @@ function updateActions() {
                                                 let actionData = actionLibrary.find(a => a.id == action.eventid);
                                                 if(actionData) {
                                                     let summary = parseText(actionData.summary, [
-                                                        { name: 'mv', value: move },
+                                                        { name: 'mv', value: Math.ceil(move / 2) },
                                                         { name: 'sti', value: sti },
                                                     ]);
                                                     attrs[`repeating_supportaction_${rowId}_summary`] = summary;

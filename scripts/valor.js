@@ -1,5 +1,5 @@
 /**
- * VALOR API SCRIPTS v2.0.1
+ * VALOR API SCRIPTS v2.0.3
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -24,10 +24,11 @@ state.hideNpcTechEffects = false;       // For non-player characters, don't show
 state.rollBehindScreen = false;         // Hide NPC rolls from the players.
 state.autoInitiativeUpdate = true;      // If a character's initiative changes during play, move them accordingly.
 state.autoInitiativeReport = true;      // If a character's initiative changes during play, send a whisper to the GM.
-state.confirmAutoInitiative = false;     // Confirm whether or not to auto-update initiative before each scene.
+state.confirmAutoInitiative = false;    // Confirm whether or not to auto-update initiative before each scene.
 state.applyAttackResults = true;        // Allows GM to directly apply attack results with a chat button on a hit.
 state.showAttackResults = true;         // Sends messages to the chat when attack results are applied.
 state.sendDefenseButtons = true;        // Sends buttons players can click to automatically defend.
+state.verboseTechniques = true;         // Gives more detailed information about techniques in the chat window.
 
 const valorName = 'Valor';	// Name of the character who sends system messages. If no character exists with this name, messages will be sent from nobody, which can add irregularities in the chat logs.
 state.narratorId = '';
@@ -533,7 +534,9 @@ on('chat:message', function(msg) {
         let attribute = split[3];
         let count = parseInt(split[4]) || 1;
         
-        techName = techName.substring(1, techName.length - 1);
+        if(techName[0] == '"') {
+            techName = techName.substring(1, techName.length - 1);
+        }
         
         performDefenseRoll(attackerId, defenderId, techName, attribute, count);
     }
@@ -1388,6 +1391,8 @@ function getTechTarget(tokenId) {
     const requestedAttrs = ['name', 'defense', 'resistance', 'defensebonus', 'resistancebonus', 'health'];
     
     let token = getObj('graphic', tokenId);
+    if(!token) return null;
+    
     let actorId = token.get('represents');
     let actor = getObj('character', actorId);
     let output = {};
@@ -2043,6 +2048,7 @@ function performTech(techId, actorId, targets, msg, bonus, override = false) {
         if(coreData.ultimate && !tech.mods.find(m => m.id)) {
             error += 'Already used. ';
         }
+        
         if(parseInt(actor.stamina) < parseInt(tech.cost)) {
             error = 'Not enough stamina. ';
         }
@@ -2211,9 +2217,10 @@ function performTech(techId, actorId, targets, msg, bonus, override = false) {
     for(const mod of tech.mods) {
         let modData = modLibrary.find(m => mod.id == m.id);
         if(modData) {
-            if(modData.tags.includes('important')) {
+            if(state.verboseTechniques || modData.tags.includes('important')) {
                 if(modSummary.length > 0) modSummary += ', ';
-                modSummary += modData.name;
+                let modName = mod.level == 1 ? modData.name : `${modData.name} ${mod.level}`;
+                modSummary += modName;
             }
             
             switch(modData.id) {
@@ -2261,8 +2268,9 @@ function performTech(techId, actorId, targets, msg, bonus, override = false) {
     
     let header = '';
     if(effects.requiresRoll) {
-        header = rollBonus ? `Rolling ${capitalize(activeStat)}${bonusDisplay(rollBonus)}:`
-            : `Rolling ${capitalize(activeStat)}:`;
+        header = rollBonus ? `Rolling ${capitalize(activeStat)}${bonusDisplay(rollBonus)}`
+            : `Rolling ${capitalize(activeStat)}`;
+        if(!state.rollBehindScreen) header += ':';
     } else if(targets.length > 1) {
         header = 'Targets ';
     } else if(targets.length == 1) {
@@ -2291,6 +2299,7 @@ function performTech(techId, actorId, targets, msg, bonus, override = false) {
         tech.name += ` (${techQualifiers.join(', ')})`;
     }
     
+    let noTargets = true;
     for(var targetId of targets) {
         if(targetId == 'self') {
             let page = Campaign().get('playerpageid');
@@ -2305,7 +2314,11 @@ function performTech(techId, actorId, targets, msg, bonus, override = false) {
                 continue;
             }
         }
+        
         target = getTechTarget(targetId);
+        if(!target) continue;
+        noTargets = false;
+        
         let line = '';
         let hiddenLine = '';
         
@@ -2492,7 +2505,6 @@ function performTech(techId, actorId, targets, msg, bonus, override = false) {
                             if(skillLevelAttrs && skillLevelAttrs.length > 0) {
                                 let skillLevelAttr = skillLevelAttrs[0];
                                 let oldLevel = parseInt(skillLevelAttr.get('current'));
-                                log(oldLevel);
                                 if(oldLevel < skillLevel) {
                                     skillLevelAttr.set('current', skillLevel);
                                 }
@@ -2570,6 +2582,42 @@ function performTech(techId, actorId, targets, msg, bonus, override = false) {
             } else {
                 if(line.indexOf(']]') > -1) line += ', ';
                 line += techEffects.join(', ');
+            }
+        }
+        
+        if(line) lines.push(line);
+        if(hiddenLine) hiddenLines.push(hiddenLine);
+    }
+    
+    if(noTargets) {
+        // Display generic info
+        let line = '';
+        let hiddenLine = '';
+        if(effects.requiresRoll) {
+            if(state.rollBehindScreen) {
+                hiddenLine = `[[1d10+${rollValue}${bonusDisplay(rollBonus)}]]`;
+            } else {
+                header += ` [[1d10+${rollValue}${bonusDisplay(rollBonus)}]]`;
+            }
+            
+            let effectLine = '';
+            if(effects.damage) {
+                effectLine += `Damage <b>${effects.damage}</b>`;
+                switch(effects.damageType) {
+                    case 'physical':
+                        effectLine += ' - Defense';
+                        break;
+                    case 'energy':
+                        effect += ' - Resistance';
+                        break;
+                }
+            }
+            
+            if(state.hideNpcTechEffects) {
+                if(hiddenLine.length > 0) hiddenLine += '<br />';
+                hiddenLine += effectLine;
+            } else {
+                line = effectLine;
             }
         }
         
@@ -3902,7 +3950,6 @@ function duplicateCharacter(actorId) {
         _type: 'attribute',
         _characterid: actorId
     });
-    log(attributes);
     
     for(var attribute of attributes) {
         let oldAttrs = findObjs({
@@ -3912,11 +3959,9 @@ function duplicateCharacter(actorId) {
         });
         if(oldAttrs && oldAttrs.length > 0) {
             let oldAttr = oldAttrs[0];
-            log(oldAttr)
             oldAttr.set('current', attribute.get('current'));
             oldAttr.set('max', attribute.get('max'));
         } else {
-            log(1);
             let obj = createObj('attribute', {
                 name: attribute.get('name'),
                 current: attribute.get('current'),
