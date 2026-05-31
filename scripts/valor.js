@@ -1,5 +1,5 @@
 /**
- * VALOR API SCRIPTS v2.0.3
+ * VALOR API SCRIPTS v2.0.3a
  * 
  * INSTALLATION INSTRUCTIONS
  * 1. From campaign, go to API Scripts.
@@ -2376,7 +2376,8 @@ function performTech(techId, actorId, targets, msg, bonus, override = false) {
                     }
                     if(targetResolve == highest) {
                         const valor = parseInt(getAttrByName(target.id, 'valor')) || 0;
-                        if(valor >= 2) {
+                        let valorMax = parseInt(getAttrByName(actorId, 'valor', 'max')) || 0;
+                        if(valor >= 2 || valorMax == 0) {
                             text += ` <a href="!d-roll ${actorId} ${target.id} ${escapedTech} resolve {0}">Resolve</a>`;
                         }
                     }
@@ -3817,6 +3818,10 @@ function performDefenseRoll(attackerId, defenderId, techName, attribute, count) 
             attributeName = 'Resolve';
             primaryName = 'guts';
             break;
+    }
+    
+    if(techName[0] == '&' && techName[techName.length - 1] == '&') {
+        techName = techName.substring(1, techName.length - 1);
     }
     
     const techs = getTechs(attackerId);

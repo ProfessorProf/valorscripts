@@ -262,3 +262,6 @@ v2.0.3 (5/18/2026):
 - Bugfix: Immobile characters no longer show move actions on actions tab.
 - Bugfix: Crash on certain tech names.
 - Bugfix: Now properly handles non-character objects.
+
+v2.0.3a (5/31/2026):
+- Bugfix: Defense buttons actually work again.
